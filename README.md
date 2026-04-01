@@ -1,2 +1,3 @@
-# Example
-An example greeter plugin
+# Lumbridge Guide
+
+The RuneLite plugin counterpart of the LumbridgeGuide platform.
