@@ -11,9 +11,29 @@ public interface LumbridgeGuideConfig extends Config {
     String CONFIG_GROUP = "lumbridge_guide";
 
     @ConfigSection(
+            name = "Bingo",
+            description = "Bingo board display settings",
+            position = 1,
+            closedByDefault = true
+    )
+    String bingoSection = "bingoSection";
+
+    @ConfigItem(
+            keyName = "showTeamPrefix",
+            name = "Show Team Prefix",
+            description = "Prefix your name in chat with your bingo team name in the team colour",
+            section = bingoSection,
+            position = 0
+    )
+    default boolean showTeamPrefix() {
+        return false;
+    }
+
+    @ConfigSection(
             name = "API Settings",
             description = "Configuration for the API connection",
-            position = 0
+            position = 999,
+            closedByDefault = true
     )
     String apiSection = "apiSection";
 
@@ -28,4 +48,5 @@ public interface LumbridgeGuideConfig extends Config {
     default String apiKey() {
         return "";
     }
+
 }

@@ -1,16 +1,18 @@
 package com.lumbridgeguide;
 
 import com.google.inject.Provides;
-import com.lumbridgeguide.api.LumbridgeGuideClient;
-import com.lumbridgeguide.data.InventoryItemData;
-import com.lumbridgeguide.data.SyncRequest;
-import com.lumbridgeguide.service.PlayerSnapshotService;
-import com.lumbridgeguide.ui.LumbridgeGuideTheme;
+import com.lumbridgeguide.data.PluginBoardData;
+import com.lumbridgeguide.data.PluginTeamData;
+import com.lumbridgeguide.service.BoardDataService;
 import com.lumbridgeguide.ui.LumbridgeGuidePanel;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.client.callback.ClientThread;
+import net.runelite.api.MessageNode;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.widgets.ComponentID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -34,19 +36,13 @@ public class LumbridgeGuidePlugin extends Plugin {
     private Client client;
 
     @Inject
-    private ClientThread clientThread;
-
-    @Inject
     private LumbridgeGuideConfig config;
 
     @Inject
     private ClientToolbar clientToolbar;
 
     @Inject
-    private LumbridgeGuideClient apiClient;
-
-    @Inject
-    private PlayerSnapshotService snapshotService;
+    private BoardDataService boardDataService;
 
     private LumbridgeGuidePanel panel;
     private NavigationButton navigationButton;
@@ -55,7 +51,9 @@ public class LumbridgeGuidePlugin extends Plugin {
     protected void startUp() throws Exception {
         log.info("Lumbridge Guide started");
 
-        panel = new LumbridgeGuidePanel(this, config);
+        boardDataService.refresh();
+
+        panel = new LumbridgeGuidePanel(boardDataService, config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 
@@ -78,58 +76,90 @@ public class LumbridgeGuidePlugin extends Plugin {
     }
 
     @Subscribe
+    public void onGameTick(GameTick tick) {
+        updateChatboxInputPrefix();
+    }
+
+    @Subscribe
     public void onConfigChanged(ConfigChanged event) {
         if (LumbridgeGuideConfig.CONFIG_GROUP.equals(event.getGroup()) && panel != null) {
+            boardDataService.refresh();
             panel.refresh();
         }
     }
 
-    /**
-     * Send a sync request to the test endpoint
-     */
-    public void onSyncButtonClicked() {
-        if (!apiClient.isAuthenticated()) {
-            panel.setStatus("API key not set!", LumbridgeGuideTheme.STATUS_ERROR);
+    @Subscribe
+    public void onChatMessage(ChatMessage chatMessage) {
+        if (!config.showTeamPrefix()) {
             return;
         }
 
-        if (client.getGameState() != GameState.LOGGED_IN) {
-            panel.setStatus("You must be logged in!", LumbridgeGuideTheme.STATUS_ERROR);
+        ChatMessageType type = chatMessage.getType();
+        if (type != ChatMessageType.PUBLICCHAT
+                && type != ChatMessageType.MODCHAT
+                && type != ChatMessageType.FRIENDSCHAT
+                && type != ChatMessageType.CLAN_CHAT
+                && type != ChatMessageType.CLAN_GUEST_CHAT) {
             return;
         }
 
-        panel.setSyncing(true);
-        panel.setStatus("Reading inventory...", LumbridgeGuideTheme.STATUS_PENDING);
+        if (client.getLocalPlayer() == null) {
+            return;
+        }
 
-        clientThread.invokeLater(() ->
-        {
-            List<InventoryItemData> items = snapshotService.readInventoryItems();
-            String playerName = snapshotService.getPlayerName();
+        String localName = client.getLocalPlayer().getName();
+        if (localName == null || !localName.equals(chatMessage.getName())) {
+            return;
+        }
 
-            SyncRequest syncRequest = SyncRequest.builder()
-                    .playerName(playerName)
-                    .items(items)
-                    .build();
+        PluginTeamData team = resolveActiveTeam();
+        if (team == null || team.getName() == null || team.getColor() == null) {
+            return;
+        }
 
-            panel.setStatus("Sending to server...", LumbridgeGuideTheme.STATUS_PENDING);
+        String colorHex = team.getColor().replace("#", "");
+        String prefix = "<col=" + colorHex + ">[" + team.getName() + "]</col> ";
 
-            apiClient.post("/test", syncRequest,
-                    response ->
-                    {
-                        panel.setStatus("Synced! (" + items.size() + " items)", LumbridgeGuideTheme.STATUS_SUCCESS);
-                        panel.setSyncing(false);
-                        log.info("Inventory synced: {} items", items.size());
-                    },
-                    error ->
-                    {
-                        String errorMessage = error.getStatusCode() == -1
-                                ? "Connection failed"
-                                : "Error " + error.getStatusCode();
-                        panel.setStatus(errorMessage, LumbridgeGuideTheme.STATUS_ERROR);
-                        panel.setSyncing(false);
-                        log.warn("Inventory sync failed: status {}", error.getStatusCode());
-                    });
-        });
+        MessageNode messageNode = chatMessage.getMessageNode();
+        messageNode.setName(prefix + messageNode.getName());
+    }
+
+    private void updateChatboxInputPrefix() {
+        if (!config.showTeamPrefix()) {
+            return;
+        }
+
+        Widget chatboxInput = client.getWidget(ComponentID.CHATBOX_INPUT);
+        if (chatboxInput == null) {
+            return;
+        }
+
+        if (client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null) {
+            return;
+        }
+
+        PluginTeamData team = resolveActiveTeam();
+        if (team == null || team.getName() == null || team.getColor() == null) {
+            return;
+        }
+
+        String playerName = client.getLocalPlayer().getName();
+        String currentText = chatboxInput.getText();
+        String teamTag = "[" + team.getName() + "]";
+
+        if (currentText != null && currentText.contains(playerName) && !currentText.contains(teamTag)) {
+            String colorHex = team.getColor().replace("#", "");
+            String prefix = "<col=" + colorHex + ">" + teamTag + "</col> ";
+            chatboxInput.setText(currentText.replace(playerName + ":", prefix + playerName + ":"));
+        }
+    }
+
+    private PluginTeamData resolveActiveTeam() {
+        List<PluginBoardData> boards = boardDataService.getBoards();
+        if (boards.isEmpty()) {
+            return null;
+        }
+        return boards.get(0).getMyTeam();
     }
 
     @Provides
