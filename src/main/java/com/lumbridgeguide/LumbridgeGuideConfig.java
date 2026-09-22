@@ -29,6 +29,17 @@ public interface LumbridgeGuideConfig extends Config {
         return false;
     }
 
+    @ConfigItem(
+            keyName = "unclaimedFirst",
+            name = "Unclaimed tiles first",
+            description = "List tiles you still have to claim above the ones already claimed",
+            section = bingoSection,
+            position = 1
+    )
+    default boolean unclaimedFirst() {
+        return false;
+    }
+
     @ConfigSection(
             name = "API Settings",
             description = "Configuration for the API connection",

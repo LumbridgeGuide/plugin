@@ -16,6 +16,9 @@ public class PluginBoardData {
     private int gridSize;
     private String startsAt;
     private String endsAt;
+    private String verificationCode;
+    private boolean tilePointsEnabled;
+    private String webUrl;
     private PluginTeamData myTeam;
     private List<PluginTileData> tiles;
 }

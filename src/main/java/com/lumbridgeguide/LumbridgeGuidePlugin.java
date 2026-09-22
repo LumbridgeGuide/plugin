@@ -4,6 +4,7 @@ import com.google.inject.Provides;
 import com.lumbridgeguide.data.PluginBoardData;
 import com.lumbridgeguide.data.PluginTeamData;
 import com.lumbridgeguide.service.BoardDataService;
+import com.lumbridgeguide.service.GearTagService;
 import com.lumbridgeguide.ui.LumbridgeGuidePanel;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -15,9 +16,13 @@ import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.ItemManager;
+import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.banktags.BankTagsPlugin;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
@@ -30,6 +35,7 @@ import java.util.List;
 @PluginDescriptor(
         name = "Lumbridge Guide"
 )
+@PluginDependency(BankTagsPlugin.class)
 public class LumbridgeGuidePlugin extends Plugin {
 
     @Inject
@@ -44,6 +50,15 @@ public class LumbridgeGuidePlugin extends Plugin {
     @Inject
     private BoardDataService boardDataService;
 
+    @Inject
+    private GearTagService gearTagService;
+
+    @Inject
+    private ItemManager itemManager;
+
+    @Inject
+    private SkillIconManager skillIconManager;
+
     private LumbridgeGuidePanel panel;
     private NavigationButton navigationButton;
 
@@ -53,7 +68,7 @@ public class LumbridgeGuidePlugin extends Plugin {
 
         boardDataService.refresh();
 
-        panel = new LumbridgeGuidePanel(boardDataService, config);
+        panel = new LumbridgeGuidePanel(boardDataService, gearTagService, itemManager, skillIconManager, config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 
