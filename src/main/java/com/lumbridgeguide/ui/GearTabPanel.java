@@ -1,6 +1,7 @@
 package com.lumbridgeguide.ui;
 
 import com.lumbridgeguide.service.GearTagService;
+import net.runelite.client.ui.FontManager;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -42,7 +43,7 @@ public class GearTabPanel extends JPanel {
 
         codeField = new JTextField();
         codeField.setToolTipText("Gear code");
-        codeField.setFont(LumbridgeGuideTheme.monoFont(Font.PLAIN, 12f));
+        codeField.setFont(FontManager.getRunescapeFont());
         codeField.setBackground(LumbridgeGuideTheme.SURFACE_INSET);
         codeField.setForeground(LumbridgeGuideTheme.TEXT_PRIMARY);
         codeField.setCaretColor(LumbridgeGuideTheme.TEXT_PRIMARY);

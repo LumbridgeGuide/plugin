@@ -1,5 +1,7 @@
 package com.lumbridgeguide.ui;
 
+import net.runelite.client.ui.FontManager;
+
 import javax.swing.JPanel;
 import java.awt.Cursor;
 import java.awt.Dimension;

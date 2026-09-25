@@ -1,5 +1,7 @@
 package com.lumbridgeguide.ui;
 
+import net.runelite.client.ui.FontManager;
+
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -27,7 +29,7 @@ class ThemedTabBar extends JPanel {
 
         for (String name : tabNames) {
             JButton button = new JButton(name);
-            button.setFont(LumbridgeGuideTheme.font(Font.BOLD, 13f));
+            button.setFont(FontManager.getRunescapeFont());
             button.setFocusPainted(false);
             button.setContentAreaFilled(false);
             button.setOpaque(false);

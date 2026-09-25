@@ -33,21 +33,14 @@ public final class LumbridgeGuideTheme {
     public static final Color WARNING = new Color(0xD4A32A);
     public static final Color ERROR = new Color(0xC4573A);
 
-    private static final String[] SANS_FAMILIES = {
-            "Inter", "Segoe UI", "SF Pro Text", "Helvetica Neue", "Roboto", "Arial"
-    };
     private static final String[] MONO_FAMILIES = {
             "JetBrains Mono", "Cascadia Mono", "Consolas", "Menlo", "Monospaced"
     };
 
     private static final Set<String> INSTALLED_FAMILIES = new HashSet<>(Arrays.asList(
             GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
-    private static final String SANS = firstInstalled(SANS_FAMILIES, Font.SANS_SERIF);
-    private static final String MONO = firstInstalled(MONO_FAMILIES, Font.MONOSPACED);
 
-    public static Font font(int style, float size) {
-        return new Font(SANS, style, 1).deriveFont(size);
-    }
+    private static final String MONO = firstInstalled(MONO_FAMILIES, Font.MONOSPACED);
 
     public static Font monoFont(int style, float size) {
         return new Font(MONO, style, 1).deriveFont(size);
