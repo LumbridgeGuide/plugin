@@ -3,6 +3,7 @@ package com.lumbridgeguide.ui;
 import com.lumbridgeguide.data.PluginBoardData;
 import com.lumbridgeguide.data.PluginTeamData;
 import com.lumbridgeguide.data.PluginTileData;
+import net.runelite.client.ui.FontManager;
 
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
@@ -71,7 +72,7 @@ class TileRowPanel extends JPanel {
             trailing.setIcon(new Ui.CheckIcon(stripeColor != null ? stripeColor : LumbridgeGuideTheme.SUCCESS));
         } else {
             trailing.setText("›");
-            trailing.setFont(LumbridgeGuideTheme.font(Font.BOLD, 16f));
+            trailing.setFont(FontManager.getRunescapeFont());
             trailing.setForeground(LumbridgeGuideTheme.TEXT_MUTED);
         }
 

@@ -1,5 +1,7 @@
 package com.lumbridgeguide.ui;
 
+import net.runelite.client.ui.FontManager;
+
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -28,7 +30,7 @@ final class Ui {
 
     static JLabel label(String text, float size, int style, Color color) {
         JLabel label = new JLabel(text);
-        label.setFont(LumbridgeGuideTheme.font(style, size));
+        label.setFont(FontManager.getRunescapeFont());
         label.setForeground(color);
         return label;
     }
@@ -38,7 +40,7 @@ final class Ui {
      */
     static WrapText wrapped(String text, int width, float size, int style, Color color) {
         WrapText wrapText = new WrapText(width);
-        wrapText.setFont(LumbridgeGuideTheme.font(style, size));
+        wrapText.setFont(FontManager.getRunescapeFont());
         wrapText.setForeground(color);
         wrapText.setText(text);
         return wrapText;
@@ -46,7 +48,7 @@ final class Ui {
 
     static JButton button(String text, Color background, Color foreground, Color hover) {
         JButton button = new JButton(text);
-        button.setFont(LumbridgeGuideTheme.font(Font.BOLD, 12f));
+        button.setFont(FontManager.getRunescapeFont());
         button.setForeground(foreground);
         button.setBackground(background);
         button.setOpaque(true);
@@ -164,7 +166,7 @@ final class Ui {
         private final String text;
         private final Color background;
         private final Color foreground;
-        private final Font font = LumbridgeGuideTheme.font(Font.BOLD, 10f);
+        private final Font font = FontManager.getRunescapeFont();
 
         Badge(String text, Color background, Color foreground) {
             this.text = text;

@@ -1,5 +1,7 @@
 package com.lumbridgeguide.ui;
 
+import net.runelite.client.ui.FontManager;
+
 import javax.swing.JPanel;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -64,7 +66,7 @@ class VerificationCodePanel extends JPanel {
         Graphics2D canvas = (Graphics2D) graphics.create();
         canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         canvas.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        canvas.setFont(LumbridgeGuideTheme.font(Font.BOLD, 22f));
+        canvas.setFont(FontManager.getRunescapeBoldFont());
         FontMetrics metrics = canvas.getFontMetrics();
 
         int count = code.length();

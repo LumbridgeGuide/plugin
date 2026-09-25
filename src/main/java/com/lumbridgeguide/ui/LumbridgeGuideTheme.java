@@ -1,14 +1,9 @@
 package com.lumbridgeguide.ui;
 
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.GraphicsEnvironment;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
- * Colours and fonts copied from the Lumbridge Guide website's dark theme so the
+ * Colours copied from the Lumbridge Guide website's dark theme so the
  * plugin panel looks like part of the same product.
  */
 public final class LumbridgeGuideTheme {
@@ -33,18 +28,6 @@ public final class LumbridgeGuideTheme {
     public static final Color WARNING = new Color(0xD4A32A);
     public static final Color ERROR = new Color(0xC4573A);
 
-    private static final String[] SANS_FAMILIES = {
-            "Inter", "Segoe UI", "SF Pro Text", "Helvetica Neue", "Roboto", "Arial"
-    };
-
-    private static final Set<String> INSTALLED_FAMILIES = new HashSet<>(Arrays.asList(
-            GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
-    private static final String SANS = firstInstalled(SANS_FAMILIES, Font.SANS_SERIF);
-
-    public static Font font(int style, float size) {
-        return new Font(SANS, style, 1).deriveFont(size);
-    }
-
     public static Color parseTeamColor(String hex) {
         if (hex == null || hex.isEmpty()) {
             return TEXT_MUTED;
@@ -54,15 +37,6 @@ public final class LumbridgeGuideTheme {
         } catch (NumberFormatException ignored) {
             return TEXT_MUTED;
         }
-    }
-
-    private static String firstInstalled(String[] candidates, String fallback) {
-        for (String candidate : candidates) {
-            if (INSTALLED_FAMILIES.contains(candidate)) {
-                return candidate;
-            }
-        }
-        return fallback;
     }
 
     private LumbridgeGuideTheme() {
