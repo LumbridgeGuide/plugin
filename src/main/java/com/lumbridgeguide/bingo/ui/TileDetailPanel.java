@@ -28,10 +28,6 @@ import java.awt.Font;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * The expanded view of a single tile: everything the player needs to know to
- * complete it, with a button to go back to the list.
- */
 public class TileDetailPanel extends JPanel {
 
     private static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 16;

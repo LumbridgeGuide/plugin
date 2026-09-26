@@ -17,7 +17,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-/** The logged-in account's link status and the Sync now button. */
 public class AccountTabPanel extends JPanel {
 
     private final JLabel accountName;

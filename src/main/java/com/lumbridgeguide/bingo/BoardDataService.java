@@ -14,10 +14,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Manages bingo board data fetched from the backend, keeping the latest
- * response in memory.
- */
 @Slf4j
 @Singleton
 public class BoardDataService {
@@ -56,11 +52,7 @@ public class BoardDataService {
         refresh(null);
     }
 
-    /**
-     * Fetches board data from {@code GET /api/plugin/sync} asynchronously,
-     * updating the in-memory data on success.
-     * The optional callback is invoked after the request completes regardless of outcome.
-     */
+    /** {@code onComplete} runs whether or not the request succeeds. */
     public void refresh(Runnable onComplete) {
         if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");

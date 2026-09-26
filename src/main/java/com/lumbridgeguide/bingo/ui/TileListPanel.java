@@ -10,9 +10,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
-/**
- * The board's tiles as a vertical list, in board order or with unclaimed tiles first.
- */
 public class TileListPanel extends JPanel {
 
     private static final int GAP = 6;

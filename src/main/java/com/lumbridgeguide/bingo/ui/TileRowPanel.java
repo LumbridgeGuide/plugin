@@ -26,10 +26,6 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * One tile in the board list: type badge, title, and a short claim summary.
- * Clicking it opens the expanded tile view.
- */
 class TileRowPanel extends JPanel {
 
     private static final int ARC = 8;
