@@ -24,11 +24,11 @@ import java.util.List;
  * Small factory for themed Swing components. Every component gets an explicit
  * font because RuneLite's global pixel font would otherwise leak in.
  */
-final class Ui {
+public final class Ui {
 
-    static final int CONTENT_WIDTH = 188;
+    public static final int CONTENT_WIDTH = 188;
 
-    static JLabel label(String text, float size, int style, Color color) {
+    public static JLabel label(String text, float size, int style, Color color) {
         JLabel label = new JLabel(text);
         label.setFont(FontManager.getRunescapeFont());
         label.setForeground(color);
@@ -38,7 +38,7 @@ final class Ui {
     /**
      * Text that wraps at the given pixel width.
      */
-    static WrapText wrapped(String text, int width, float size, int style, Color color) {
+    public static WrapText wrapped(String text, int width, float size, int style, Color color) {
         WrapText wrapText = new WrapText(width);
         wrapText.setFont(FontManager.getRunescapeFont());
         wrapText.setForeground(color);
@@ -46,7 +46,7 @@ final class Ui {
         return wrapText;
     }
 
-    static JButton button(String text, Color background, Color foreground, Color hover) {
+    public static JButton button(String text, Color background, Color foreground, Color hover) {
         JButton button = new JButton(text);
         button.setFont(FontManager.getRunescapeFont());
         button.setForeground(foreground);
@@ -71,12 +71,12 @@ final class Ui {
         return button;
     }
 
-    static JButton primaryButton(String text) {
+    public static JButton primaryButton(String text) {
         return button(text, LumbridgeGuideTheme.ACCENT, LumbridgeGuideTheme.TEXT_INVERSE,
                 LumbridgeGuideTheme.ACCENT_HOVER);
     }
 
-    static JButton secondaryButton(String text) {
+    public static JButton secondaryButton(String text) {
         return button(text, LumbridgeGuideTheme.SURFACE_OVERLAY, LumbridgeGuideTheme.TEXT_PRIMARY,
                 LumbridgeGuideTheme.BORDER);
     }
@@ -85,18 +85,18 @@ final class Ui {
      * Word wrapped text measured with the real font metrics. Swing's HTML labels
      * measure and paint differently, which clipped lines, so this draws its own.
      */
-    static class WrapText extends JComponent {
+    public static class WrapText extends JComponent {
 
         private final int wrapWidth;
         private List<String> lines = new ArrayList<>();
         private String text = "";
 
-        WrapText(int wrapWidth) {
+        public WrapText(int wrapWidth) {
             this.wrapWidth = wrapWidth;
             setAlignmentX(LEFT_ALIGNMENT);
         }
 
-        void setText(String newText) {
+        public void setText(String newText) {
             text = newText == null ? "" : newText;
             lines = wrapLines();
             revalidate();
@@ -161,14 +161,14 @@ final class Ui {
     /**
      * A small rounded pill with centred text, used for tile types and team names.
      */
-    static class Badge extends JComponent {
+    public static class Badge extends JComponent {
 
         private final String text;
         private final Color background;
         private final Color foreground;
         private final Font font = FontManager.getRunescapeFont();
 
-        Badge(String text, Color background, Color foreground) {
+        public Badge(String text, Color background, Color foreground) {
             this.text = text;
             this.background = background;
             this.foreground = foreground;
@@ -205,13 +205,13 @@ final class Ui {
     /**
      * A check mark drawn as lines, because the panel fonts have no glyph for one.
      */
-    static class CheckIcon implements Icon {
+    public static class CheckIcon implements Icon {
 
         private static final int SIZE = 14;
 
         private final Color color;
 
-        CheckIcon(Color color) {
+        public CheckIcon(Color color) {
             this.color = color;
         }
 

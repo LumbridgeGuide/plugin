@@ -1,10 +1,13 @@
 package com.lumbridgeguide.ui;
 
 import com.lumbridgeguide.LumbridgeGuideConfig;
-import com.lumbridgeguide.service.AccountSyncService;
-import com.lumbridgeguide.service.BoardDataService;
-import com.lumbridgeguide.service.GearConfigExportService;
-import com.lumbridgeguide.service.GearTagService;
+import com.lumbridgeguide.account.AccountSyncService;
+import com.lumbridgeguide.account.ui.AccountTabPanel;
+import com.lumbridgeguide.bingo.BoardDataService;
+import com.lumbridgeguide.bingo.ui.BingoTabPanel;
+import com.lumbridgeguide.gear.GearConfigExportService;
+import com.lumbridgeguide.gear.GearTagService;
+import com.lumbridgeguide.gear.ui.GearTabPanel;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.PluginPanel;
