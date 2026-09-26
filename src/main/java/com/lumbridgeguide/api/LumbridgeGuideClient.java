@@ -111,11 +111,10 @@ public class LumbridgeGuideClient {
     }
 
     private static HttpUrl buildApiBaseUrl() {
-        String obfuscatedDefault = ApiConfig.getApiBaseUrl();
-        String base = System.getProperty(API_BASE_PROPERTY, obfuscatedDefault);
+        String base = System.getProperty(API_BASE_PROPERTY, ApiConfig.API_BASE_URL);
         HttpUrl url = HttpUrl.parse(base);
         if (url == null) {
-            url = HttpUrl.parse(obfuscatedDefault);
+            url = HttpUrl.parse(ApiConfig.API_BASE_URL);
         }
         if (url == null) {
             throw new IllegalStateException("Both configured and generated API base URLs are invalid");
