@@ -1,7 +1,6 @@
 package com.lumbridgeguide.bingo;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
@@ -34,9 +33,9 @@ public class BoardDataService {
     private volatile PluginSyncResponse cachedData;
 
     @Inject
-    public BoardDataService(LumbridgeGuideClient apiClient) {
+    public BoardDataService(LumbridgeGuideClient apiClient, Gson gson) {
         this.apiClient = apiClient;
-        this.gson = new GsonBuilder().create();
+        this.gson = gson;
         this.cachedData = loadFromDisk();
     }
 

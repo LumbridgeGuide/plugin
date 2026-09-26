@@ -1,7 +1,6 @@
 package com.lumbridgeguide.api;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.lumbridgeguide.LumbridgeGuideConfig;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +30,9 @@ public class LumbridgeGuideClient {
     private final HttpUrl apiBaseUrl;
 
     @Inject
-    public LumbridgeGuideClient(OkHttpClient httpClient, LumbridgeGuideConfig config) {
+    public LumbridgeGuideClient(OkHttpClient httpClient, Gson gson, LumbridgeGuideConfig config) {
         this.httpClient = httpClient;
-        this.gson = new GsonBuilder().create();
+        this.gson = gson;
         this.config = config;
         this.apiBaseUrl = buildApiBaseUrl();
     }

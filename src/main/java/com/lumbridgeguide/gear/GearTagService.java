@@ -33,11 +33,13 @@ public class GearTagService {
     private final LumbridgeGuideClient apiClient;
     private final TagManager tagManager;
     private final ClientThread clientThread;
-    private final Gson gson = new Gson();
+    private final Gson gson;
 
     @Inject
-    public GearTagService(LumbridgeGuideClient apiClient, TagManager tagManager, ClientThread clientThread) {
+    public GearTagService(
+            LumbridgeGuideClient apiClient, Gson gson, TagManager tagManager, ClientThread clientThread) {
         this.apiClient = apiClient;
+        this.gson = gson;
         this.tagManager = tagManager;
         this.clientThread = clientThread;
     }
