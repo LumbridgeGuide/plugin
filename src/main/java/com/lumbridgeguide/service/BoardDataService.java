@@ -103,24 +103,6 @@ public class BoardDataService {
                 });
     }
 
-    /**
-     * Blocking variant of {@link #refresh()} for use during plugin startup
-     * or on background threads where the caller needs the result immediately.
-     */
-    public void refreshSync() {
-        if (!apiClient.hasApiKey()) {
-            log.debug("Skipping board sync, no API key configured");
-            return;
-        }
-
-        ApiResponse response = apiClient.getSync("/plugin/sync");
-        if (response.isSuccess()) {
-            handleSyncSuccess(response);
-        } else {
-            handleSyncFailure(response);
-        }
-    }
-
     private void handleSyncSuccess(ApiResponse response) {
         try {
             PluginSyncResponse syncResponse = gson.fromJson(response.getBody(), PluginSyncResponse.class);

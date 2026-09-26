@@ -68,41 +68,6 @@ public class LumbridgeGuideClient {
         executeAsync(request, onSuccess, onFailure);
     }
 
-    public <T> void put(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .put(jsonBody(body))
-                .build();
-        executeAsync(request, onSuccess, onFailure);
-    }
-
-    public <T> void patch(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .patch(jsonBody(body))
-                .build();
-        executeAsync(request, onSuccess, onFailure);
-    }
-
-    public void delete(String path, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .delete()
-                .build();
-        executeAsync(request, onSuccess, onFailure);
-    }
-
-    public <T> ApiResponse postSync(String path, T body) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .post(jsonBody(body))
-                .build();
-        return executeSync(request);
-    }
-
-    public ApiResponse getSync(String path) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .get()
-                .build();
-        return executeSync(request);
-    }
-
     public <T> T deserialize(String json, Class<T> clazz) {
         return gson.fromJson(json, clazz);
     }
@@ -157,15 +122,5 @@ public class LumbridgeGuideClient {
                 }
             }
         });
-    }
-
-    private ApiResponse executeSync(Request request) {
-        try (Response response = httpClient.newCall(request).execute()) {
-            ResponseBody responseBody = response.body();
-            String bodyContent = responseBody != null ? responseBody.string() : "";
-            return new ApiResponse(response.code(), bodyContent, response.isSuccessful());
-        } catch (IOException exception) {
-            return ApiResponse.error(-1, "Network error: " + exception.getMessage());
-        }
     }
 }
