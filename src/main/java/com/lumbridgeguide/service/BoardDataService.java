@@ -76,7 +76,7 @@ public class BoardDataService {
      * The optional callback is invoked after the request completes regardless of outcome.
      */
     public void refresh(Runnable onComplete) {
-        if (!apiClient.isAuthenticated()) {
+        if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");
             if (onComplete != null) {
                 onComplete.run();
@@ -108,7 +108,7 @@ public class BoardDataService {
      * or on background threads where the caller needs the result immediately.
      */
     public void refreshSync() {
-        if (!apiClient.isAuthenticated()) {
+        if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");
             return;
         }
