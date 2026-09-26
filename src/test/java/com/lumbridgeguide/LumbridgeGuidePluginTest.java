@@ -1,10 +1,9 @@
-package com.example;
+package com.lumbridgeguide;
 
-import com.lumbridgeguide.LumbridgeGuidePlugin;
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
 
-public class ExamplePluginTest
+public class LumbridgeGuidePluginTest
 {
 	public static void main(String[] args) throws Exception
 	{

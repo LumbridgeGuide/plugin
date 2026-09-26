@@ -1,4 +1,4 @@
-package com.lumbridgeguide.data;
+package com.lumbridgeguide.bingo.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TileItemEntry {
-    private int id;
+public class PluginTeamData {
+    private String id;
     private String name;
+    private String color;
 }
 

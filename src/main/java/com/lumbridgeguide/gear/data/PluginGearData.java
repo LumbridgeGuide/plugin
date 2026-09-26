@@ -1,15 +1,16 @@
-package com.lumbridgeguide.data;
+package com.lumbridgeguide.gear.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PluginTeamData {
+public class PluginGearData {
     private String id;
     private String name;
-    private String color;
+    private List<Integer> itemIds;
 }
-

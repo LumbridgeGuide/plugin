@@ -1,11 +1,11 @@
-package com.lumbridgeguide.service;
+package com.lumbridgeguide.bingo;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
-import com.lumbridgeguide.data.PluginBoardData;
-import com.lumbridgeguide.data.PluginSyncResponse;
+import com.lumbridgeguide.bingo.data.PluginBoardData;
+import com.lumbridgeguide.bingo.data.PluginSyncResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -14,10 +14,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Manages bingo board data fetched from the backend, keeping the latest
- * response in memory.
- */
 @Slf4j
 @Singleton
 public class BoardDataService {
@@ -56,13 +52,9 @@ public class BoardDataService {
         refresh(null);
     }
 
-    /**
-     * Fetches board data from {@code GET /api/plugin/sync} asynchronously,
-     * updating the in-memory data on success.
-     * The optional callback is invoked after the request completes regardless of outcome.
-     */
+    /** {@code onComplete} runs whether or not the request succeeds. */
     public void refresh(Runnable onComplete) {
-        if (!apiClient.isAuthenticated()) {
+        if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");
             if (onComplete != null) {
                 onComplete.run();
@@ -87,24 +79,6 @@ public class BoardDataService {
                         onComplete.run();
                     }
                 });
-    }
-
-    /**
-     * Blocking variant of {@link #refresh()} for use during plugin startup
-     * or on background threads where the caller needs the result immediately.
-     */
-    public void refreshSync() {
-        if (!apiClient.isAuthenticated()) {
-            log.debug("Skipping board sync, no API key configured");
-            return;
-        }
-
-        ApiResponse response = apiClient.getSync("/plugin/sync");
-        if (response.isSuccess()) {
-            handleSyncSuccess(response);
-        } else {
-            handleSyncFailure(response);
-        }
     }
 
     private void handleSyncSuccess(ApiResponse response) {
