@@ -41,23 +41,18 @@ public class LumbridgeGuideClient {
         return apiBaseUrl.newBuilder().addPathSegments(path.substring(1)).build();
     }
 
-    public boolean isAuthenticated() {
+    public boolean hasApiKey() {
         String apiKey = config.apiKey();
         return apiKey != null && !apiKey.trim().isEmpty();
     }
 
-    /**
-     * Sends an asynchronous {@code GET} request
-    */
     public void get(String path, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .get()
                 .build();
         executeAsync(request, onSuccess, onFailure);
     }
-    /**
-     * Sends an asynchronous {@code POST} request with a JSON body
-     */
+
     public <T> void post(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .post(jsonBody(body))
@@ -65,9 +60,6 @@ public class LumbridgeGuideClient {
         executeAsync(request, onSuccess, onFailure);
     }
 
-    /**
-     * Sends an asynchronous {@code PUT} request with a JSON body
-     */
     public <T> void put(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .put(jsonBody(body))
@@ -75,9 +67,6 @@ public class LumbridgeGuideClient {
         executeAsync(request, onSuccess, onFailure);
     }
 
-    /**
-     * Sends an asynchronous {@code PATCH} request with a JSON body
-     */
     public <T> void patch(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .patch(jsonBody(body))
@@ -85,9 +74,6 @@ public class LumbridgeGuideClient {
         executeAsync(request, onSuccess, onFailure);
     }
 
-    /**
-     * Sends an asynchronous {@code DELETE} request
-     */
     public void delete(String path, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .delete()
@@ -95,10 +81,6 @@ public class LumbridgeGuideClient {
         executeAsync(request, onSuccess, onFailure);
     }
 
-    /**
-     * Sends a synchronous {@code POST} request
-     * Prefer the async variant; use this only on a background thread
-     */
     public <T> ApiResponse postSync(String path, T body) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .post(jsonBody(body))
@@ -106,10 +88,6 @@ public class LumbridgeGuideClient {
         return executeSync(request);
     }
 
-    /**
-     * Sends a synchronous {@code GET} request
-     * Prefer the async variant; use this only on a background thread
-     */
     public ApiResponse getSync(String path) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .get()

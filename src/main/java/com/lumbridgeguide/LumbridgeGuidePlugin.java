@@ -3,15 +3,20 @@ package com.lumbridgeguide;
 import com.google.inject.Provides;
 import com.lumbridgeguide.data.PluginBoardData;
 import com.lumbridgeguide.data.PluginTeamData;
+import com.lumbridgeguide.service.AccountSyncService;
 import com.lumbridgeguide.service.BoardDataService;
+import com.lumbridgeguide.service.GearConfigExportService;
 import com.lumbridgeguide.service.GearTagService;
 import com.lumbridgeguide.ui.LumbridgeGuidePanel;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
 import net.runelite.api.MessageNode;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.StatChanged;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
@@ -29,7 +34,9 @@ import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
 import java.awt.image.BufferedImage;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @PluginDescriptor(
@@ -54,13 +61,28 @@ public class LumbridgeGuidePlugin extends Plugin {
     private GearTagService gearTagService;
 
     @Inject
+    private AccountSyncService accountSyncService;
+
+    @Inject
+    private GearConfigExportService gearConfigExportService;
+
+    @Inject
     private ItemManager itemManager;
 
     @Inject
     private SkillIconManager skillIconManager;
 
+    private static final Set<GameState> LOGGED_OUT_STATES = EnumSet.of(
+            GameState.UNKNOWN,
+            GameState.STARTING,
+            GameState.LOGIN_SCREEN,
+            GameState.LOGIN_SCREEN_AUTHENTICATOR,
+            GameState.LOGGING_IN);
+
     private LumbridgeGuidePanel panel;
     private NavigationButton navigationButton;
+    private boolean awaitingLogin = true;
+    private boolean loginPending;
 
     @Override
     protected void startUp() throws Exception {
@@ -68,7 +90,11 @@ public class LumbridgeGuidePlugin extends Plugin {
 
         boardDataService.refresh();
 
-        panel = new LumbridgeGuidePanel(boardDataService, gearTagService, itemManager, skillIconManager, config);
+        awaitingLogin = true;
+        loginPending = client.getGameState() == GameState.LOGGED_IN;
+
+        panel = new LumbridgeGuidePanel(boardDataService, gearTagService, gearConfigExportService,
+                accountSyncService, itemManager, skillIconManager, config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 
@@ -92,7 +118,31 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     @Subscribe
     public void onGameTick(GameTick tick) {
+        if (loginPending) {
+            loginPending = false;
+            accountSyncService.onLoggedIn();
+        }
         updateChatboxInputPrefix();
+    }
+
+    @Subscribe
+    public void onGameStateChanged(GameStateChanged event) {
+        GameState state = event.getGameState();
+        if (LOGGED_OUT_STATES.contains(state)) {
+            if (!awaitingLogin) {
+                loginPending = false;
+                accountSyncService.onLoggedOut();
+            }
+            awaitingLogin = true;
+        } else if (state == GameState.LOGGED_IN && awaitingLogin) {
+            awaitingLogin = false;
+            loginPending = true;
+        }
+    }
+
+    @Subscribe
+    public void onStatChanged(StatChanged event) {
+        accountSyncService.onStatChanged();
     }
 
     @Subscribe
@@ -105,6 +155,11 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     @Subscribe
     public void onChatMessage(ChatMessage chatMessage) {
+        if (chatMessage.getType() == ChatMessageType.GAMEMESSAGE
+                && chatMessage.getMessage().contains("completed a quest")) {
+            accountSyncService.onQuestCompleted();
+        }
+
         if (!config.showTeamPrefix()) {
             return;
         }

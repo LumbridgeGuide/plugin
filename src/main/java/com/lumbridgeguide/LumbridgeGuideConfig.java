@@ -41,6 +41,25 @@ public interface LumbridgeGuideConfig extends Config {
     }
 
     @ConfigSection(
+            name = "Account",
+            description = "RuneScape account syncing",
+            position = 2,
+            closedByDefault = true
+    )
+    String accountSection = "accountSection";
+
+    @ConfigItem(
+            keyName = "syncOnLoginLogout",
+            name = "Sync on login and logout",
+            description = "Also sync your stats and quests when you log in and out. Only for accounts you have already linked with Sync now.",
+            section = accountSection,
+            position = 0
+    )
+    default boolean syncOnLoginLogout() {
+        return false;
+    }
+
+    @ConfigSection(
             name = "API Settings",
             description = "Configuration for the API connection",
             position = 999,

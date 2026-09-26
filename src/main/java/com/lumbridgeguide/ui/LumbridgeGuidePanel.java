@@ -1,7 +1,9 @@
 package com.lumbridgeguide.ui;
 
 import com.lumbridgeguide.LumbridgeGuideConfig;
+import com.lumbridgeguide.service.AccountSyncService;
 import com.lumbridgeguide.service.BoardDataService;
+import com.lumbridgeguide.service.GearConfigExportService;
 import com.lumbridgeguide.service.GearTagService;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
@@ -26,6 +28,7 @@ public class LumbridgeGuidePanel extends PluginPanel {
     private static final String TABS_CARD = "tabs";
     private static final String BINGO_TAB = "Bingo";
     private static final String GEAR_TAB = "Gear";
+    private static final String ACCOUNT_TAB = "Account";
 
     private final LumbridgeGuideConfig config;
     private final JPanel centerPanel;
@@ -34,6 +37,8 @@ public class LumbridgeGuidePanel extends PluginPanel {
     public LumbridgeGuidePanel(
             BoardDataService boardDataService,
             GearTagService gearTagService,
+            GearConfigExportService gearConfigExportService,
+            AccountSyncService accountSyncService,
             ItemManager itemManager,
             SkillIconManager skillIconManager,
             LumbridgeGuideConfig config) {
@@ -54,7 +59,10 @@ public class LumbridgeGuidePanel extends PluginPanel {
         centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);
         centerPanel.add(buildNoKeyCard(), NO_KEY_CARD);
-        centerPanel.add(buildTabsCard(bingoTab, new GearTabPanel(gearTagService)), TABS_CARD);
+        centerPanel.add(buildTabsCard(
+                bingoTab,
+                new GearTabPanel(gearTagService, gearConfigExportService),
+                new AccountTabPanel(accountSyncService)), TABS_CARD);
         add(centerPanel, BorderLayout.CENTER);
 
         refresh();
@@ -76,14 +84,15 @@ public class LumbridgeGuidePanel extends PluginPanel {
         });
     }
 
-    private static JPanel buildTabsCard(BingoTabPanel bingoTab, GearTabPanel gearTab) {
+    private static JPanel buildTabsCard(BingoTabPanel bingoTab, GearTabPanel gearTab, AccountTabPanel accountTab) {
         CardLayout tabCards = new CardLayout();
         JPanel display = new JPanel(tabCards);
         display.setOpaque(false);
         display.add(bingoTab, BINGO_TAB);
         display.add(gearTab, GEAR_TAB);
+        display.add(accountTab, ACCOUNT_TAB);
 
-        ThemedTabBar tabBar = new ThemedTabBar(Arrays.asList(BINGO_TAB, GEAR_TAB),
+        ThemedTabBar tabBar = new ThemedTabBar(Arrays.asList(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB),
                 name -> tabCards.show(display, name));
         tabBar.setBorder(new EmptyBorder(0, 0, 8, 0));
 
