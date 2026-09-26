@@ -7,6 +7,7 @@ import com.lumbridgeguide.service.AccountSyncService;
 import com.lumbridgeguide.service.BoardDataService;
 import com.lumbridgeguide.service.GearConfigExportService;
 import com.lumbridgeguide.service.GearTagService;
+import com.lumbridgeguide.service.TeamChatPrefix;
 import com.lumbridgeguide.ui.LumbridgeGuidePanel;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -183,15 +184,12 @@ public class LumbridgeGuidePlugin extends Plugin {
         }
 
         PluginTeamData team = resolveActiveTeam();
-        if (team == null || team.getName() == null || team.getColor() == null) {
+        if (team == null || team.getName() == null) {
             return;
         }
 
-        String colorHex = team.getColor().replace("#", "");
-        String prefix = "<col=" + colorHex + ">[" + team.getName() + "]</col> ";
-
         MessageNode messageNode = chatMessage.getMessageNode();
-        messageNode.setName(prefix + messageNode.getName());
+        messageNode.setName(TeamChatPrefix.of(team.getName(), team.getColor()) + messageNode.getName());
     }
 
     private void updateChatboxInputPrefix() {
@@ -209,17 +207,15 @@ public class LumbridgeGuidePlugin extends Plugin {
         }
 
         PluginTeamData team = resolveActiveTeam();
-        if (team == null || team.getName() == null || team.getColor() == null) {
+        if (team == null || team.getName() == null) {
             return;
         }
 
         String playerName = client.getLocalPlayer().getName();
         String currentText = chatboxInput.getText();
-        String teamTag = "[" + team.getName() + "]";
+        String prefix = TeamChatPrefix.of(team.getName(), team.getColor());
 
-        if (currentText != null && currentText.contains(playerName) && !currentText.contains(teamTag)) {
-            String colorHex = team.getColor().replace("#", "");
-            String prefix = "<col=" + colorHex + ">" + teamTag + "</col> ";
+        if (currentText != null && currentText.contains(playerName) && !currentText.contains(prefix)) {
             chatboxInput.setText(currentText.replace(playerName + ":", prefix + playerName + ":"));
         }
     }
