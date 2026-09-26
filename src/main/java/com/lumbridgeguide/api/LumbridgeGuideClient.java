@@ -19,6 +19,7 @@ public class LumbridgeGuideClient {
 
     private static final String API_KEY_HEADER = "X-API-Key";
     private static final String API_BASE_PROPERTY = "lumbridgeguide.api.base";
+    private static final String DEFAULT_API_BASE_URL = "https://api.lumbridge.guide/api";
 
     private static final MediaType JSON_MEDIA_TYPE =
             MediaType.parse("application/json; charset=utf-8");
@@ -34,7 +35,7 @@ public class LumbridgeGuideClient {
         this.httpClient = httpClient;
         this.gson = new GsonBuilder().create();
         this.config = config;
-        this.apiBaseUrl = buildApiBaseUrl();
+        this.apiBaseUrl = HttpUrl.get(System.getProperty(API_BASE_PROPERTY, DEFAULT_API_BASE_URL));
     }
 
     public HttpUrl resolveUrl(String path) {
@@ -101,18 +102,6 @@ public class LumbridgeGuideClient {
 
     private <T> RequestBody jsonBody(T body) {
         return RequestBody.create(JSON_MEDIA_TYPE, gson.toJson(body));
-    }
-
-    private static HttpUrl buildApiBaseUrl() {
-        String base = System.getProperty(API_BASE_PROPERTY, ApiConfig.API_BASE_URL);
-        HttpUrl url = HttpUrl.parse(base);
-        if (url == null) {
-            url = HttpUrl.parse(ApiConfig.API_BASE_URL);
-        }
-        if (url == null) {
-            throw new IllegalStateException("Both configured and generated API base URLs are invalid");
-        }
-        return url;
     }
 
     private Request.Builder newRequestBuilder(HttpUrl url) {
