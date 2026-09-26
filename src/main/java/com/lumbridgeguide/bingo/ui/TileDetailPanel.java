@@ -4,8 +4,9 @@ import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.bingo.data.TileItemEntry;
-import com.lumbridgeguide.ui.LumbridgeGuideTheme;
-import com.lumbridgeguide.ui.Ui;
+import com.lumbridgeguide.ui.Badge;
+import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.Theme;
 import net.runelite.api.Skill;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
@@ -33,7 +34,7 @@ import java.util.Locale;
  */
 public class TileDetailPanel extends JPanel {
 
-    private static final int TEXT_WIDTH = Ui.CONTENT_WIDTH - 16;
+    private static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 16;
 
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
@@ -45,7 +46,7 @@ public class TileDetailPanel extends JPanel {
         this.skillIconManager = skillIconManager;
         setOpaque(false);
 
-        JButton closeButton = Ui.secondaryButton("‹  Back to tiles");
+        JButton closeButton = Components.secondaryButton("‹  Back to tiles");
         closeButton.addActionListener(event -> onClose.run());
         closeButton.setHorizontalAlignment(JButton.LEFT);
 
@@ -67,19 +68,19 @@ public class TileDetailPanel extends JPanel {
         JPanel badges = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         badges.setOpaque(false);
         badges.setAlignmentX(LEFT_ALIGNMENT);
-        badges.add(new Ui.Badge(TileText.typeName(tile).toUpperCase(Locale.ROOT),
-                LumbridgeGuideTheme.SURFACE_OVERLAY, LumbridgeGuideTheme.ACCENT));
+        badges.add(new Badge(TileText.typeName(tile).toUpperCase(Locale.ROOT),
+                Theme.SURFACE_OVERLAY, Theme.ACCENT));
         if (board.isTilePointsEnabled() && tile.getPoints() > 0) {
-            badges.add(new Ui.Badge(tile.getPoints() + (tile.getPoints() == 1 ? " POINT" : " POINTS"),
-                    LumbridgeGuideTheme.SURFACE_OVERLAY, LumbridgeGuideTheme.TEXT_SECONDARY));
+            badges.add(new Badge(tile.getPoints() + (tile.getPoints() == 1 ? " POINT" : " POINTS"),
+                    Theme.SURFACE_OVERLAY, Theme.TEXT_SECONDARY));
         }
         addRow(badges, 6);
 
-        addRow(Ui.wrapped(tile.getTitle(), Ui.CONTENT_WIDTH, 16f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY), 8);
+        addRow(Components.wrapped(tile.getTitle(), Components.CONTENT_WIDTH, 16f, Font.BOLD, Theme.TEXT_PRIMARY), 8);
 
         if (tile.getDescription() != null && !tile.getDescription().isEmpty()) {
-            addRow(Ui.wrapped(tile.getDescription(), Ui.CONTENT_WIDTH, 12f, Font.PLAIN,
-                    LumbridgeGuideTheme.TEXT_SECONDARY), 8);
+            addRow(Components.wrapped(tile.getDescription(), Components.CONTENT_WIDTH, 12f, Font.PLAIN,
+                    Theme.TEXT_SECONDARY), 8);
         }
 
         addRequirements(tile);
@@ -106,7 +107,7 @@ public class TileDetailPanel extends JPanel {
             String kills = tile.getKillCount() != null && tile.getKillCount() > 0
                     ? "Kill " + tile.getMonsterName() + " x" + tile.getKillCount()
                     : "Kill " + tile.getMonsterName();
-            addRow(card(Ui.wrapped(kills, TEXT_WIDTH, 12f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY)), 6);
+            addRow(card(Components.wrapped(kills, TEXT_WIDTH, 12f, Font.BOLD, Theme.TEXT_PRIMARY)), 6);
         }
         if (hasItems) {
             List<TileItemEntry> items = tile.getItems();
@@ -128,7 +129,7 @@ public class TileDetailPanel extends JPanel {
 
         String xp = tile.getXpTarget() > 0 ? String.format("%,d XP", tile.getXpTarget()) : "";
         String text = (xp.isEmpty() ? "" : xp + " in ") + TileText.capitalise(tile.getSkill());
-        row.add(Ui.wrapped(text, TEXT_WIDTH - 30, 12f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY),
+        row.add(Components.wrapped(text, TEXT_WIDTH - 30, 12f, Font.BOLD, Theme.TEXT_PRIMARY),
                 BorderLayout.CENTER);
         return card(row);
     }
@@ -143,7 +144,7 @@ public class TileDetailPanel extends JPanel {
         image.addTo(icon);
 
         row.add(icon, BorderLayout.WEST);
-        row.add(Ui.wrapped(item.getName(), TEXT_WIDTH - 46, 12f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY),
+        row.add(Components.wrapped(item.getName(), TEXT_WIDTH - 46, 12f, Font.BOLD, Theme.TEXT_PRIMARY),
                 BorderLayout.CENTER);
         return card(row);
     }
@@ -152,29 +153,29 @@ public class TileDetailPanel extends JPanel {
         addRow(sectionHeading("Status"), 14);
 
         if (!tile.isClaimed()) {
-            addRow(card(Ui.label("Not claimed yet", 12f, Font.BOLD, LumbridgeGuideTheme.TEXT_MUTED)), 6);
+            addRow(card(Components.label("Not claimed yet", 12f, Font.BOLD, Theme.TEXT_MUTED)), 6);
             return;
         }
 
         PluginTeamData team = board.getMyTeam();
         boolean mine = team != null && team.getId() != null && team.getId().equals(tile.getClaimedByTeamId());
         if (mine) {
-            Color teamColor = LumbridgeGuideTheme.parseTeamColor(team.getColor());
-            addRow(card(Ui.label("Claimed by " + team.getName(), 12f, Font.BOLD, teamColor)), 6);
+            Color teamColor = Theme.parseTeamColor(team.getColor());
+            addRow(card(Components.label("Claimed by " + team.getName(), 12f, Font.BOLD, teamColor)), 6);
         } else {
-            addRow(card(Ui.label("Claimed by another team", 12f, Font.BOLD, LumbridgeGuideTheme.SUCCESS)), 6);
+            addRow(card(Components.label("Claimed by another team", 12f, Font.BOLD, Theme.SUCCESS)), 6);
         }
     }
 
     private static JLabel sectionHeading(String text) {
-        return Ui.label(text.toUpperCase(Locale.ROOT), 10f, Font.BOLD, LumbridgeGuideTheme.TEXT_MUTED);
+        return Components.label(text.toUpperCase(Locale.ROOT), 10f, Font.BOLD, Theme.TEXT_MUTED);
     }
 
     private static JPanel card(java.awt.Component child) {
         JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(LumbridgeGuideTheme.SURFACE_RAISED);
+        card.setBackground(Theme.SURFACE_RAISED);
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(LumbridgeGuideTheme.BORDER),
+                BorderFactory.createLineBorder(Theme.BORDER),
                 new EmptyBorder(8, 8, 8, 8)));
         card.add(child, BorderLayout.CENTER);
         return card;

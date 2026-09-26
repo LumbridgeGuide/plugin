@@ -1,7 +1,7 @@
 package com.lumbridgeguide.bingo.ui;
 
-import com.lumbridgeguide.ui.LumbridgeGuideTheme;
-import com.lumbridgeguide.ui.Ui;
+import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.Theme;
 import net.runelite.client.ui.FontManager;
 
 import javax.swing.JPanel;
@@ -51,7 +51,7 @@ class VerificationCodePanel extends JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(Ui.CONTENT_WIDTH, HEIGHT);
+        return new Dimension(Components.CONTENT_WIDTH, HEIGHT);
     }
 
     @Override
@@ -68,7 +68,7 @@ class VerificationCodePanel extends JPanel {
         Graphics2D canvas = (Graphics2D) graphics.create();
         canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         canvas.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        canvas.setFont(LumbridgeGuideTheme.monoFont(Font.BOLD, 22f));
+        canvas.setFont(Theme.monoFont(Font.BOLD, 22f));
         FontMetrics metrics = canvas.getFontMetrics();
 
         int count = code.length();
@@ -76,15 +76,15 @@ class VerificationCodePanel extends JPanel {
 
         for (int index = 0; index < count; index++) {
             int boxX = index * (boxWidth + GAP);
-            canvas.setColor(LumbridgeGuideTheme.SURFACE_RAISED);
+            canvas.setColor(Theme.SURFACE_RAISED);
             canvas.fillRoundRect(boxX, 0, boxWidth, HEIGHT - 1, 6, 6);
-            canvas.setColor(LumbridgeGuideTheme.BORDER);
+            canvas.setColor(Theme.BORDER);
             canvas.drawRoundRect(boxX, 0, boxWidth - 1, HEIGHT - 2, 6, 6);
 
             String character = String.valueOf(code.charAt(index));
             int textX = boxX + (boxWidth - metrics.stringWidth(character)) / 2;
             int textY = (HEIGHT - metrics.getHeight()) / 2 + metrics.getAscent();
-            canvas.setColor(LumbridgeGuideTheme.ACCENT);
+            canvas.setColor(Theme.ACCENT);
             canvas.drawString(character, textX, textY);
         }
         canvas.dispose();

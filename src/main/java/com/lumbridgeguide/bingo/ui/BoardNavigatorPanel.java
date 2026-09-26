@@ -1,7 +1,7 @@
 package com.lumbridgeguide.bingo.ui;
 
-import com.lumbridgeguide.ui.LumbridgeGuideTheme;
-import com.lumbridgeguide.ui.Ui;
+import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.Theme;
 import net.runelite.client.ui.FontManager;
 
 import javax.swing.JButton;
@@ -34,7 +34,7 @@ class BoardNavigatorPanel extends JPanel {
 
         positionLabel = new JLabel("", SwingConstants.CENTER);
         positionLabel.setFont(FontManager.getRunescapeFont());
-        positionLabel.setForeground(LumbridgeGuideTheme.TEXT_SECONDARY);
+        positionLabel.setForeground(Theme.TEXT_SECONDARY);
 
         add(previousButton, BorderLayout.WEST);
         add(positionLabel, BorderLayout.CENTER);
@@ -47,7 +47,7 @@ class BoardNavigatorPanel extends JPanel {
     }
 
     private static JButton arrowButton(String text) {
-        JButton button = Ui.secondaryButton(text);
+        JButton button = Components.secondaryButton(text);
         button.setFont(FontManager.getRunescapeFont());
         button.setBorder(new EmptyBorder(2, 12, 4, 12));
         return button;
