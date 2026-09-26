@@ -126,7 +126,7 @@ public class AccountSyncService {
     }
 
     /** Call from the client thread after a quest is completed. */
-    public void onQuestCompleted() {
+    public void onQuestPointsChanged() {
         AccountSyncPayload snapshot = latest;
         if (snapshot != null) {
             latest = snapshot.toBuilder().quests(readQuests()).questPoints(readQuestPoints()).build();

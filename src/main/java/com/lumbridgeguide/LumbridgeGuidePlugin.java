@@ -20,6 +20,8 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -155,12 +157,14 @@ public class LumbridgeGuidePlugin extends Plugin {
     }
 
     @Subscribe
-    public void onChatMessage(ChatMessage chatMessage) {
-        if (chatMessage.getType() == ChatMessageType.GAMEMESSAGE
-                && chatMessage.getMessage().contains("completed a quest")) {
-            accountSyncService.onQuestCompleted();
+    public void onVarbitChanged(VarbitChanged event) {
+        if (event.getVarpId() == VarPlayerID.QP) {
+            accountSyncService.onQuestPointsChanged();
         }
+    }
 
+    @Subscribe
+    public void onChatMessage(ChatMessage chatMessage) {
         if (!config.showTeamPrefix()) {
             return;
         }
