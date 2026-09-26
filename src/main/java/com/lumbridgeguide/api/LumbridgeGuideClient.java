@@ -19,6 +19,7 @@ public class LumbridgeGuideClient {
 
     private static final String API_KEY_HEADER = "X-API-Key";
     private static final String API_BASE_PROPERTY = "lumbridgeguide.api.base";
+    private static final String DEFAULT_API_BASE_URL = "https://api.lumbridge.guide/api";
 
     private static final MediaType JSON_MEDIA_TYPE =
             MediaType.parse("application/json; charset=utf-8");
@@ -48,80 +49,23 @@ public class LumbridgeGuideClient {
         return urlBuilder.build();
     }
 
-    public boolean isAuthenticated() {
+    public boolean hasApiKey() {
         String apiKey = config.apiKey();
         return apiKey != null && !apiKey.trim().isEmpty();
     }
 
-    /**
-     * Sends an asynchronous {@code GET} request
-    */
     public void get(String path, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .get()
                 .build();
         executeAsync(request, onSuccess, onFailure);
     }
-    /**
-     * Sends an asynchronous {@code POST} request with a JSON body
-     */
+
     public <T> void post(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .post(jsonBody(body))
                 .build();
         executeAsync(request, onSuccess, onFailure);
-    }
-
-    /**
-     * Sends an asynchronous {@code PUT} request with a JSON body
-     */
-    public <T> void put(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .put(jsonBody(body))
-                .build();
-        executeAsync(request, onSuccess, onFailure);
-    }
-
-    /**
-     * Sends an asynchronous {@code PATCH} request with a JSON body
-     */
-    public <T> void patch(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .patch(jsonBody(body))
-                .build();
-        executeAsync(request, onSuccess, onFailure);
-    }
-
-    /**
-     * Sends an asynchronous {@code DELETE} request
-     */
-    public void delete(String path, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .delete()
-                .build();
-        executeAsync(request, onSuccess, onFailure);
-    }
-
-    /**
-     * Sends a synchronous {@code POST} request
-     * Prefer the async variant; use this only on a background thread
-     */
-    public <T> ApiResponse postSync(String path, T body) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .post(jsonBody(body))
-                .build();
-        return executeSync(request);
-    }
-
-    /**
-     * Sends a synchronous {@code GET} request
-     * Prefer the async variant; use this only on a background thread
-     */
-    public ApiResponse getSync(String path) {
-        Request request = newRequestBuilder(resolveUrl(path))
-                .get()
-                .build();
-        return executeSync(request);
     }
 
     public <T> T deserialize(String json, Class<T> clazz) {
@@ -133,16 +77,8 @@ public class LumbridgeGuideClient {
     }
 
     private static HttpUrl buildApiBaseUrl() {
-        String obfuscatedDefault = ApiConfig.getApiBaseUrl();
-        String base = System.getProperty(API_BASE_PROPERTY, obfuscatedDefault);
-        HttpUrl url = HttpUrl.parse(base);
-        if (url == null) {
-            url = HttpUrl.parse(obfuscatedDefault);
-        }
-        if (url == null) {
-            throw new IllegalStateException("Both configured and generated API base URLs are invalid");
-        }
-        return url;
+        HttpUrl url = HttpUrl.parse(System.getProperty(API_BASE_PROPERTY, DEFAULT_API_BASE_URL));
+        return url != null ? url : HttpUrl.get(DEFAULT_API_BASE_URL);
     }
 
     private Request.Builder newRequestBuilder(HttpUrl url) {
@@ -186,15 +122,5 @@ public class LumbridgeGuideClient {
                 }
             }
         });
-    }
-
-    private ApiResponse executeSync(Request request) {
-        try (Response response = httpClient.newCall(request).execute()) {
-            ResponseBody responseBody = response.body();
-            String bodyContent = responseBody != null ? responseBody.string() : "";
-            return new ApiResponse(response.code(), bodyContent, response.isSuccessful());
-        } catch (IOException exception) {
-            return ApiResponse.error(-1, "Network error: " + exception.getMessage());
-        }
     }
 }

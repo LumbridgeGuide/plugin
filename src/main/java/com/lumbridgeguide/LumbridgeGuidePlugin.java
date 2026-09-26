@@ -1,35 +1,49 @@
 package com.lumbridgeguide;
 
 import com.google.inject.Provides;
-import com.lumbridgeguide.data.PluginBoardData;
-import com.lumbridgeguide.data.PluginTeamData;
-import com.lumbridgeguide.service.BoardDataService;
-import com.lumbridgeguide.ui.LumbridgeGuidePanel;
+import com.lumbridgeguide.account.AccountSyncService;
+import com.lumbridgeguide.bingo.BoardDataService;
+import com.lumbridgeguide.bingo.TeamChatPrefix;
+import com.lumbridgeguide.bingo.data.PluginBoardData;
+import com.lumbridgeguide.bingo.data.PluginTeamData;
+import com.lumbridgeguide.gear.GearConfigExportService;
+import com.lumbridgeguide.gear.GearTagService;
+import com.lumbridgeguide.ui.SidebarPanel;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
 import net.runelite.api.MessageNode;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.StatChanged;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
+import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.banktags.BankTagsPlugin;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
 import java.awt.image.BufferedImage;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @PluginDescriptor(
         name = "Lumbridge Guide"
 )
+@PluginDependency(BankTagsPlugin.class)
 public class LumbridgeGuidePlugin extends Plugin {
 
     @Inject
@@ -44,8 +58,32 @@ public class LumbridgeGuidePlugin extends Plugin {
     @Inject
     private BoardDataService boardDataService;
 
-    private LumbridgeGuidePanel panel;
+    @Inject
+    private GearTagService gearTagService;
+
+    @Inject
+    private AccountSyncService accountSyncService;
+
+    @Inject
+    private GearConfigExportService gearConfigExportService;
+
+    @Inject
+    private ItemManager itemManager;
+
+    @Inject
+    private SkillIconManager skillIconManager;
+
+    private static final Set<GameState> LOGGED_OUT_STATES = EnumSet.of(
+            GameState.UNKNOWN,
+            GameState.STARTING,
+            GameState.LOGIN_SCREEN,
+            GameState.LOGIN_SCREEN_AUTHENTICATOR,
+            GameState.LOGGING_IN);
+
+    private SidebarPanel panel;
     private NavigationButton navigationButton;
+    private boolean awaitingLogin = true;
+    private boolean loginPending;
 
     @Override
     protected void startUp() throws Exception {
@@ -53,7 +91,11 @@ public class LumbridgeGuidePlugin extends Plugin {
 
         boardDataService.refresh();
 
-        panel = new LumbridgeGuidePanel(boardDataService, config);
+        awaitingLogin = true;
+        loginPending = client.getGameState() == GameState.LOGGED_IN;
+
+        panel = new SidebarPanel(boardDataService, gearTagService, gearConfigExportService,
+                accountSyncService, itemManager, skillIconManager, config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 
@@ -77,7 +119,31 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     @Subscribe
     public void onGameTick(GameTick tick) {
+        if (loginPending) {
+            loginPending = false;
+            accountSyncService.onLoggedIn();
+        }
         updateChatboxInputPrefix();
+    }
+
+    @Subscribe
+    public void onGameStateChanged(GameStateChanged event) {
+        GameState state = event.getGameState();
+        if (LOGGED_OUT_STATES.contains(state)) {
+            if (!awaitingLogin) {
+                loginPending = false;
+                accountSyncService.onLoggedOut();
+            }
+            awaitingLogin = true;
+        } else if (state == GameState.LOGGED_IN && awaitingLogin) {
+            awaitingLogin = false;
+            loginPending = true;
+        }
+    }
+
+    @Subscribe
+    public void onStatChanged(StatChanged event) {
+        accountSyncService.onStatChanged();
     }
 
     @Subscribe
@@ -90,6 +156,11 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     @Subscribe
     public void onChatMessage(ChatMessage chatMessage) {
+        if (chatMessage.getType() == ChatMessageType.GAMEMESSAGE
+                && chatMessage.getMessage().contains("completed a quest")) {
+            accountSyncService.onQuestCompleted();
+        }
+
         if (!config.showTeamPrefix()) {
             return;
         }
@@ -113,15 +184,12 @@ public class LumbridgeGuidePlugin extends Plugin {
         }
 
         PluginTeamData team = resolveActiveTeam();
-        if (team == null || team.getName() == null || team.getColor() == null) {
+        if (team == null || team.getName() == null) {
             return;
         }
 
-        String colorHex = team.getColor().replace("#", "");
-        String prefix = "<col=" + colorHex + ">[" + team.getName() + "]</col> ";
-
         MessageNode messageNode = chatMessage.getMessageNode();
-        messageNode.setName(prefix + messageNode.getName());
+        messageNode.setName(TeamChatPrefix.of(team.getName(), team.getColor()) + messageNode.getName());
     }
 
     private void updateChatboxInputPrefix() {
@@ -139,17 +207,15 @@ public class LumbridgeGuidePlugin extends Plugin {
         }
 
         PluginTeamData team = resolveActiveTeam();
-        if (team == null || team.getName() == null || team.getColor() == null) {
+        if (team == null || team.getName() == null) {
             return;
         }
 
         String playerName = client.getLocalPlayer().getName();
         String currentText = chatboxInput.getText();
-        String teamTag = "[" + team.getName() + "]";
+        String prefix = TeamChatPrefix.of(team.getName(), team.getColor());
 
-        if (currentText != null && currentText.contains(playerName) && !currentText.contains(teamTag)) {
-            String colorHex = team.getColor().replace("#", "");
-            String prefix = "<col=" + colorHex + ">" + teamTag + "</col> ";
+        if (currentText != null && currentText.contains(playerName) && !currentText.contains(prefix)) {
             chatboxInput.setText(currentText.replace(playerName + ":", prefix + playerName + ":"));
         }
     }

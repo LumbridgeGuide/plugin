@@ -1,4 +1,4 @@
-package com.lumbridgeguide.data;
+package com.lumbridgeguide.bingo.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
