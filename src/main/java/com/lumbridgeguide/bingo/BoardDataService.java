@@ -20,14 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Manages bingo board data fetched from the backend, providing in-memory
- * access backed by a persistent on-disk JSON cache.
- * <p>
- * On startup the service loads any previously cached data from disk so the
- * plugin has board information available immediately, then refreshes from
- * the API to pick up changes.
- */
+/** Board data is cached on disk so the panel has boards to show before the first refresh finishes. */
 @Slf4j
 @Singleton
 public class BoardDataService {
@@ -70,11 +63,7 @@ public class BoardDataService {
         refresh(null);
     }
 
-    /**
-     * Fetches board data from {@code GET /api/plugin/sync} asynchronously,
-     * updating both the in-memory cache and the on-disk file on success.
-     * The optional callback is invoked after the request completes regardless of outcome.
-     */
+    /** {@code onComplete} runs whether or not the request succeeds. */
     public void refresh(Runnable onComplete) {
         if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");

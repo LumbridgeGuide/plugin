@@ -25,9 +25,6 @@ public final class Components {
         return label;
     }
 
-    /**
-     * Text that wraps at the given pixel width.
-     */
     public static WrapText wrapped(String text, int width, float size, int style, Color color) {
         WrapText wrapText = new WrapText(width);
         wrapText.setFont(FontManager.getRunescapeFont());

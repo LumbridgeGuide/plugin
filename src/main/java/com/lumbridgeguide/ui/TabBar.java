@@ -13,9 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * A row of equal width tabs with an accent underline on the selected one.
- */
 class TabBar extends JPanel {
 
     private final List<String> names = new ArrayList<>();

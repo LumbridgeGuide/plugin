@@ -266,7 +266,6 @@ public class AccountSyncService {
                 busy));
     }
 
-    /** What the Account tab shows. */
     @Getter
     public static final class AccountView {
         private final String displayName;

@@ -11,9 +11,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/**
- * A small rounded pill with centred text, used for tile types and team names.
- */
 public class Badge extends JComponent {
 
     private final String text;
