@@ -3,8 +3,10 @@ package com.lumbridgeguide.bingo.ui;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
-import com.lumbridgeguide.ui.LumbridgeGuideTheme;
-import com.lumbridgeguide.ui.Ui;
+import com.lumbridgeguide.ui.Badge;
+import com.lumbridgeguide.ui.CheckIcon;
+import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.Theme;
 import net.runelite.client.ui.FontManager;
 
 import javax.swing.BoxLayout;
@@ -44,26 +46,26 @@ class TileRowPanel extends JPanel {
 
         boolean claimedByMyTeam = isClaimedByMyTeam(tile, board);
         stripeColor = claimedByMyTeam
-                ? LumbridgeGuideTheme.parseTeamColor(board.getMyTeam().getColor())
+                ? Theme.parseTeamColor(board.getMyTeam().getColor())
                 : null;
 
         JPanel badgeHolder = new JPanel(new BorderLayout());
         badgeHolder.setOpaque(false);
-        badgeHolder.add(new Ui.Badge(TileText.badgeLabel(tile), LumbridgeGuideTheme.SURFACE_OVERLAY,
-                LumbridgeGuideTheme.ACCENT), BorderLayout.NORTH);
+        badgeHolder.add(new Badge(TileText.badgeLabel(tile), Theme.SURFACE_OVERLAY,
+                Theme.ACCENT), BorderLayout.NORTH);
 
         JPanel textColumn = new JPanel();
         textColumn.setLayout(new BoxLayout(textColumn, BoxLayout.Y_AXIS));
         textColumn.setOpaque(false);
 
-        Color titleColor = tile.isClaimed() ? LumbridgeGuideTheme.TEXT_SECONDARY : LumbridgeGuideTheme.TEXT_PRIMARY;
-        JComponent title = Ui.wrapped(tile.getTitle(), TITLE_WIDTH, 12f, Font.BOLD, titleColor);
+        Color titleColor = tile.isClaimed() ? Theme.TEXT_SECONDARY : Theme.TEXT_PRIMARY;
+        JComponent title = Components.wrapped(tile.getTitle(), TITLE_WIDTH, 12f, Font.BOLD, titleColor);
         title.setAlignmentX(LEFT_ALIGNMENT);
         textColumn.add(title);
 
         String summary = summaryText(tile, board);
         if (!summary.isEmpty()) {
-            JLabel summaryLabel = Ui.label(summary, 11f, Font.PLAIN, tile.isClaimed() ? LumbridgeGuideTheme.TEXT_SECONDARY : LumbridgeGuideTheme.TEXT_MUTED);
+            JLabel summaryLabel = Components.label(summary, 11f, Font.PLAIN, tile.isClaimed() ? Theme.TEXT_SECONDARY : Theme.TEXT_MUTED);
             summaryLabel.setAlignmentX(LEFT_ALIGNMENT);
             summaryLabel.setBorder(new EmptyBorder(2, 0, 0, 0));
             textColumn.add(summaryLabel);
@@ -71,11 +73,11 @@ class TileRowPanel extends JPanel {
 
         JLabel trailing = new JLabel("", SwingConstants.CENTER);
         if (tile.isClaimed()) {
-            trailing.setIcon(new Ui.CheckIcon(stripeColor != null ? stripeColor : LumbridgeGuideTheme.SUCCESS));
+            trailing.setIcon(new CheckIcon(stripeColor != null ? stripeColor : Theme.SUCCESS));
         } else {
             trailing.setText("›");
             trailing.setFont(FontManager.getRunescapeFont());
-            trailing.setForeground(LumbridgeGuideTheme.TEXT_MUTED);
+            trailing.setForeground(Theme.TEXT_MUTED);
         }
 
         add(badgeHolder, BorderLayout.WEST);
@@ -114,9 +116,9 @@ class TileRowPanel extends JPanel {
         int width = getWidth();
         int height = getHeight();
 
-        canvas.setColor(hovered ? LumbridgeGuideTheme.SURFACE_OVERLAY : LumbridgeGuideTheme.SURFACE_RAISED);
+        canvas.setColor(hovered ? Theme.SURFACE_OVERLAY : Theme.SURFACE_RAISED);
         canvas.fillRoundRect(0, 0, width, height, ARC, ARC);
-        canvas.setColor(hovered ? LumbridgeGuideTheme.ACCENT : LumbridgeGuideTheme.BORDER);
+        canvas.setColor(hovered ? Theme.ACCENT : Theme.BORDER);
         canvas.drawRoundRect(0, 0, width - 1, height - 1, ARC, ARC);
 
         if (stripeColor != null) {

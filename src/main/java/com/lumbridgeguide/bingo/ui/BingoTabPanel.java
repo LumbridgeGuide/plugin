@@ -4,8 +4,8 @@ import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.bingo.BoardDataService;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
-import com.lumbridgeguide.ui.LumbridgeGuideTheme;
-import com.lumbridgeguide.ui.Ui;
+import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.Theme;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.util.LinkBrowser;
@@ -65,7 +65,7 @@ public class BingoTabPanel extends JPanel {
         headerPanel = new BoardHeaderPanel();
         tileList = new TileListPanel();
 
-        emptyLabel = Ui.label("No active boards", 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_MUTED);
+        emptyLabel = Components.label("No active boards", 12f, Font.PLAIN, Theme.TEXT_MUTED);
         emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
         emptyLabel.setBorder(new EmptyBorder(30, 0, 30, 0));
 
@@ -89,9 +89,9 @@ public class BingoTabPanel extends JPanel {
         listScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         listScroll.getVerticalScrollBar().setUnitIncrement(16);
 
-        openButton = Ui.primaryButton("Open board");
+        openButton = Components.primaryButton("Open board");
         openButton.addActionListener(event -> openBoardInBrowser());
-        refreshButton = Ui.secondaryButton("Refresh");
+        refreshButton = Components.secondaryButton("Refresh");
         refreshButton.addActionListener(event -> onRefreshClicked());
 
         JPanel buttonBar = new JPanel(new GridLayout(1, 2, 6, 0));

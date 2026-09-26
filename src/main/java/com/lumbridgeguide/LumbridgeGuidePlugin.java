@@ -8,7 +8,7 @@ import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
-import com.lumbridgeguide.ui.LumbridgeGuidePanel;
+import com.lumbridgeguide.ui.SidebarPanel;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -80,7 +80,7 @@ public class LumbridgeGuidePlugin extends Plugin {
             GameState.LOGIN_SCREEN_AUTHENTICATOR,
             GameState.LOGGING_IN);
 
-    private LumbridgeGuidePanel panel;
+    private SidebarPanel panel;
     private NavigationButton navigationButton;
     private boolean awaitingLogin = true;
     private boolean loginPending;
@@ -94,7 +94,7 @@ public class LumbridgeGuidePlugin extends Plugin {
         awaitingLogin = true;
         loginPending = client.getGameState() == GameState.LOGGED_IN;
 
-        panel = new LumbridgeGuidePanel(boardDataService, gearTagService, gearConfigExportService,
+        panel = new SidebarPanel(boardDataService, gearTagService, gearConfigExportService,
                 accountSyncService, itemManager, skillIconManager, config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");

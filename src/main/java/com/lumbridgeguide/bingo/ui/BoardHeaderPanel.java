@@ -3,8 +3,9 @@ package com.lumbridgeguide.bingo.ui;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
-import com.lumbridgeguide.ui.LumbridgeGuideTheme;
-import com.lumbridgeguide.ui.Ui;
+import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.Theme;
+import com.lumbridgeguide.ui.WrapText;
 import java.awt.Color;
 import java.awt.Font;
 import java.time.Duration;
@@ -19,7 +20,7 @@ public class BoardHeaderPanel extends JPanel {
 
     private final JLabel codeCaption;
     private final VerificationCodePanel codePanel;
-    private final Ui.WrapText titleLabel;
+    private final WrapText titleLabel;
     private final JLabel teamLabel;
     private final JLabel statsLabel;
     private final JLabel timingLabel;
@@ -29,24 +30,24 @@ public class BoardHeaderPanel extends JPanel {
         setOpaque(false);
         setBorder(new EmptyBorder(0, 0, 8, 0));
 
-        codeCaption = Ui.label("Verification code", 11f, Font.PLAIN, LumbridgeGuideTheme.TEXT_MUTED);
+        codeCaption = Components.label("Verification code", 11f, Font.PLAIN, Theme.TEXT_MUTED);
         codeCaption.setAlignmentX(LEFT_ALIGNMENT);
         codeCaption.setBorder(new EmptyBorder(0, 0, 4, 0));
 
         codePanel = new VerificationCodePanel();
         codePanel.setAlignmentX(LEFT_ALIGNMENT);
 
-        titleLabel = Ui.wrapped("", Ui.CONTENT_WIDTH, 15f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY);
+        titleLabel = Components.wrapped("", Components.CONTENT_WIDTH, 15f, Font.BOLD, Theme.TEXT_PRIMARY);
 
-        teamLabel = Ui.label("", 12f, Font.BOLD, LumbridgeGuideTheme.TEXT_SECONDARY);
+        teamLabel = Components.label("", 12f, Font.BOLD, Theme.TEXT_SECONDARY);
         teamLabel.setAlignmentX(LEFT_ALIGNMENT);
         teamLabel.setBorder(new EmptyBorder(4, 0, 0, 0));
 
-        statsLabel = Ui.label("", 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_SECONDARY);
+        statsLabel = Components.label("", 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
         statsLabel.setAlignmentX(LEFT_ALIGNMENT);
         statsLabel.setBorder(new EmptyBorder(4, 0, 0, 0));
 
-        timingLabel = Ui.label("", 11f, Font.PLAIN, LumbridgeGuideTheme.TEXT_MUTED);
+        timingLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_MUTED);
         timingLabel.setAlignmentX(LEFT_ALIGNMENT);
         timingLabel.setBorder(new EmptyBorder(2, 0, 0, 0));
 
@@ -78,7 +79,7 @@ public class BoardHeaderPanel extends JPanel {
 
         PluginTeamData team = board.getMyTeam();
         if (team != null && team.getName() != null) {
-            Color teamColor = LumbridgeGuideTheme.parseTeamColor(team.getColor());
+            Color teamColor = Theme.parseTeamColor(team.getColor());
             teamLabel.setText("Team: " + team.getName());
             teamLabel.setForeground(teamColor);
             teamLabel.setVisible(true);

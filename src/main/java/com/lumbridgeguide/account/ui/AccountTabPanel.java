@@ -2,8 +2,9 @@ package com.lumbridgeguide.account.ui;
 
 import com.lumbridgeguide.account.AccountStatusText;
 import com.lumbridgeguide.account.AccountSyncService;
-import com.lumbridgeguide.ui.LumbridgeGuideTheme;
-import com.lumbridgeguide.ui.Ui;
+import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.Theme;
+import com.lumbridgeguide.ui.WrapText;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -20,10 +21,10 @@ import javax.swing.border.EmptyBorder;
 public class AccountTabPanel extends JPanel {
 
     private final JLabel accountName;
-    private final Ui.WrapText statusText;
+    private final WrapText statusText;
     private final JButton syncButton;
     private final JButton refreshButton;
-    private final Ui.WrapText resultText;
+    private final WrapText resultText;
     private final JLabel lastSyncedText;
 
     public AccountTabPanel(AccountSyncService accountSyncService) {
@@ -31,33 +32,33 @@ public class AccountTabPanel extends JPanel {
         setOpaque(false);
         setBorder(new EmptyBorder(4, 0, 0, 0));
 
-        JLabel heading = Ui.label("RuneScape account", 15f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY);
+        JLabel heading = Components.label("RuneScape account", 15f, Font.BOLD, Theme.TEXT_PRIMARY);
         heading.setAlignmentX(LEFT_ALIGNMENT);
 
-        accountName = Ui.label(" ", 14f, Font.BOLD, LumbridgeGuideTheme.ACCENT);
+        accountName = Components.label(" ", 14f, Font.BOLD, Theme.ACCENT);
         accountName.setAlignmentX(LEFT_ALIGNMENT);
 
-        statusText = Ui.wrapped(" ", Ui.CONTENT_WIDTH, 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_SECONDARY);
+        statusText = Components.wrapped(" ", Components.CONTENT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
 
-        syncButton = Ui.primaryButton("Sync now");
+        syncButton = Components.primaryButton("Sync now");
         syncButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         syncButton.setAlignmentX(LEFT_ALIGNMENT);
         syncButton.addActionListener(event -> accountSyncService.syncNow());
 
-        refreshButton = Ui.secondaryButton("Refresh");
+        refreshButton = Components.secondaryButton("Refresh");
         refreshButton.setToolTipText("Re-read your account and check its link status again");
         refreshButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         refreshButton.setAlignmentX(LEFT_ALIGNMENT);
         refreshButton.addActionListener(event -> accountSyncService.refresh());
 
-        resultText = Ui.wrapped(" ", Ui.CONTENT_WIDTH, 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_MUTED);
-        lastSyncedText = Ui.label(" ", 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_MUTED);
+        resultText = Components.wrapped(" ", Components.CONTENT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_MUTED);
+        lastSyncedText = Components.label(" ", 12f, Font.PLAIN, Theme.TEXT_MUTED);
         lastSyncedText.setAlignmentX(LEFT_ALIGNMENT);
 
-        JComponent disclosure = Ui.wrapped(
+        JComponent disclosure = Components.wrapped(
                 "Sync sends this account's name, account type, skill levels, XP and quest progress to Lumbridge "
                         + "Guide. The first Sync now links the account to you.",
-                Ui.CONTENT_WIDTH, 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_MUTED);
+                Components.CONTENT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_MUTED);
         disclosure.setAlignmentX(LEFT_ALIGNMENT);
 
         add(heading);
@@ -82,7 +83,7 @@ public class AccountTabPanel extends JPanel {
     private void show(AccountSyncService.AccountView view) {
         boolean loggedIn = view.getDisplayName() != null;
         accountName.setText(loggedIn ? view.getDisplayName() : "Not logged in");
-        accountName.setForeground(loggedIn ? LumbridgeGuideTheme.ACCENT : LumbridgeGuideTheme.TEXT_MUTED);
+        accountName.setForeground(loggedIn ? Theme.ACCENT : Theme.TEXT_MUTED);
         statusText.setText(view.getStatusText());
         statusText.setForeground(color(view.getStatusTone()));
 
@@ -98,13 +99,13 @@ public class AccountTabPanel extends JPanel {
     private static Color color(AccountStatusText.Tone tone) {
         switch (tone) {
             case SUCCESS:
-                return LumbridgeGuideTheme.SUCCESS;
+                return Theme.SUCCESS;
             case WARNING:
-                return LumbridgeGuideTheme.WARNING;
+                return Theme.WARNING;
             case ERROR:
-                return LumbridgeGuideTheme.ERROR;
+                return Theme.ERROR;
             default:
-                return LumbridgeGuideTheme.TEXT_MUTED;
+                return Theme.TEXT_MUTED;
         }
     }
 }

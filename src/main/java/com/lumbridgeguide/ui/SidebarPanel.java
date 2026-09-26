@@ -25,7 +25,7 @@ import java.awt.Component;
 import java.awt.Font;
 import java.util.Arrays;
 
-public class LumbridgeGuidePanel extends PluginPanel {
+public class SidebarPanel extends PluginPanel {
 
     private static final String NO_KEY_CARD = "noKey";
     private static final String TABS_CARD = "tabs";
@@ -37,7 +37,7 @@ public class LumbridgeGuidePanel extends PluginPanel {
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
 
-    public LumbridgeGuidePanel(
+    public SidebarPanel(
             BoardDataService boardDataService,
             GearTagService gearTagService,
             GearConfigExportService gearConfigExportService,
@@ -50,9 +50,9 @@ public class LumbridgeGuidePanel extends PluginPanel {
 
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(8, 8, 8, 8));
-        setBackground(LumbridgeGuideTheme.PANEL_BACKGROUND);
+        setBackground(Theme.PANEL_BACKGROUND);
 
-        JLabel pluginTitle = Ui.label("Lumbridge Guide", 16f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY);
+        JLabel pluginTitle = Components.label("Lumbridge Guide", 16f, Font.BOLD, Theme.TEXT_PRIMARY);
         pluginTitle.setHorizontalAlignment(SwingConstants.CENTER);
         pluginTitle.setBorder(new EmptyBorder(0, 0, 8, 0));
         add(pluginTitle, BorderLayout.NORTH);
@@ -95,7 +95,7 @@ public class LumbridgeGuidePanel extends PluginPanel {
         display.add(gearTab, GEAR_TAB);
         display.add(accountTab, ACCOUNT_TAB);
 
-        ThemedTabBar tabBar = new ThemedTabBar(Arrays.asList(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB),
+        TabBar tabBar = new TabBar(Arrays.asList(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB),
                 name -> tabCards.show(display, name));
         tabBar.setBorder(new EmptyBorder(0, 0, 8, 0));
 
@@ -111,12 +111,12 @@ public class LumbridgeGuidePanel extends PluginPanel {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
 
-        JLabel title = Ui.label("API key needed", 14f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY);
+        JLabel title = Components.label("API key needed", 14f, Font.BOLD, Theme.TEXT_PRIMARY);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         title.setBorder(new EmptyBorder(30, 0, 8, 0));
 
-        JComponent message = Ui.wrapped("Set your API key in the plugin settings to get started.",
-                Ui.CONTENT_WIDTH - 20, 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_SECONDARY);
+        JComponent message = Components.wrapped("Set your API key in the plugin settings to get started.",
+                Components.CONTENT_WIDTH - 20, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
         message.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         panel.add(title);

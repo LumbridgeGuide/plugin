@@ -2,8 +2,9 @@ package com.lumbridgeguide.gear.ui;
 
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
-import com.lumbridgeguide.ui.LumbridgeGuideTheme;
-import com.lumbridgeguide.ui.Ui;
+import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.Theme;
+import com.lumbridgeguide.ui.WrapText;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.util.LinkBrowser;
 
@@ -30,13 +31,13 @@ public class GearTabPanel extends JPanel {
 
     private final JTextField codeField;
     private final JButton syncButton;
-    private final Ui.WrapText statusLabel;
+    private final WrapText statusLabel;
 
     private final JTextField configNameField;
     private final JCheckBox includeEquipmentBox;
     private final JCheckBox includeInventoryBox;
     private final JButton createButton;
-    private final Ui.WrapText createStatusLabel;
+    private final WrapText createStatusLabel;
     private final JButton openButton;
     private String createdUrl;
 
@@ -48,23 +49,23 @@ public class GearTabPanel extends JPanel {
         setOpaque(false);
         setBorder(new EmptyBorder(4, 0, 0, 0));
 
-        JLabel heading = Ui.label("Gear bank tag", 15f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY);
+        JLabel heading = Components.label("Gear bank tag", 15f, Font.BOLD, Theme.TEXT_PRIMARY);
         heading.setAlignmentX(LEFT_ALIGNMENT);
 
-        JComponent help = Ui.wrapped(
+        JComponent help = Components.wrapped(
                 "Paste a gear code from its page on the website. Sync makes a bank tag with every item in the set.",
-                Ui.CONTENT_WIDTH, 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_SECONDARY);
+                Components.CONTENT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
         help.setAlignmentX(LEFT_ALIGNMENT);
 
         codeField = textField("Gear code");
         codeField.addActionListener(event -> onSyncClicked());
 
-        syncButton = Ui.primaryButton("Sync");
+        syncButton = Components.primaryButton("Sync");
         syncButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         syncButton.setAlignmentX(LEFT_ALIGNMENT);
         syncButton.addActionListener(event -> onSyncClicked());
 
-        statusLabel = Ui.wrapped(" ", Ui.CONTENT_WIDTH, 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_MUTED);
+        statusLabel = Components.wrapped(" ", Components.CONTENT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_MUTED);
 
         add(heading);
         add(Box.createVerticalStrut(6));
@@ -76,25 +77,25 @@ public class GearTabPanel extends JPanel {
         add(Box.createVerticalStrut(10));
         add(statusLabel);
 
-        JLabel createHeading = Ui.label("Create gear config", 15f, Font.BOLD, LumbridgeGuideTheme.TEXT_PRIMARY);
+        JLabel createHeading = Components.label("Create gear config", 15f, Font.BOLD, Theme.TEXT_PRIMARY);
         createHeading.setAlignmentX(LEFT_ALIGNMENT);
-        JComponent createHelp = Ui.wrapped(
+        JComponent createHelp = Components.wrapped(
                 "Make a gear config on the website from what you're wearing and carrying, rune pouch included.",
-                Ui.CONTENT_WIDTH, 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_SECONDARY);
+                Components.CONTENT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
         createHelp.setAlignmentX(LEFT_ALIGNMENT);
 
         configNameField = textField("Name (defaults to your name + setup)");
         includeEquipmentBox = checkBox("Include equipment");
         includeInventoryBox = checkBox("Include inventory");
 
-        createButton = Ui.primaryButton("Create");
+        createButton = Components.primaryButton("Create");
         createButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         createButton.setAlignmentX(LEFT_ALIGNMENT);
         createButton.addActionListener(event -> onCreateClicked());
 
-        createStatusLabel = Ui.wrapped(" ", Ui.CONTENT_WIDTH, 12f, Font.PLAIN, LumbridgeGuideTheme.TEXT_MUTED);
+        createStatusLabel = Components.wrapped(" ", Components.CONTENT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_MUTED);
 
-        openButton = Ui.secondaryButton("Open on website");
+        openButton = Components.secondaryButton("Open on website");
         openButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         openButton.setAlignmentX(LEFT_ALIGNMENT);
         openButton.setVisible(false);
@@ -123,13 +124,13 @@ public class GearTabPanel extends JPanel {
 
     private void onCreateClicked() {
         if (!includeEquipmentBox.isSelected() && !includeInventoryBox.isSelected()) {
-            showCreateStatus("Include equipment, inventory or both.", LumbridgeGuideTheme.ERROR);
+            showCreateStatus("Include equipment, inventory or both.", Theme.ERROR);
             return;
         }
         createButton.setEnabled(false);
         createButton.setText("Creating...");
         openButton.setVisible(false);
-        showCreateStatus("Reading your items...", LumbridgeGuideTheme.TEXT_MUTED);
+        showCreateStatus("Reading your items...", Theme.TEXT_MUTED);
 
         gearConfigExportService.create(configNameField.getText(), includeEquipmentBox.isSelected(),
                 includeInventoryBox.isSelected(), result -> SwingUtilities.invokeLater(() ->
@@ -137,7 +138,7 @@ public class GearTabPanel extends JPanel {
                     createButton.setEnabled(true);
                     createButton.setText("Create");
                     showCreateStatus(result.getMessage(),
-                            result.isSuccess() ? LumbridgeGuideTheme.SUCCESS : LumbridgeGuideTheme.ERROR);
+                            result.isSuccess() ? Theme.SUCCESS : Theme.ERROR);
                     createdUrl = result.getUrl();
                     openButton.setVisible(result.isSuccess() && createdUrl != null);
                     revalidate();
@@ -153,11 +154,11 @@ public class GearTabPanel extends JPanel {
         JTextField field = new JTextField();
         field.setToolTipText(tooltip);
         field.setFont(FontManager.getRunescapeFont());
-        field.setBackground(LumbridgeGuideTheme.SURFACE_INSET);
-        field.setForeground(LumbridgeGuideTheme.TEXT_PRIMARY);
-        field.setCaretColor(LumbridgeGuideTheme.TEXT_PRIMARY);
+        field.setBackground(Theme.SURFACE_INSET);
+        field.setForeground(Theme.TEXT_PRIMARY);
+        field.setCaretColor(Theme.TEXT_PRIMARY);
         field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(LumbridgeGuideTheme.BORDER),
+                BorderFactory.createLineBorder(Theme.BORDER),
                 new EmptyBorder(6, 8, 6, 8)));
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
         field.setAlignmentX(LEFT_ALIGNMENT);
@@ -167,7 +168,7 @@ public class GearTabPanel extends JPanel {
     private static JCheckBox checkBox(String text) {
         JCheckBox box = new JCheckBox(text, true);
         box.setFont(FontManager.getRunescapeFont());
-        box.setForeground(LumbridgeGuideTheme.TEXT_SECONDARY);
+        box.setForeground(Theme.TEXT_SECONDARY);
         box.setOpaque(false);
         box.setFocusPainted(false);
         box.setAlignmentX(LEFT_ALIGNMENT);
@@ -177,20 +178,20 @@ public class GearTabPanel extends JPanel {
     private void onSyncClicked() {
         Optional<String> code = GearTagService.extractCode(codeField.getText());
         if (code.isEmpty()) {
-            showStatus("Enter a valid gear code", LumbridgeGuideTheme.ERROR);
+            showStatus("Enter a valid gear code", Theme.ERROR);
             return;
         }
 
         syncButton.setEnabled(false);
         syncButton.setText("Syncing...");
-        showStatus("Fetching gear set...", LumbridgeGuideTheme.TEXT_MUTED);
+        showStatus("Fetching gear set...", Theme.TEXT_MUTED);
 
         gearTagService.sync(code.get(), result -> SwingUtilities.invokeLater(() ->
         {
             syncButton.setEnabled(true);
             syncButton.setText("Sync");
             showStatus(result.getMessage(),
-                    result.isSuccess() ? LumbridgeGuideTheme.SUCCESS : LumbridgeGuideTheme.ERROR);
+                    result.isSuccess() ? Theme.SUCCESS : Theme.ERROR);
         }));
     }
 

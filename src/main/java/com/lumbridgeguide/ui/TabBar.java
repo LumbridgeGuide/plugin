@@ -16,13 +16,13 @@ import java.util.function.Consumer;
 /**
  * A row of equal width tabs with an accent underline on the selected one.
  */
-class ThemedTabBar extends JPanel {
+class TabBar extends JPanel {
 
     private final List<String> names = new ArrayList<>();
     private final List<JButton> buttons = new ArrayList<>();
     private final Consumer<String> onSelect;
 
-    ThemedTabBar(List<String> tabNames, Consumer<String> onSelect) {
+    TabBar(List<String> tabNames, Consumer<String> onSelect) {
         super(new GridLayout(1, tabNames.size()));
         this.onSelect = onSelect;
         setOpaque(false);
@@ -47,8 +47,8 @@ class ThemedTabBar extends JPanel {
         for (int index = 0; index < names.size(); index++) {
             boolean selected = names.get(index).equals(name);
             JButton button = buttons.get(index);
-            Color underline = selected ? LumbridgeGuideTheme.ACCENT : LumbridgeGuideTheme.BORDER;
-            button.setForeground(selected ? LumbridgeGuideTheme.TEXT_PRIMARY : LumbridgeGuideTheme.TEXT_MUTED);
+            Color underline = selected ? Theme.ACCENT : Theme.BORDER;
+            button.setForeground(selected ? Theme.TEXT_PRIMARY : Theme.TEXT_MUTED);
             button.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(0, 0, 2, 0, underline),
                     BorderFactory.createEmptyBorder(6, 0, 6, 0)));

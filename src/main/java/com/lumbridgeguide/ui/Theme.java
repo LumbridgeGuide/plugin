@@ -6,7 +6,7 @@ import java.awt.Color;
  * Colours copied from the Lumbridge Guide website's dark theme so the
  * plugin panel looks like part of the same product.
  */
-public final class LumbridgeGuideTheme {
+public final class Theme {
 
     public static final Color PANEL_BACKGROUND = new Color(0x1A1A1E);
     public static final Color SURFACE_RAISED = new Color(0x242428);
@@ -39,6 +39,6 @@ public final class LumbridgeGuideTheme {
         }
     }
 
-    private LumbridgeGuideTheme() {
+    private Theme() {
     }
 }
