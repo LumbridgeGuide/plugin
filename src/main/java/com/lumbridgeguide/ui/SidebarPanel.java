@@ -96,9 +96,9 @@ public class SidebarPanel extends PluginPanel {
         display.add(gearTab, GEAR_TAB);
         display.add(accountTab, ACCOUNT_TAB);
 
-        TabBar tabBar = new TabBar(Arrays.asList(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB),
+        TabBar tabBar = new TabBar(Arrays.asList(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB), TabBar.Style.UNDERLINE,
                 name -> tabCards.show(display, name));
-        tabBar.setBorder(new EmptyBorder(0, 0, 12, 0));
+        tabBar.setBorder(new EmptyBorder(0, 0, 10, 0));
 
         JPanel card = new JPanel(new BorderLayout());
         card.setOpaque(false);
@@ -110,13 +110,16 @@ public class SidebarPanel extends PluginPanel {
     private static JPanel buildNoKeyCard() {
         Section card = new Section(0);
 
-        JLabel title = Components.label("API key needed", 14f, Font.BOLD, Theme.TEXT_PRIMARY);
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel title = Components.label("API key needed", 15f, Font.BOLD, Theme.TEXT_PRIMARY);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(title);
         card.add(Box.createVerticalStrut(6));
-        card.add(Components.wrapped("Set your API key in the plugin settings to get started.",
-                Components.CONTENT_WIDTH - 12, 12f, Font.PLAIN, Theme.TEXT_SECONDARY));
-        card.add(Box.createVerticalStrut(8));
+        WrapText message = Components.wrapped("Set your API key in the plugin settings to get started.",
+                Components.CONTENT_WIDTH - 12, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        message.setCentred(true);
+        message.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(message);
+        card.add(Box.createVerticalStrut(10));
 
         String[] steps = {
             "Sign in on the Lumbridge Guide website",
@@ -124,8 +127,10 @@ public class SidebarPanel extends PluginPanel {
             "Paste it into this plugin's settings",
         };
         for (int index = 0; index < steps.length; index++) {
-            card.add(Components.wrapped((index + 1) + ".  " + steps[index], Components.CONTENT_WIDTH - 12, 11f,
-                    Font.PLAIN, Theme.TEXT_MUTED));
+            WrapText step = Components.wrapped((index + 1) + ".  " + steps[index], Components.CONTENT_WIDTH - 12,
+                    11f, Font.PLAIN, Theme.TEXT_MUTED);
+            step.setAlignmentX(Component.CENTER_ALIGNMENT);
+            card.add(step);
             card.add(Box.createVerticalStrut(3));
         }
 

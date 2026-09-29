@@ -4,6 +4,7 @@ import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.bingo.BoardDataService;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
+import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.EmptyState;
 import net.runelite.client.game.ItemManager;
@@ -69,8 +70,11 @@ public class BingoTabPanel extends JPanel {
 
         emptyRefreshButton = Components.secondaryButton("Refresh");
         emptyRefreshButton.addActionListener(event -> onRefreshClicked());
+        JButton openWebsiteButton = Components.primaryButton("Open website");
+        openWebsiteButton.addActionListener(event -> LinkBrowser.browse(LumbridgeGuideClient.websiteUrl()));
         emptyState = new EmptyState("No active boards",
-                "Boards you join on the website show up here once they start.", emptyRefreshButton);
+                "Boards you join on the website show up here once they start.", emptyRefreshButton,
+                openWebsiteButton);
 
         tilesCaption = Components.sectionLabel("Tiles");
         tilesCaption.setBorder(new EmptyBorder(0, 0, 2, 0));

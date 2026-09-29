@@ -3,8 +3,10 @@ package com.lumbridgeguide.ui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
+import java.awt.font.TextAttribute;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,8 +35,8 @@ public final class Theme {
     public static final Color WARNING = new Color(0xD4A32A);
     public static final Color ERROR = new Color(0xC4573A);
 
-    /** Corner diameter for buttons, inputs and chips. Square, to keep the panel plain. */
-    public static final int ARC = 0;
+    /** Corner diameter for cards, buttons, inputs and chips: a slight softening of square corners. */
+    public static final int ARC = 4;
 
     private static final String[] MONO_FAMILIES = {
             "JetBrains Mono", "Cascadia Mono", "Consolas", "Menlo", "Monospaced"
@@ -47,6 +49,14 @@ public final class Theme {
 
     public static Font monoFont(int style, float size) {
         return new Font(MONO, style, 1).deriveFont(size);
+    }
+
+    public static final float LABEL_SIZE = 9f;
+    public static final float LABEL_TRACKING = 0.08f;
+
+    /** The small spaced-out uppercase mono type used for section labels, such as "TILES". */
+    public static Font labelFont() {
+        return monoFont(Font.PLAIN, LABEL_SIZE).deriveFont(Map.of(TextAttribute.TRACKING, LABEL_TRACKING));
     }
 
     public static Color parseTeamColor(String hex) {

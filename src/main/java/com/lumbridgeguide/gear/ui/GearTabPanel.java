@@ -31,8 +31,9 @@ public class GearTabPanel extends JPanel {
         display.add(topAligned(bankTabSection), BANK_TAB);
         display.add(topAligned(new CreateConfigSection(gearConfigExportService)), CREATE_CONFIG);
 
-        TabBar subtabs = new TabBar(Arrays.asList(BANK_TAB, CREATE_CONFIG), name -> cards.show(display, name));
-        subtabs.setBorder(new EmptyBorder(0, 0, 12, 0));
+        TabBar subtabs = new TabBar(Arrays.asList(BANK_TAB, CREATE_CONFIG), TabBar.Style.TEXT,
+                name -> cards.show(display, name));
+        subtabs.setBorder(new EmptyBorder(0, 0, 10, 0));
 
         add(subtabs, BorderLayout.NORTH);
         add(display, BorderLayout.CENTER);

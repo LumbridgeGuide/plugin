@@ -1,6 +1,7 @@
 package com.lumbridgeguide.gear.ui;
 
 import com.lumbridgeguide.gear.GearConfigExportService;
+import com.lumbridgeguide.ui.Card;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.Section;
 import com.lumbridgeguide.ui.Theme;
@@ -49,23 +50,26 @@ class CreateConfigSection extends Section {
             }
         });
 
-        add(GearForm.title("Create config"));
-        add(Box.createVerticalStrut(6));
-        add(GearForm.help("Makes a gear config on the website from what you're wearing and carrying, rune pouch "
-                + "included."));
-        add(Box.createVerticalStrut(10));
-        add(includeEquipmentBox);
-        add(includeInventoryBox);
-        add(Box.createVerticalStrut(10));
-        add(Components.sectionLabel("Name"));
-        add(Box.createVerticalStrut(4));
-        add(configNameField);
-        add(Box.createVerticalStrut(10));
-        add(createButton);
-        add(Box.createVerticalStrut(10));
-        add(statusLabel);
-        add(Box.createVerticalStrut(6));
-        add(openButton);
+        Card form = new Card(12);
+        form.add(GearForm.title("Create config"));
+        form.add(Box.createVerticalStrut(6));
+        form.add(GearForm.help("Makes a gear config on the website from what you're wearing and carrying, rune "
+                + "pouch included."));
+        form.add(Box.createVerticalStrut(10));
+        form.add(includeEquipmentBox);
+        form.add(Box.createVerticalStrut(4));
+        form.add(includeInventoryBox);
+        form.add(Box.createVerticalStrut(10));
+        form.add(Components.sectionLabel("Name"));
+        form.add(Box.createVerticalStrut(5));
+        form.add(configNameField);
+        form.add(Box.createVerticalStrut(10));
+        form.add(createButton);
+        form.add(Box.createVerticalStrut(8));
+        form.add(statusLabel);
+        form.add(Box.createVerticalStrut(4));
+        form.add(openButton);
+        add(form);
     }
 
     private void onCreateClicked() {

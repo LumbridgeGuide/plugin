@@ -13,6 +13,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.Locale;
 
 /**
  * Small factory for themed Swing components. Every component gets an explicit
@@ -40,9 +41,24 @@ public final class Components {
         return label;
     }
 
-    /** A quiet heading over a group of controls, such as "Tiles" or "Verification code". */
+    /** A small mono heading over a group of controls, such as "TILES" or "VERIFICATION CODE". */
     public static JLabel sectionLabel(String text) {
-        JLabel label = label(text, 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        String upper = text.toUpperCase(Locale.ROOT);
+        int tracking = (int) Math.ceil(upper.length() * Theme.LABEL_TRACKING * Theme.LABEL_SIZE) + 1;
+        JLabel label = new JLabel(upper) {
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension size = super.getPreferredSize();
+                return new Dimension(size.width + tracking, size.height);
+            }
+
+            @Override
+            public Dimension getMaximumSize() {
+                return getPreferredSize();
+            }
+        };
+        label.setFont(Theme.labelFont());
+        label.setForeground(Theme.TEXT_MUTED);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         return label;
     }

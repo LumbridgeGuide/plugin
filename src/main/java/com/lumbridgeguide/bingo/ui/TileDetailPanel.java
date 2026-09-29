@@ -6,7 +6,7 @@ import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.bingo.data.TileItemEntry;
 import com.lumbridgeguide.ui.Badge;
 import com.lumbridgeguide.ui.Components;
-import com.lumbridgeguide.ui.Section;
+import com.lumbridgeguide.ui.Card;
 import com.lumbridgeguide.ui.Theme;
 import net.runelite.api.Skill;
 import net.runelite.client.game.ItemManager;
@@ -31,7 +31,7 @@ public class TileDetailPanel extends JPanel {
 
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
-    private final Section content;
+    private final Card content;
 
     public TileDetailPanel(ItemManager itemManager, SkillIconManager skillIconManager, Runnable onClose) {
         super(new BorderLayout(0, 8));
@@ -42,7 +42,7 @@ public class TileDetailPanel extends JPanel {
         JButton closeButton = Components.linkButton("‹  Back to tiles");
         closeButton.addActionListener(event -> onClose.run());
 
-        content = new Section(4);
+        content = new Card(12);
 
         JPanel contentWrapper = new JPanel(new BorderLayout());
         contentWrapper.setOpaque(false);

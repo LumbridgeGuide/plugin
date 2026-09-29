@@ -4,7 +4,7 @@ import com.lumbridgeguide.account.AccountStatusText;
 import com.lumbridgeguide.account.AccountSyncService;
 import com.lumbridgeguide.ui.Badge;
 import com.lumbridgeguide.ui.Components;
-import com.lumbridgeguide.ui.Section;
+import com.lumbridgeguide.ui.Card;
 import com.lumbridgeguide.ui.Theme;
 import com.lumbridgeguide.ui.WrapText;
 import java.awt.BorderLayout;
@@ -27,7 +27,7 @@ import javax.swing.border.EmptyBorder;
 /** The RuneScape account that is logged in, whether it is linked, and the button that syncs it. */
 public class AccountTabPanel extends JPanel {
 
-    private static final int TEXT_WIDTH = Components.CONTENT_WIDTH;
+    private static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 24;
 
     private final InitialAvatar avatar;
     private final JLabel accountName;
@@ -83,7 +83,7 @@ public class AccountTabPanel extends JPanel {
         lastSyncedText = Components.label(" ", 11f, Font.PLAIN, Theme.TEXT_MUTED);
         lastSyncedText.setAlignmentX(LEFT_ALIGNMENT);
 
-        Section card = new Section(4);
+        Card card = new Card(12);
         card.add(who);
         card.add(Box.createVerticalStrut(10));
         card.add(badgeHolder);
@@ -102,7 +102,7 @@ public class AccountTabPanel extends JPanel {
         disclosure.setAlignmentX(LEFT_ALIGNMENT);
 
         JLabel heading = Components.sectionLabel("RuneScape account");
-        heading.setBorder(new EmptyBorder(0, 0, 4, 0));
+        heading.setBorder(new EmptyBorder(0, 0, 6, 0));
 
         add(heading);
         add(card);

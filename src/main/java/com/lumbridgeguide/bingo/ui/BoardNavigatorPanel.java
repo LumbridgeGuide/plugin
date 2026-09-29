@@ -11,6 +11,9 @@ import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.util.function.IntConsumer;
 
 /** Steps between the viewer's active boards. Hidden when there is only one. */
@@ -21,7 +24,7 @@ class BoardNavigatorPanel extends JPanel {
     BoardNavigatorPanel(IntConsumer onStep) {
         super(new BorderLayout(6, 0));
         setOpaque(false);
-        setBorder(new EmptyBorder(4, 0, 4, 0));
+        setBorder(new EmptyBorder(3, 4, 3, 4));
 
         JButton previousButton = arrowButton("‹");
         JButton nextButton = arrowButton("›");
@@ -45,6 +48,15 @@ class BoardNavigatorPanel extends JPanel {
     @Override
     public Dimension getMaximumSize() {
         return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphics) {
+        Graphics2D canvas = (Graphics2D) graphics.create();
+        canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        canvas.setColor(Theme.SURFACE_INSET);
+        canvas.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.ARC, Theme.ARC);
+        canvas.dispose();
     }
 
     private static JButton arrowButton(String text) {

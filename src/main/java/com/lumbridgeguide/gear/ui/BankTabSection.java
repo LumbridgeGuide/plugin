@@ -1,23 +1,22 @@
 package com.lumbridgeguide.gear.ui;
 
 import com.lumbridgeguide.gear.GearTagService;
+import com.lumbridgeguide.ui.Card;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.Section;
 import com.lumbridgeguide.ui.Theme;
 import com.lumbridgeguide.ui.WrapText;
 
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import java.awt.Color;
 import java.util.List;
 import java.util.Optional;
 
-/** Generates a bank tag tab from a gear code while the bank is open, then lists what was missing. */
+/** Generates a bank tag tab from a gear code while the bank is open, then lists what was missing in a second card. */
 class BankTabSection extends Section {
 
     private static final String BANK_CLOSED_HINT = "Open your bank to generate a tab.";
@@ -27,7 +26,7 @@ class BankTabSection extends Section {
     private final JTextField codeField;
     private final JButton generateButton;
     private final WrapText statusLabel;
-    private final JPanel missingPanel;
+    private final Card missingPanel;
     private boolean bankOpen;
     private boolean generating;
     private boolean showingBankHint = true;
@@ -47,27 +46,27 @@ class BankTabSection extends Section {
 
         statusLabel = GearForm.status(BANK_CLOSED_HINT);
 
-        missingPanel = new JPanel();
-        missingPanel.setLayout(new BoxLayout(missingPanel, BoxLayout.Y_AXIS));
-        missingPanel.setOpaque(false);
-        missingPanel.setAlignmentX(LEFT_ALIGNMENT);
+        missingPanel = new Card(12);
         missingPanel.setVisible(false);
 
-        add(GearForm.title("Bank tab"));
-        add(Box.createVerticalStrut(6));
-        add(GearForm.help("Tag all items for a config and created a tag-tab with a defined layout."));
+        Card form = new Card(12);
+        form.add(GearForm.title("Bank tab"));
+        form.add(Box.createVerticalStrut(6));
+        form.add(GearForm.help("Tag all items for a config and created a tag-tab with a defined layout."));
+        form.add(Box.createVerticalStrut(10));
+        form.add(Components.sectionLabel("Gear code or gear page link"));
+        form.add(Box.createVerticalStrut(5));
+        form.add(codeField);
+        form.add(Box.createVerticalStrut(10));
+        form.add(includeMissingBox);
+        form.add(GearForm.checkBoxHint("Show items you don't have as placeholders in the tab"));
+        form.add(Box.createVerticalStrut(10));
+        form.add(generateButton);
+        form.add(Box.createVerticalStrut(8));
+        form.add(statusLabel);
+
+        add(form);
         add(Box.createVerticalStrut(10));
-        add(Components.sectionLabel("Gear code or gear page link"));
-        add(Box.createVerticalStrut(4));
-        add(codeField);
-        add(Box.createVerticalStrut(10));
-        add(includeMissingBox);
-        add(GearForm.checkBoxHint("Show items you don't have as placeholders in the tab"));
-        add(Box.createVerticalStrut(10));
-        add(generateButton);
-        add(Box.createVerticalStrut(10));
-        add(statusLabel);
-        add(Box.createVerticalStrut(8));
         add(missingPanel);
     }
 

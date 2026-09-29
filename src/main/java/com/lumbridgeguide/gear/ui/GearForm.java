@@ -19,7 +19,8 @@ import java.awt.Font;
 /** The building blocks both gear subtabs share, so their forms look and line up the same. */
 final class GearForm {
 
-    static final int TEXT_WIDTH = Components.CONTENT_WIDTH;
+    /** Text inside a gear card, which is narrower than the panel by the card's padding. */
+    static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 24;
 
     private GearForm() {
     }

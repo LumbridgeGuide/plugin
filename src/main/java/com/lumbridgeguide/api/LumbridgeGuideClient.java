@@ -27,6 +27,8 @@ public class LumbridgeGuideClient {
     private static final String API_KEY_HEADER = "X-API-Key";
     private static final String API_BASE_PROPERTY = "lumbridgeguide.api.base";
     private static final String DEFAULT_API_BASE_URL = "https://api.lumbridge.guide/api";
+    private static final String WEB_BASE_PROPERTY = "lumbridgeguide.web.base";
+    private static final String DEFAULT_WEB_BASE_URL = "https://lumbridge.guide";
 
     private static final MediaType JSON_MEDIA_TYPE =
             MediaType.parse("application/json; charset=utf-8");
@@ -43,6 +45,11 @@ public class LumbridgeGuideClient {
         this.gson = gson;
         this.config = config;
         this.apiBaseUrl = buildApiBaseUrl();
+    }
+
+    /** The website's home page, overridable like the API base for local development. */
+    public static String websiteUrl() {
+        return System.getProperty(WEB_BASE_PROPERTY, DEFAULT_WEB_BASE_URL);
     }
 
     public HttpUrl resolveUrl(String path) {

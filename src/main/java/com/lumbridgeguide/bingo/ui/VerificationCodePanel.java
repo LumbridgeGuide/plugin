@@ -17,24 +17,23 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * Shows a bingo verification code on one line in large mono type, with a hint on the right. Clicking anywhere on it
+ * Shows a bingo verification code as large characters in individual boxes, like the website. Clicking anywhere on it
  * copies the code.
  */
 class VerificationCodePanel extends JPanel {
 
-    private static final int HEIGHT = 24;
+    private static final int GAP = 3;
+    private static final int HEIGHT = 32;
     private static final String HINT = "Click to copy";
 
-    private final Font captionFont = Theme.monoFont(Font.PLAIN, 9f);
-    private final Font codeFont = Theme.monoFont(Font.BOLD, 17f);
-    private final Font hintFont = Components.font(10f, Font.PLAIN);
+    private final Font codeFont = Theme.monoFont(Font.BOLD, 15f);
 
     private String code = "";
-    private String hint = HINT;
 
     VerificationCodePanel() {
         setOpaque(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        setToolTipText(HINT);
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
@@ -45,7 +44,7 @@ class VerificationCodePanel extends JPanel {
 
     void setCode(String newCode) {
         code = newCode == null ? "" : newCode;
-        hint = HINT;
+        setToolTipText(HINT);
         setVisible(!code.isEmpty());
         revalidate();
         repaint();
@@ -68,23 +67,26 @@ class VerificationCodePanel extends JPanel {
         }
 
         Graphics2D canvas = (Graphics2D) graphics.create();
+        canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         canvas.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-        FontMetrics codeMetrics = canvas.getFontMetrics(codeFont);
-        int baseline = (HEIGHT - codeMetrics.getHeight()) / 2 + codeMetrics.getAscent();
-
-        canvas.setFont(captionFont);
-        canvas.setColor(Theme.TEXT_MUTED);
-        canvas.drawString("CODE", 0, baseline);
-        int codeX = canvas.getFontMetrics().stringWidth("CODE") + 6;
-
         canvas.setFont(codeFont);
-        canvas.setColor(Theme.ACCENT);
-        canvas.drawString(code, codeX, baseline);
+        FontMetrics metrics = canvas.getFontMetrics();
 
-        canvas.setFont(hintFont);
-        canvas.setColor(Theme.TEXT_MUTED);
-        canvas.drawString(hint, getWidth() - canvas.getFontMetrics().stringWidth(hint), baseline);
+        int count = code.length();
+        int boxWidth = (getWidth() - GAP * (count - 1)) / count;
+        for (int index = 0; index < count; index++) {
+            int boxX = index * (boxWidth + GAP);
+            canvas.setColor(Theme.SURFACE_INSET);
+            canvas.fillRoundRect(boxX, 0, boxWidth, HEIGHT - 1, Theme.ARC, Theme.ARC);
+            canvas.setColor(Theme.BORDER);
+            canvas.drawRoundRect(boxX, 0, boxWidth - 1, HEIGHT - 2, Theme.ARC, Theme.ARC);
+
+            String character = String.valueOf(code.charAt(index));
+            int textX = boxX + (boxWidth - metrics.stringWidth(character)) / 2;
+            int textY = (HEIGHT - metrics.getHeight()) / 2 + metrics.getAscent();
+            canvas.setColor(Theme.ACCENT);
+            canvas.drawString(character, textX, textY);
+        }
         canvas.dispose();
     }
 
@@ -93,7 +95,6 @@ class VerificationCodePanel extends JPanel {
             return;
         }
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(code), null);
-        hint = "Copied";
-        repaint();
+        setToolTipText("Copied!");
     }
 }
