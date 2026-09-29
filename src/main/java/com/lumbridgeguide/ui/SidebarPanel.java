@@ -13,6 +13,8 @@ import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.gear.ui.GearTabPanel;
 import com.lumbridgeguide.notifications.InboxService;
 import com.lumbridgeguide.notifications.ui.InboxPanel;
+import com.lumbridgeguide.stars.ShootingStarService;
+import com.lumbridgeguide.stars.ui.StarsTabPanel;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.PluginPanel;
@@ -31,7 +33,8 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagLayout;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SidebarPanel extends PluginPanel {
 
@@ -41,12 +44,14 @@ public class SidebarPanel extends PluginPanel {
     private static final String BINGO_TAB = "Bingo";
     private static final String GEAR_TAB = "Gear";
     private static final String ACCOUNT_TAB = "Account";
+    private static final String STARS_TAB = "Stars";
 
     private final LumbridgeGuideConfig config;
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
     private final GearTabPanel gearTab;
     private final JButton inboxButton;
+    private final StarsTabPanel starsTab;
 
     public SidebarPanel(
             BoardDataService boardDataService,
@@ -57,6 +62,7 @@ public class SidebarPanel extends PluginPanel {
             TripCheckService tripCheckService,
             AccountSyncService accountSyncService,
             InboxService inboxService,
+            ShootingStarService starService,
             ItemManager itemManager,
             SkillIconManager skillIconManager,
             LumbridgeGuideConfig config) {
@@ -81,6 +87,7 @@ public class SidebarPanel extends PluginPanel {
                 skillIconManager);
         gearTab = new GearTabPanel(gearTagService, gearConfigExportService, tripCheckService,
                 config.includeMissingItems());
+        starsTab = config.showStarsTab() ? new StarsTabPanel(starService) : null;
 
         centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);
@@ -145,8 +152,18 @@ public class SidebarPanel extends PluginPanel {
         display.add(gearTab, GEAR_TAB);
         display.add(accountTab, ACCOUNT_TAB);
 
-        TabBar tabBar = new TabBar(Arrays.asList(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB), TabBar.Style.UNDERLINE,
-                name -> tabCards.show(display, name));
+        List<String> tabs = new ArrayList<>(List.of(BINGO_TAB, GEAR_TAB));
+        if (starsTab != null) {
+            display.add(scrolling(starsTab), STARS_TAB);
+            tabs.add(STARS_TAB);
+        }
+        tabs.add(ACCOUNT_TAB);
+        TabBar tabBar = new TabBar(tabs, TabBar.Style.UNDERLINE, name -> {
+            tabCards.show(display, name);
+            if (STARS_TAB.equals(name) && starsTab != null) {
+                starsTab.loadIfNeeded();
+            }
+        });
         tabBar.setBorder(new EmptyBorder(0, 0, 10, 0));
 
         JPanel card = new JPanel(new BorderLayout());

@@ -12,6 +12,7 @@ import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.notifications.InboxService;
+import com.lumbridgeguide.stars.ShootingStarService;
 import com.lumbridgeguide.ui.SidebarPanel;
 import com.lumbridgeguide.ui.Theme;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,8 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.MessageNode;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameObjectDespawned;
+import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.StatChanged;
@@ -94,6 +97,9 @@ public class LumbridgeGuidePlugin extends Plugin {
     private InboxService inboxService;
 
     @Inject
+    private ShootingStarService starService;
+
+    @Inject
     private ItemManager itemManager;
 
     @Inject
@@ -129,7 +135,8 @@ public class LumbridgeGuidePlugin extends Plugin {
     private void addPanel() {
         panel = new SidebarPanel(boardDataService, tileProgressTracker, proofService, gearTagService,
                 gearConfigExportService,
-                tripCheckService, accountSyncService, inboxService, itemManager, skillIconManager, config);
+                tripCheckService, accountSyncService, inboxService, starService, itemManager, skillIconManager,
+                config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 
@@ -160,6 +167,7 @@ public class LumbridgeGuidePlugin extends Plugin {
         }
         tileProgressTracker.reportIfDue();
         inboxService.pollIfDue();
+        starService.onGameTick();
         updateChatboxInputPrefix();
         refreshBoardsWhenDue();
     }
@@ -211,6 +219,16 @@ public class LumbridgeGuidePlugin extends Plugin {
     }
 
     @Subscribe
+    public void onGameObjectSpawned(GameObjectSpawned event) {
+        starService.onObjectSpawned(event.getGameObject());
+    }
+
+    @Subscribe
+    public void onGameObjectDespawned(GameObjectDespawned event) {
+        starService.onObjectDespawned(event.getGameObject());
+    }
+
+    @Subscribe
     public void onNpcLootReceived(NpcLootReceived event) {
         proofService.onLoot(event.getItems());
     }
@@ -226,7 +244,8 @@ public class LumbridgeGuidePlugin extends Plugin {
         if (!LumbridgeGuideConfig.CONFIG_GROUP.equals(event.getGroup()) || panel == null) {
             return;
         }
-        if (LumbridgeGuideConfig.ACCENT_COLOUR_KEY.equals(event.getKey())) {
+        if (LumbridgeGuideConfig.ACCENT_COLOUR_KEY.equals(event.getKey())
+                || LumbridgeGuideConfig.SHOW_STARS_TAB_KEY.equals(event.getKey())) {
             Theme.setAccent(config.accentColour());
             SwingUtilities.invokeLater(() -> {
                 clientToolbar.removeNavigation(navigationButton);
