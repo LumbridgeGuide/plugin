@@ -8,23 +8,22 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 
-/** A rounded, filled outline for components that paint their own content inside it, such as text fields. */
+/**
+ * A rounded hairline outline. It only draws the outline: a border paints after its component, so a fill here would
+ * cover the component's own content, such as the text in a field.
+ */
 public class RoundedBorder extends AbstractBorder {
 
     private final Color outline;
-    private final Color fill;
 
-    public RoundedBorder(Color outline, Color fill) {
+    public RoundedBorder(Color outline) {
         this.outline = outline;
-        this.fill = fill;
     }
 
     @Override
     public void paintBorder(Component component, Graphics graphics, int x, int y, int width, int height) {
         Graphics2D canvas = (Graphics2D) graphics.create();
         canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        canvas.setColor(fill);
-        canvas.fillRoundRect(x, y, width, height, Theme.ARC, Theme.ARC);
         canvas.setColor(outline);
         canvas.drawRoundRect(x, y, width - 1, height - 1, Theme.ARC, Theme.ARC);
         canvas.dispose();

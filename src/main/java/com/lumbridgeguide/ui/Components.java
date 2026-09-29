@@ -13,6 +13,8 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.util.Locale;
 
 /**
@@ -102,6 +104,15 @@ public final class Components {
         return button;
     }
 
+    /** A compact outlined button in the accent, for an action on one row of a list. */
+    public static JButton rowButton(String text) {
+        JButton button = new ActionButton(text, ActionButton.Kind.SECONDARY);
+        button.setFont(FontManager.getRunescapeSmallFont());
+        button.setForeground(Theme.accent());
+        button.setBorder(new EmptyBorder(4, 9, 4, 9));
+        return button;
+    }
+
     /** A primary button that stretches to the width of a vertical form. */
     public static JButton fullWidthButton(String text) {
         JButton button = primaryButton(text);
@@ -110,15 +121,30 @@ public final class Components {
         return button;
     }
 
+    /** A text field that shows its tooltip as faded placeholder text while it is empty. */
     public static JTextField textField(String tooltip) {
-        JTextField field = new JTextField();
+        JTextField field = new JTextField() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                graphics.setColor(Theme.SURFACE_INSET);
+                graphics.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.ARC, Theme.ARC);
+                super.paintComponent(graphics);
+                if (getText().isEmpty() && !isFocusOwner()) {
+                    Insets insets = getInsets();
+                    graphics.setFont(getFont());
+                    graphics.setColor(Theme.TEXT_MUTED);
+                    graphics.drawString(tooltip, insets.left,
+                            insets.top + graphics.getFontMetrics().getAscent());
+                }
+            }
+        };
         field.setToolTipText(tooltip);
         field.setFont(FontManager.getRunescapeFont());
         field.setOpaque(false);
         field.setBackground(Theme.SURFACE_INSET);
         field.setForeground(Theme.TEXT_PRIMARY);
         field.setCaretColor(Theme.TEXT_PRIMARY);
-        field.setBorder(new CompoundBorder(new RoundedBorder(Theme.BORDER, Theme.SURFACE_INSET),
+        field.setBorder(new CompoundBorder(new RoundedBorder(Theme.BORDER),
                 new EmptyBorder(6, 9, 6, 9)));
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
         field.setAlignmentX(Component.LEFT_ALIGNMENT);
