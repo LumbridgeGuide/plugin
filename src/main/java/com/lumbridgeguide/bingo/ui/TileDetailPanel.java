@@ -1,12 +1,16 @@
 package com.lumbridgeguide.bingo.ui;
 
+import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
+import com.lumbridgeguide.bingo.data.PluginProgressData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.bingo.data.TileItemEntry;
 import com.lumbridgeguide.ui.Badge;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.Card;
+import com.lumbridgeguide.ui.DotIcon;
+import com.lumbridgeguide.ui.ProgressBar;
 import com.lumbridgeguide.ui.Theme;
 import net.runelite.api.Skill;
 import net.runelite.client.game.ItemManager;
@@ -18,12 +22,14 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.util.List;
 import java.util.Locale;
+import java.util.OptionalLong;
 
 public class TileDetailPanel extends JPanel {
 
@@ -31,12 +37,15 @@ public class TileDetailPanel extends JPanel {
 
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
+    private final TileProgressTracker progressTracker;
     private final Card content;
 
-    public TileDetailPanel(ItemManager itemManager, SkillIconManager skillIconManager, Runnable onClose) {
+    public TileDetailPanel(ItemManager itemManager, SkillIconManager skillIconManager,
+                           TileProgressTracker progressTracker, Runnable onClose) {
         super(new BorderLayout(0, 8));
         this.itemManager = itemManager;
         this.skillIconManager = skillIconManager;
+        this.progressTracker = progressTracker;
         setOpaque(false);
 
         JButton closeButton = Components.linkButton("‹  Back to tiles");
@@ -75,11 +84,72 @@ public class TileDetailPanel extends JPanel {
                     Theme.TEXT_SECONDARY), 8);
         }
 
+        addProgress(tile);
         addRequirements(tile);
         addClaimStatus(tile, board);
 
         revalidate();
         repaint();
+    }
+
+    /**
+     * Kill count and XP tiles show the player's own count, from this session's tracking when there is one or from
+     * the last sync otherwise, and their team's split.
+     */
+    private void addProgress(PluginTileData tile) {
+        boolean killCount = "kill_count".equals(tile.getType());
+        boolean experience = "skill_xp".equals(tile.getType());
+        if (!killCount && !experience) {
+            return;
+        }
+        long target = killCount ? (tile.getKillCount() == null ? 0 : tile.getKillCount()) : tile.getXpTarget();
+        List<PluginProgressData> team = tile.getProgress() == null ? List.of() : tile.getProgress();
+        OptionalLong tracked = progressTracker == null ? OptionalLong.empty() : progressTracker.progressFor(tile.getId());
+        long mine = tracked.orElse(team.stream().filter(PluginProgressData::isMine)
+                .mapToLong(PluginProgressData::getProgress).findFirst().orElse(0));
+        boolean tracking = progressTracker != null && progressTracker.isTracking();
+
+        JPanel heading = new JPanel(new BorderLayout());
+        heading.setOpaque(false);
+        heading.add(Components.sectionLabel("Your progress"), BorderLayout.WEST);
+        if (tracking) {
+            JLabel live = Components.label("Tracking", 10f, Font.PLAIN, Theme.SUCCESS);
+            live.setIcon(new DotIcon(Theme.SUCCESS));
+            live.setIconTextGap(4);
+            heading.add(live, BorderLayout.EAST);
+        }
+        addRow(heading, 14);
+
+        JPanel count = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        ((FlowLayout) count.getLayout()).setAlignOnBaseline(true);
+        count.setOpaque(false);
+        count.setBorder(new EmptyBorder(0, -5, 0, 0));
+        count.add(Components.monoLabel(String.format("%,d", mine), 22f, Font.BOLD, Theme.TEXT_PRIMARY));
+        String unit = killCount ? " kills" : " XP";
+        count.add(Components.label("/ " + String.format("%,d", target) + unit, 11f, Font.PLAIN,
+                Theme.TEXT_SECONDARY));
+        addRow(count, 4);
+
+        ProgressBar bar = new ProgressBar();
+        bar.setProgress(target <= 0 ? 0 : (double) mine / target, Theme.accent());
+        addRow(bar, 6);
+        addRow(Components.wrapped(tracking
+                        ? "Counted from when the plugin first saw this board running, so nothing to type in."
+                        : "Turn on Track tile progress in the plugin settings to count this automatically.",
+                TEXT_WIDTH, 10f, Font.PLAIN, Theme.TEXT_MUTED), 6);
+
+        if (team.size() > 1) {
+            addRow(Components.sectionLabel("Team progress"), 12);
+            for (PluginProgressData teammate : team) {
+                JPanel row = new JPanel(new BorderLayout());
+                row.setOpaque(false);
+                row.add(Components.label(teammate.isMine() ? "You" : teammate.getName(), 12f, Font.PLAIN,
+                        Theme.TEXT_PRIMARY), BorderLayout.WEST);
+                row.add(Components.monoLabel(String.format("%,d", teammate.isMine() ? mine : teammate.getProgress()),
+                        11f, Font.PLAIN, teammate.isMine() ? Theme.accent() : Theme.TEXT_SECONDARY), BorderLayout.EAST);
+                addRow(row, 5);
+            }
+        }
     }
 
     private void addRequirements(PluginTileData tile) {

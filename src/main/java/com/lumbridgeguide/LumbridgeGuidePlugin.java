@@ -4,6 +4,7 @@ import com.google.inject.Provides;
 import com.lumbridgeguide.account.AccountSyncService;
 import com.lumbridgeguide.bingo.BoardDataService;
 import com.lumbridgeguide.bingo.TeamChatPrefix;
+import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.gear.GearConfigExportService;
@@ -81,6 +82,9 @@ public class LumbridgeGuidePlugin extends Plugin {
     private TripCheckService tripCheckService;
 
     @Inject
+    private TileProgressTracker tileProgressTracker;
+
+    @Inject
     private ItemManager itemManager;
 
     @Inject
@@ -114,8 +118,8 @@ public class LumbridgeGuidePlugin extends Plugin {
     }
 
     private void addPanel() {
-        panel = new SidebarPanel(boardDataService, gearTagService, gearConfigExportService, tripCheckService,
-                accountSyncService, itemManager, skillIconManager, config);
+        panel = new SidebarPanel(boardDataService, tileProgressTracker, gearTagService, gearConfigExportService,
+                tripCheckService, accountSyncService, itemManager, skillIconManager, config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 
@@ -142,7 +146,9 @@ public class LumbridgeGuidePlugin extends Plugin {
         if (loginPending) {
             loginPending = false;
             accountSyncService.onLoggedIn();
+            tileProgressTracker.onStatsChanged();
         }
+        tileProgressTracker.reportIfDue();
         updateChatboxInputPrefix();
         refreshBoardsWhenDue();
     }
@@ -170,6 +176,7 @@ public class LumbridgeGuidePlugin extends Plugin {
             if (!awaitingLogin) {
                 loginPending = false;
                 accountSyncService.onLoggedOut();
+                tileProgressTracker.reset();
             }
             awaitingLogin = true;
         } else if (state == GameState.LOGGED_IN && awaitingLogin) {
@@ -195,6 +202,7 @@ public class LumbridgeGuidePlugin extends Plugin {
     @Subscribe
     public void onStatChanged(StatChanged event) {
         accountSyncService.onStatChanged();
+        tileProgressTracker.onStatsChanged();
     }
 
     @Subscribe
@@ -223,6 +231,10 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     @Subscribe
     public void onChatMessage(ChatMessage chatMessage) {
+        if (chatMessage.getType() == ChatMessageType.GAMEMESSAGE) {
+            tileProgressTracker.onGameMessage(chatMessage.getMessage());
+            return;
+        }
         if (!config.showTeamPrefix()) {
             return;
         }

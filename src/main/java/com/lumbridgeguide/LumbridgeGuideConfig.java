@@ -63,6 +63,17 @@ public interface LumbridgeGuideConfig extends Config {
         return false;
     }
 
+    @ConfigItem(
+            keyName = "trackTileProgress",
+            name = "Track tile progress",
+            description = "Count your kills and XP towards kill count and XP tiles, and share the count with your team",
+            section = bingoSection,
+            position = 3
+    )
+    default boolean trackTileProgress() {
+        return true;
+    }
+
     @Range(max = 60)
     @Units(Units.MINUTES)
     @ConfigItem(

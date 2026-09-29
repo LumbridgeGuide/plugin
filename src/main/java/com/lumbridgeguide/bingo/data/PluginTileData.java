@@ -24,5 +24,7 @@ public class PluginTileData {
     private Integer killCount;
     private boolean claimed;
     private String claimedByTeamId;
+    /** Your team's progress on a kill count or XP tile, most first. Never another team's. */
+    private List<PluginProgressData> progress;
 }
 

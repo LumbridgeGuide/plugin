@@ -2,6 +2,7 @@ package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.bingo.BoardDataService;
+import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
@@ -64,6 +65,7 @@ public class BingoTabPanel extends JPanel {
 
     public BingoTabPanel(
             BoardDataService boardDataService,
+            TileProgressTracker tileProgressTracker,
             LumbridgeGuideConfig config,
             ItemManager itemManager,
             SkillIconManager skillIconManager) {
@@ -148,7 +150,7 @@ public class BingoTabPanel extends JPanel {
         overviewRoot.add(viewTabs, BorderLayout.NORTH);
         overviewRoot.add(views, BorderLayout.CENTER);
 
-        detailPanel = new TileDetailPanel(itemManager, skillIconManager, this::closeDetail);
+        detailPanel = new TileDetailPanel(itemManager, skillIconManager, tileProgressTracker, this::closeDetail);
 
         add(overviewRoot, OVERVIEW_CARD);
         add(scrolling(detailPanel), DETAIL_CARD);
