@@ -120,9 +120,28 @@ public interface LumbridgeGuideConfig extends Config {
     }
 
     @ConfigSection(
+            name = "Notifications",
+            description = "Your Lumbridge Guide inbox",
+            position = 3,
+            closedByDefault = true
+    )
+    String notificationSection = "notificationSection";
+
+    @ConfigItem(
+            keyName = "notificationChatMessages",
+            name = "Chat message for new notifications",
+            description = "Say in the game chat when a new invite or proof result arrives",
+            section = notificationSection,
+            position = 0
+    )
+    default boolean notificationChatMessages() {
+        return true;
+    }
+
+    @ConfigSection(
             name = "Account",
             description = "RuneScape account syncing",
-            position = 3,
+            position = 4,
             closedByDefault = true
     )
     String accountSection = "accountSection";

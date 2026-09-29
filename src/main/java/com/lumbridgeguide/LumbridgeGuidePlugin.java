@@ -11,6 +11,7 @@ import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
+import com.lumbridgeguide.notifications.InboxService;
 import com.lumbridgeguide.ui.SidebarPanel;
 import com.lumbridgeguide.ui.Theme;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +91,9 @@ public class LumbridgeGuidePlugin extends Plugin {
     private ProofService proofService;
 
     @Inject
+    private InboxService inboxService;
+
+    @Inject
     private ItemManager itemManager;
 
     @Inject
@@ -125,7 +129,7 @@ public class LumbridgeGuidePlugin extends Plugin {
     private void addPanel() {
         panel = new SidebarPanel(boardDataService, tileProgressTracker, proofService, gearTagService,
                 gearConfigExportService,
-                tripCheckService, accountSyncService, itemManager, skillIconManager, config);
+                tripCheckService, accountSyncService, inboxService, itemManager, skillIconManager, config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 
@@ -155,6 +159,7 @@ public class LumbridgeGuidePlugin extends Plugin {
             tileProgressTracker.onStatsChanged();
         }
         tileProgressTracker.reportIfDue();
+        inboxService.pollIfDue();
         updateChatboxInputPrefix();
         refreshBoardsWhenDue();
     }

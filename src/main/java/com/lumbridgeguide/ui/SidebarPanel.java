@@ -11,13 +11,19 @@ import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.gear.ui.GearTabPanel;
+import com.lumbridgeguide.notifications.InboxService;
+import com.lumbridgeguide.notifications.ui.InboxPanel;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.PluginPanel;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
@@ -31,6 +37,7 @@ public class SidebarPanel extends PluginPanel {
 
     private static final String NO_KEY_CARD = "noKey";
     private static final String TABS_CARD = "tabs";
+    private static final String INBOX_CARD = "inbox";
     private static final String BINGO_TAB = "Bingo";
     private static final String GEAR_TAB = "Gear";
     private static final String ACCOUNT_TAB = "Account";
@@ -39,6 +46,7 @@ public class SidebarPanel extends PluginPanel {
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
     private final GearTabPanel gearTab;
+    private final JButton inboxButton;
 
     public SidebarPanel(
             BoardDataService boardDataService,
@@ -48,6 +56,7 @@ public class SidebarPanel extends PluginPanel {
             GearConfigExportService gearConfigExportService,
             TripCheckService tripCheckService,
             AccountSyncService accountSyncService,
+            InboxService inboxService,
             ItemManager itemManager,
             SkillIconManager skillIconManager,
             LumbridgeGuideConfig config) {
@@ -59,8 +68,14 @@ public class SidebarPanel extends PluginPanel {
         setBackground(Theme.PANEL_BACKGROUND);
 
         JLabel pluginTitle = Components.label("Lumbridge Guide", 16f, Font.BOLD, Theme.TEXT_PRIMARY);
-        pluginTitle.setBorder(new EmptyBorder(2, 0, 10, 0));
-        add(pluginTitle, BorderLayout.NORTH);
+        inboxButton = Components.rowButton("Inbox");
+        inboxButton.setToolTipText("Your Lumbridge Guide notifications");
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.setBorder(new EmptyBorder(2, 0, 10, 0));
+        header.add(pluginTitle, BorderLayout.WEST);
+        header.add(inboxButton, BorderLayout.EAST);
+        add(header, BorderLayout.NORTH);
 
         bingoTab = new BingoTabPanel(boardDataService, tileProgressTracker, proofService, config, itemManager,
                 skillIconManager);
@@ -71,7 +86,19 @@ public class SidebarPanel extends PluginPanel {
         centerPanel.setOpaque(false);
         centerPanel.add(buildNoKeyCard(), NO_KEY_CARD);
         centerPanel.add(buildTabsCard(new AccountTabPanel(accountSyncService)), TABS_CARD);
+        InboxPanel inboxPanel = new InboxPanel(inboxService,
+                () -> ((CardLayout) centerPanel.getLayout()).show(centerPanel, TABS_CARD));
+        centerPanel.add(scrolling(inboxPanel), INBOX_CARD);
         add(centerPanel, BorderLayout.CENTER);
+
+        inboxButton.addActionListener(event -> {
+            ((CardLayout) centerPanel.getLayout()).show(centerPanel, INBOX_CARD);
+            inboxPanel.load();
+        });
+        inboxService.setOnUnreadCount(count -> SwingUtilities.invokeLater(() -> {
+            inboxButton.setText(count > 0 ? "Inbox  " + count : "Inbox");
+            inboxButton.revalidate();
+        }));
 
         refresh();
     }
@@ -86,6 +113,7 @@ public class SidebarPanel extends PluginPanel {
             boolean hasKey = config.apiKey() != null && !config.apiKey().trim().isEmpty();
 
             ((CardLayout) centerPanel.getLayout()).show(centerPanel, hasKey ? TABS_CARD : NO_KEY_CARD);
+            inboxButton.setVisible(hasKey);
 
             if (hasKey) {
                 bingoTab.refresh();
@@ -94,6 +122,19 @@ public class SidebarPanel extends PluginPanel {
             revalidate();
             repaint();
         });
+    }
+
+    private static JScrollPane scrolling(JPanel content) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.add(content, BorderLayout.NORTH);
+        JScrollPane scroll = new JScrollPane(wrapper);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        return scroll;
     }
 
     private JPanel buildTabsCard(AccountTabPanel accountTab) {
