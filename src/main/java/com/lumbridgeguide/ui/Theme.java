@@ -28,8 +28,10 @@ public final class Theme {
     public static final Color TEXT_MUTED = new Color(0x6E6E76);
     public static final Color TEXT_INVERSE = new Color(0x1A1A1E);
 
-    public static final Color ACCENT = new Color(0xE07A3A);
-    public static final Color ACCENT_HOVER = new Color(0xC96A2E);
+    public static final Color DEFAULT_ACCENT = new Color(0xE07A3A);
+
+    private static Color accent = DEFAULT_ACCENT;
+    private static Color accentHover = hoverOf(DEFAULT_ACCENT);
 
     public static final Color SUCCESS = new Color(0x4A9E6E);
     public static final Color WARNING = new Color(0xD4A32A);
@@ -46,6 +48,25 @@ public final class Theme {
             GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
 
     private static final String MONO = firstInstalled(MONO_FAMILIES, Font.MONOSPACED);
+
+    /** The highlight colour for selected tabs, primary buttons and codes, set from the plugin's settings. */
+    public static Color accent() {
+        return accent;
+    }
+
+    public static Color accentHover() {
+        return accentHover;
+    }
+
+    public static void setAccent(Color newAccent) {
+        accent = newAccent == null ? DEFAULT_ACCENT : newAccent;
+        accentHover = hoverOf(accent);
+    }
+
+    private static Color hoverOf(Color colour) {
+        return new Color(Math.round(colour.getRed() * 0.88f), Math.round(colour.getGreen() * 0.88f),
+                Math.round(colour.getBlue() * 0.88f));
+    }
 
     public static Font monoFont(int style, float size) {
         return new Font(MONO, style, 1).deriveFont(size);

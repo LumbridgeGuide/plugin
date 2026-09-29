@@ -78,7 +78,7 @@ public class TabBar extends JPanel {
         public void setSelected(boolean selected) {
             super.setSelected(selected);
             if (selected) {
-                setForeground(Theme.ACCENT);
+                setForeground(Theme.accent());
             } else {
                 setForeground(style == Style.UNDERLINE ? Theme.TEXT_SECONDARY : Theme.TEXT_MUTED);
             }
@@ -93,7 +93,7 @@ public class TabBar extends JPanel {
                 return;
             }
             int lineHeight = isSelected() ? 2 : 1;
-            graphics.setColor(isSelected() ? Theme.ACCENT : Theme.BORDER_SUBTLE);
+            graphics.setColor(isSelected() ? Theme.accent() : Theme.BORDER_SUBTLE);
             graphics.fillRect(0, getHeight() - lineHeight, getWidth(), lineHeight);
         }
     }

@@ -63,7 +63,7 @@ public class ActionButton extends JButton {
         boolean active = hovered && isEnabled();
         int arc = Theme.ARC;
         if (kind == Kind.PRIMARY) {
-            canvas.setColor(active ? Theme.ACCENT_HOVER : Theme.ACCENT);
+            canvas.setColor(active ? Theme.accentHover() : Theme.accent());
             canvas.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
         } else {
             if (active) {

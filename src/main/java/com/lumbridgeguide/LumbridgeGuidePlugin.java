@@ -9,6 +9,7 @@ import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.ui.SidebarPanel;
+import com.lumbridgeguide.ui.Theme;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -39,7 +40,10 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
+import javax.swing.SwingUtilities;
 import java.awt.image.BufferedImage;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -89,16 +93,23 @@ public class LumbridgeGuidePlugin extends Plugin {
     private NavigationButton navigationButton;
     private boolean awaitingLogin = true;
     private boolean loginPending;
+    private Instant lastBoardRefresh = Instant.now();
 
     @Override
     protected void startUp() throws Exception {
         log.info("Lumbridge Guide started");
 
         boardDataService.refresh();
+        lastBoardRefresh = Instant.now();
 
         awaitingLogin = true;
         loginPending = client.getGameState() == GameState.LOGGED_IN;
 
+        Theme.setAccent(config.accentColour());
+        addPanel();
+    }
+
+    private void addPanel() {
         panel = new SidebarPanel(boardDataService, gearTagService, gearConfigExportService,
                 accountSyncService, itemManager, skillIconManager, config);
 
@@ -129,6 +140,20 @@ public class LumbridgeGuidePlugin extends Plugin {
             accountSyncService.onLoggedIn();
         }
         updateChatboxInputPrefix();
+        refreshBoardsWhenDue();
+    }
+
+    private void refreshBoardsWhenDue() {
+        int minutes = config.boardRefreshMinutes();
+        if (minutes <= 0 || Duration.between(lastBoardRefresh, Instant.now()).toMinutes() < minutes) {
+            return;
+        }
+        lastBoardRefresh = Instant.now();
+        boardDataService.refresh(() -> {
+            if (panel != null) {
+                panel.refresh();
+            }
+        });
     }
 
     @Subscribe
@@ -170,10 +195,19 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     @Subscribe
     public void onConfigChanged(ConfigChanged event) {
-        if (LumbridgeGuideConfig.CONFIG_GROUP.equals(event.getGroup()) && panel != null) {
-            boardDataService.refresh();
-            panel.refresh();
+        if (!LumbridgeGuideConfig.CONFIG_GROUP.equals(event.getGroup()) || panel == null) {
+            return;
         }
+        if (LumbridgeGuideConfig.ACCENT_COLOUR_KEY.equals(event.getKey())) {
+            Theme.setAccent(config.accentColour());
+            SwingUtilities.invokeLater(() -> {
+                clientToolbar.removeNavigation(navigationButton);
+                addPanel();
+            });
+            return;
+        }
+        boardDataService.refresh();
+        panel.refresh();
     }
 
     @Subscribe

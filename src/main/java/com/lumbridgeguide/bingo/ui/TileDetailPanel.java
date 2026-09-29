@@ -65,7 +65,7 @@ public class TileDetailPanel extends JPanel {
 
         if (board.isTilePointsEnabled() && tile.getPoints() > 0) {
             JLabel points = Components.label(tile.getPoints() + (tile.getPoints() == 1 ? " POINT" : " POINTS"),
-                    11f, Font.BOLD, Theme.ACCENT);
+                    11f, Font.BOLD, Theme.accent());
             points.setFont(Theme.monoFont(Font.BOLD, 10f));
             addRow(points, 4);
         }

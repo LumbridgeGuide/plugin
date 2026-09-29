@@ -23,7 +23,7 @@ public class CheckBoxIcon implements Icon {
         Graphics2D canvas = (Graphics2D) graphics.create();
         canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         if (selected) {
-            canvas.setColor(Theme.ACCENT);
+            canvas.setColor(Theme.accent());
             canvas.fillRoundRect(x, y, SIZE, SIZE, ARC, ARC);
             new CheckIcon(Theme.TEXT_INVERSE).paintIcon(component, canvas, x, y);
         } else {

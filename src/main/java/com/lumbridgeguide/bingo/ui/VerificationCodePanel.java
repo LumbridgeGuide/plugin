@@ -84,7 +84,7 @@ class VerificationCodePanel extends JPanel {
             String character = String.valueOf(code.charAt(index));
             int textX = boxX + (boxWidth - metrics.stringWidth(character)) / 2;
             int textY = (HEIGHT - metrics.getHeight()) / 2 + metrics.getAscent();
-            canvas.setColor(Theme.ACCENT);
+            canvas.setColor(Theme.accent());
             canvas.drawString(character, textX, textY);
         }
         canvas.dispose();

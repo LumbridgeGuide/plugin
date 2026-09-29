@@ -83,7 +83,7 @@ public class BoardHeaderPanel extends JPanel {
         titleLabel.setText(board.getTitle());
 
         PluginTeamData team = board.getMyTeam();
-        Color teamColor = team != null ? Theme.parseTeamColor(team.getColor()) : Theme.ACCENT;
+        Color teamColor = team != null ? Theme.parseTeamColor(team.getColor()) : Theme.accent();
         if (team != null && team.getName() != null) {
             teamLabel.setText("Team: " + team.getName());
             teamLabel.setIcon(new SwatchIcon(teamColor));

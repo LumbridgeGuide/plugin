@@ -31,11 +31,12 @@ class BankTabSection extends Section {
     private boolean generating;
     private boolean showingBankHint = true;
 
-    BankTabSection(GearTagService gearTagService) {
+    BankTabSection(GearTagService gearTagService, boolean includeMissingByDefault) {
         super(0);
         this.gearTagService = gearTagService;
 
         includeMissingBox = GearForm.checkBox("Include missing items");
+        includeMissingBox.setSelected(includeMissingByDefault);
 
         codeField = GearForm.textField("Gear code or gear page link");
         codeField.addActionListener(event -> onGenerateClicked());

@@ -57,7 +57,7 @@ public class SidebarPanel extends PluginPanel {
         add(pluginTitle, BorderLayout.NORTH);
 
         bingoTab = new BingoTabPanel(boardDataService, config, itemManager, skillIconManager);
-        gearTab = new GearTabPanel(gearTagService, gearConfigExportService);
+        gearTab = new GearTabPanel(gearTagService, gearConfigExportService, config.includeMissingItems());
 
         centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);

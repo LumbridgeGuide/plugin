@@ -18,12 +18,13 @@ public class GearTabPanel extends JPanel {
 
     private final BankTabSection bankTabSection;
 
-    public GearTabPanel(GearTagService gearTagService, GearConfigExportService gearConfigExportService) {
+    public GearTabPanel(GearTagService gearTagService, GearConfigExportService gearConfigExportService,
+                        boolean includeMissingByDefault) {
         super(new BorderLayout());
         setOpaque(false);
         setBorder(new EmptyBorder(4, 0, 0, 0));
 
-        bankTabSection = new BankTabSection(gearTagService);
+        bankTabSection = new BankTabSection(gearTagService, includeMissingByDefault);
 
         CardLayout cards = new CardLayout();
         JPanel display = new JPanel(cards);

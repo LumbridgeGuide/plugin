@@ -92,7 +92,7 @@ public final class Components {
     public static JButton linkButton(String text) {
         JButton button = new JButton(text);
         button.setFont(FontManager.getRunescapeBoldFont());
-        button.setForeground(Theme.ACCENT);
+        button.setForeground(Theme.accent());
         button.setBorder(new EmptyBorder(0, 0, 0, 0));
         button.setContentAreaFilled(false);
         button.setFocusPainted(false);
