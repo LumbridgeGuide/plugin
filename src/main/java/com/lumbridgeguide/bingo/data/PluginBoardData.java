@@ -21,5 +21,9 @@ public class PluginBoardData {
     private String webUrl;
     private PluginTeamData myTeam;
     private List<PluginTileData> tiles;
+    /** Team ranks, or null while a hidden board keeps other teams' claims secret. */
+    private List<PluginStandingData> standings;
+    /** The latest claims, newest first, or null while a hidden board keeps them secret. */
+    private List<PluginClaimData> recentClaims;
 }
 

@@ -7,6 +7,7 @@ import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.DotIcon;
 import com.lumbridgeguide.ui.Section;
 import com.lumbridgeguide.ui.Theme;
+import com.lumbridgeguide.ui.TimeText;
 import com.lumbridgeguide.ui.WrapText;
 
 import javax.swing.BorderFactory;
@@ -29,8 +30,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -193,27 +192,6 @@ class MyConfigsSection extends Section {
         repaint();
     }
 
-    static String ago(String isoInstant) {
-        try {
-            Duration age = Duration.between(Instant.parse(isoInstant), Instant.now());
-            if (age.toDays() >= 30) {
-                return age.toDays() / 30 + "mo ago";
-            }
-            if (age.toDays() >= 7) {
-                return age.toDays() / 7 + "w ago";
-            }
-            if (age.toDays() >= 1) {
-                return age.toDays() + "d ago";
-            }
-            if (age.toHours() >= 1) {
-                return age.toHours() + "h ago";
-            }
-            return "just now";
-        } catch (RuntimeException ignored) {
-            return "";
-        }
-    }
-
     /** One config: its name, how many items and when it changed, and the button that makes its tab. */
     private final class ConfigRow extends JPanel {
 
@@ -263,7 +241,7 @@ class MyConfigsSection extends Section {
         }
 
         private String defaultDetail() {
-            String when = ago(config.getUpdatedAt());
+            String when = TimeText.ago(config.getUpdatedAt());
             return config.getItemCount() + " items" + (when.isEmpty() ? "" : "  ·  " + when);
         }
 
