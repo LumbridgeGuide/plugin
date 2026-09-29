@@ -8,6 +8,7 @@ import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
+import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.ui.SidebarPanel;
 import com.lumbridgeguide.ui.Theme;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +78,9 @@ public class LumbridgeGuidePlugin extends Plugin {
     private GearConfigExportService gearConfigExportService;
 
     @Inject
+    private TripCheckService tripCheckService;
+
+    @Inject
     private ItemManager itemManager;
 
     @Inject
@@ -110,7 +114,7 @@ public class LumbridgeGuidePlugin extends Plugin {
     }
 
     private void addPanel() {
-        panel = new SidebarPanel(boardDataService, gearTagService, gearConfigExportService,
+        panel = new SidebarPanel(boardDataService, gearTagService, gearConfigExportService, tripCheckService,
                 accountSyncService, itemManager, skillIconManager, config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");

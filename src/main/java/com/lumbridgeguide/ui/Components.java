@@ -65,6 +65,18 @@ public final class Components {
         return label;
     }
 
+    /**
+     * A label in the mono font. Mono glyphs can draw a little wider than Swing measures them on scaled displays, so
+     * the label keeps a few pixels of room on the right.
+     */
+    public static JLabel monoLabel(String text, float size, int style, Color color) {
+        JLabel label = new JLabel(text);
+        label.setFont(Theme.monoFont(style, size));
+        label.setForeground(color);
+        label.setBorder(new EmptyBorder(0, 0, 0, 4));
+        return label;
+    }
+
     /** A line of text led by a coloured dot, for statuses such as "Not claimed yet". */
     public static JLabel statusLine(String text, Color dotColor, Color textColor) {
         JLabel label = label(text, 12f, Font.PLAIN, textColor);

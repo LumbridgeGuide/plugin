@@ -2,6 +2,7 @@ package com.lumbridgeguide.gear.ui;
 
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
+import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.ui.TabBar;
 
 import javax.swing.BorderFactory;
@@ -22,25 +23,32 @@ public class GearTabPanel extends JPanel {
     private static final String BANK_TAB = "Bank tab";
     private static final String MY_CONFIGS = "My configs";
     private static final String CREATE_CONFIG = "Create config";
+    private static final String TRIP_CHECK = "tripCheck";
 
     private final BankTabSection bankTabSection;
     private final MyConfigsSection myConfigsSection;
+    private final TripCheckPanel tripCheckPanel;
 
     public GearTabPanel(GearTagService gearTagService, GearConfigExportService gearConfigExportService,
-                        boolean includeMissingByDefault) {
+                        TripCheckService tripCheckService, boolean includeMissingByDefault) {
         super(new BorderLayout());
         setOpaque(false);
         setBorder(new EmptyBorder(4, 0, 0, 0));
 
         bankTabSection = new BankTabSection(gearTagService, includeMissingByDefault);
-        myConfigsSection = new MyConfigsSection(gearTagService, includeMissingByDefault);
-
         CardLayout cards = new CardLayout();
         JPanel display = new JPanel(cards);
+        tripCheckPanel = new TripCheckPanel(tripCheckService, gearTagService, () -> cards.show(display, MY_CONFIGS));
+        myConfigsSection = new MyConfigsSection(gearTagService, includeMissingByDefault, config -> {
+            tripCheckPanel.show(config);
+            cards.show(display, TRIP_CHECK);
+        });
+
         display.setOpaque(false);
         display.add(topAligned(bankTabSection), BANK_TAB);
         display.add(scrolling(topAligned(myConfigsSection)), MY_CONFIGS);
         display.add(topAligned(new CreateConfigSection(gearConfigExportService)), CREATE_CONFIG);
+        display.add(scrolling(topAligned(tripCheckPanel)), TRIP_CHECK);
 
         TabBar subtabs = new TabBar(Arrays.asList(BANK_TAB, MY_CONFIGS, CREATE_CONFIG), TabBar.Style.TEXT, name -> {
             cards.show(display, name);
@@ -57,6 +65,7 @@ public class GearTabPanel extends JPanel {
     public void setBankOpen(boolean open) {
         bankTabSection.setBankOpen(open);
         myConfigsSection.setBankOpen(open);
+        tripCheckPanel.setBankOpen(open);
     }
 
     private static JScrollPane scrolling(JPanel content) {

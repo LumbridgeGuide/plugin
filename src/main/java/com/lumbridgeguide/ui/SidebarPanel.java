@@ -7,6 +7,7 @@ import com.lumbridgeguide.bingo.BoardDataService;
 import com.lumbridgeguide.bingo.ui.BingoTabPanel;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
+import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.gear.ui.GearTabPanel;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
@@ -41,6 +42,7 @@ public class SidebarPanel extends PluginPanel {
             BoardDataService boardDataService,
             GearTagService gearTagService,
             GearConfigExportService gearConfigExportService,
+            TripCheckService tripCheckService,
             AccountSyncService accountSyncService,
             ItemManager itemManager,
             SkillIconManager skillIconManager,
@@ -57,7 +59,8 @@ public class SidebarPanel extends PluginPanel {
         add(pluginTitle, BorderLayout.NORTH);
 
         bingoTab = new BingoTabPanel(boardDataService, config, itemManager, skillIconManager);
-        gearTab = new GearTabPanel(gearTagService, gearConfigExportService, config.includeMissingItems());
+        gearTab = new GearTabPanel(gearTagService, gearConfigExportService, tripCheckService,
+                config.includeMissingItems());
 
         centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);

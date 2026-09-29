@@ -85,7 +85,7 @@ public class GearConfigExportService {
         });
     }
 
-    private List<GearConfigPayload.EquipmentEntry> readEquipment() {
+    List<GearConfigPayload.EquipmentEntry> readEquipment() {
         List<GearConfigPayload.EquipmentEntry> entries = new ArrayList<>();
         ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
         if (equipment == null) {
@@ -104,7 +104,7 @@ public class GearConfigExportService {
         return entries;
     }
 
-    private List<GearConfigPayload.InventoryEntry> readInventory() {
+    List<GearConfigPayload.InventoryEntry> readInventory() {
         List<GearConfigPayload.InventoryEntry> entries = new ArrayList<>();
         ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
         if (inventory == null) {
@@ -122,7 +122,7 @@ public class GearConfigExportService {
         return entries;
     }
 
-    private List<GearConfigPayload.RunePouchEntry> readRunePouch() {
+    List<GearConfigPayload.RunePouchEntry> readRunePouch() {
         List<GearConfigPayload.RunePouchEntry> entries = new ArrayList<>();
         EnumComposition runes = client.getEnum(EnumID.RUNEPOUCH_RUNE);
         for (int index = 0; index < POUCH_RUNE_VARBITS.length; index++) {

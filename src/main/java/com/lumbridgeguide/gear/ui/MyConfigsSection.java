@@ -23,14 +23,18 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 /**
  * The player's own gear configs from the website, each one click away from a bank tag tab. Importing someone else's
@@ -39,6 +43,7 @@ import java.util.Locale;
 class MyConfigsSection extends Section {
 
     private final GearTagService gearTagService;
+    private final Consumer<OwnedGearConfig> onCheck;
     private final JPanel bankNotice;
     private final JLabel countLabel;
     private final JTextField filterField;
@@ -50,9 +55,11 @@ class MyConfigsSection extends Section {
     private boolean loaded;
     private boolean making;
 
-    MyConfigsSection(GearTagService gearTagService, boolean includeMissingByDefault) {
+    MyConfigsSection(GearTagService gearTagService, boolean includeMissingByDefault,
+                     Consumer<OwnedGearConfig> onCheck) {
         super(0);
         this.gearTagService = gearTagService;
+        this.onCheck = onCheck;
 
         bankNotice = new JPanel(new BorderLayout()) {
             @Override
@@ -120,8 +127,9 @@ class MyConfigsSection extends Section {
         card.add(list);
         card.add(messageText);
 
-        WrapText help = Components.wrapped("Configs you own on the website. For anyone else's config, paste its code "
-                + "on the Bank tab page.", Components.CONTENT_WIDTH, 10f, Font.PLAIN, Theme.TEXT_MUTED);
+        WrapText help = Components.wrapped("Configs you own on the website. Click one to check what you carry "
+                + "against it. For anyone else's config, paste its code on the Bank tab page.",
+                Components.CONTENT_WIDTH, 10f, Font.PLAIN, Theme.TEXT_MUTED);
 
         add(bankNotice);
         add(Box.createVerticalStrut(10));
@@ -229,6 +237,14 @@ class MyConfigsSection extends Section {
             text.add(name);
             text.add(Box.createVerticalStrut(1));
             text.add(detailLabel);
+            text.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            text.setToolTipText("Trip check: compare what you wear and carry with this config");
+            text.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent mouseEvent) {
+                    onCheck.accept(config);
+                }
+            });
 
             makeButton = Components.rowButton("Make tab");
             makeButton.addActionListener(event -> make());

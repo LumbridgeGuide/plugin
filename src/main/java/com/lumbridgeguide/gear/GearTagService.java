@@ -222,7 +222,7 @@ public class GearTagService {
                 : base + ". " + items + " not in your bank " + (missing == 1 ? "was" : "were") + " left out.";
     }
 
-    private static String failureMessage(ApiResponse response) {
+    static String failureMessage(ApiResponse response) {
         switch (response.getStatusCode()) {
             case 404:
                 return "No gear set found for that code";
