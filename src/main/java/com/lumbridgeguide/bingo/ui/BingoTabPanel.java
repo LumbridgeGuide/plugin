@@ -5,25 +5,24 @@ import com.lumbridgeguide.bingo.BoardDataService;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.ui.Components;
-import com.lumbridgeguide.ui.Theme;
+import com.lumbridgeguide.ui.EmptyState;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.util.LinkBrowser;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
+import java.awt.FlowLayout;
 import java.util.List;
 
 /**
@@ -43,8 +42,11 @@ public class BingoTabPanel extends JPanel {
     private final BoardHeaderPanel headerPanel;
     private final TileListPanel tileList;
     private final TileDetailPanel detailPanel;
-    private final JLabel emptyLabel;
+    private final EmptyState emptyState;
+    private final JButton emptyRefreshButton;
+    private final JLabel tilesCaption;
     private final JScrollPane listScroll;
+    private final JPanel buttonBar;
     private final JButton openButton;
     private final JButton refreshButton;
 
@@ -65,22 +67,32 @@ public class BingoTabPanel extends JPanel {
         headerPanel = new BoardHeaderPanel();
         tileList = new TileListPanel();
 
-        emptyLabel = Components.label("No active boards", 12f, Font.PLAIN, Theme.TEXT_MUTED);
-        emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        emptyLabel.setBorder(new EmptyBorder(30, 0, 30, 0));
+        emptyRefreshButton = Components.secondaryButton("Refresh");
+        emptyRefreshButton.addActionListener(event -> onRefreshClicked());
+        emptyState = new EmptyState("No active boards",
+                "Boards you join on the website show up here once they start.", emptyRefreshButton);
+
+        tilesCaption = Components.sectionLabel("Tiles");
+        tilesCaption.setBorder(new EmptyBorder(0, 0, 2, 0));
 
         JPanel topSection = new JPanel();
         topSection.setLayout(new BoxLayout(topSection, BoxLayout.Y_AXIS));
         topSection.setOpaque(false);
         navigator.setAlignmentX(LEFT_ALIGNMENT);
         headerPanel.setAlignmentX(LEFT_ALIGNMENT);
-        topSection.add(navigator);
         topSection.add(headerPanel);
+        topSection.add(navigator);
+        topSection.add(Box.createVerticalStrut(12));
+        topSection.add(tilesCaption);
 
         JPanel listContent = new JPanel(new BorderLayout());
         listContent.setOpaque(false);
         listContent.add(tileList, BorderLayout.NORTH);
-        listContent.add(emptyLabel, BorderLayout.CENTER);
+        JPanel emptyHolder = new JPanel(new BorderLayout());
+        emptyHolder.setOpaque(false);
+        emptyHolder.setBorder(new EmptyBorder(24, 0, 0, 0));
+        emptyHolder.add(emptyState, BorderLayout.NORTH);
+        listContent.add(emptyHolder, BorderLayout.CENTER);
 
         listScroll = new JScrollPane(listContent);
         listScroll.setOpaque(false);
@@ -94,11 +106,11 @@ public class BingoTabPanel extends JPanel {
         refreshButton = Components.secondaryButton("Refresh");
         refreshButton.addActionListener(event -> onRefreshClicked());
 
-        JPanel buttonBar = new JPanel(new GridLayout(1, 2, 6, 0));
+        buttonBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         buttonBar.setOpaque(false);
-        buttonBar.setBorder(new EmptyBorder(8, 0, 0, 0));
-        buttonBar.add(openButton);
+        buttonBar.setBorder(new EmptyBorder(10, 0, 0, 0));
         buttonBar.add(refreshButton);
+        buttonBar.add(openButton);
 
         JPanel overview = new JPanel(new BorderLayout());
         overview.setOpaque(false);
@@ -124,9 +136,11 @@ public class BingoTabPanel extends JPanel {
         currentIndex = boards.isEmpty() ? 0 : Math.min(currentIndex, boards.size() - 1);
 
         boolean hasBoards = !boards.isEmpty();
-        emptyLabel.setVisible(!hasBoards);
+        emptyState.getParent().setVisible(!hasBoards);
         tileList.setVisible(hasBoards);
         headerPanel.setVisible(hasBoards);
+        tilesCaption.setVisible(hasBoards);
+        buttonBar.setVisible(hasBoards);
         openButton.setEnabled(false);
 
         if (hasBoards) {
@@ -181,14 +195,18 @@ public class BingoTabPanel extends JPanel {
     }
 
     private void onRefreshClicked() {
-        refreshButton.setEnabled(false);
-        refreshButton.setText("Refreshing...");
-
+        setRefreshing(true);
         boardDataService.refresh(() -> SwingUtilities.invokeLater(() ->
         {
-            refreshButton.setEnabled(true);
-            refreshButton.setText("Refresh");
+            setRefreshing(false);
             refresh();
         }));
+    }
+
+    private void setRefreshing(boolean refreshing) {
+        for (JButton button : new JButton[]{refreshButton, emptyRefreshButton}) {
+            button.setEnabled(!refreshing);
+            button.setText(refreshing ? "Refreshing..." : "Refresh");
+        }
     }
 }

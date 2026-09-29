@@ -258,6 +258,8 @@ public class AccountSyncService {
                 : AccountStatusText.forStatus(linkStatus);
         current.accept(new AccountView(
                 snapshot == null ? null : snapshot.getDisplayName(),
+                snapshot == null ? "" : AccountStatusText.accountTypeLabel(snapshot.getAccountType()),
+                snapshot == null ? "" : AccountStatusText.statusBadge(linkStatus),
                 status.getText(),
                 status.getTone(),
                 message,
@@ -269,6 +271,8 @@ public class AccountSyncService {
     @Getter
     public static final class AccountView {
         private final String displayName;
+        private final String accountType;
+        private final String statusBadge;
         private final String statusText;
         private final AccountStatusText.Tone statusTone;
         private final String message;
@@ -276,9 +280,12 @@ public class AccountSyncService {
         private final String lastSynced;
         private final boolean busy;
 
-        AccountView(String displayName, String statusText, AccountStatusText.Tone statusTone, String message,
-                    AccountStatusText.Tone messageTone, String lastSynced, boolean busy) {
+        AccountView(String displayName, String accountType, String statusBadge, String statusText,
+                    AccountStatusText.Tone statusTone, String message, AccountStatusText.Tone messageTone,
+                    String lastSynced, boolean busy) {
             this.displayName = displayName;
+            this.accountType = accountType;
+            this.statusBadge = statusBadge;
             this.statusText = statusText;
             this.statusTone = statusTone;
             this.message = message;

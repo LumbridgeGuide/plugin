@@ -21,6 +21,9 @@ import net.runelite.api.events.StatChanged;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.WidgetClosed;
+import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -132,6 +135,9 @@ public class LumbridgeGuidePlugin extends Plugin {
     public void onGameStateChanged(GameStateChanged event) {
         GameState state = event.getGameState();
         if (LOGGED_OUT_STATES.contains(state)) {
+            if (panel != null) {
+                panel.setBankOpen(false);
+            }
             if (!awaitingLogin) {
                 loginPending = false;
                 accountSyncService.onLoggedOut();
@@ -140,6 +146,20 @@ public class LumbridgeGuidePlugin extends Plugin {
         } else if (state == GameState.LOGGED_IN && awaitingLogin) {
             awaitingLogin = false;
             loginPending = true;
+        }
+    }
+
+    @Subscribe
+    public void onWidgetLoaded(WidgetLoaded event) {
+        if (event.getGroupId() == InterfaceID.BANKMAIN && panel != null) {
+            panel.setBankOpen(true);
+        }
+    }
+
+    @Subscribe
+    public void onWidgetClosed(WidgetClosed event) {
+        if (event.getGroupId() == InterfaceID.BANKMAIN && panel != null) {
+            panel.setBankOpen(false);
         }
     }
 

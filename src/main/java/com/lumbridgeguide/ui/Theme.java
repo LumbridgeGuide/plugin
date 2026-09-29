@@ -33,6 +33,9 @@ public final class Theme {
     public static final Color WARNING = new Color(0xD4A32A);
     public static final Color ERROR = new Color(0xC4573A);
 
+    /** Corner diameter for buttons, inputs and chips. Square, to keep the panel plain. */
+    public static final int ARC = 0;
+
     private static final String[] MONO_FAMILIES = {
             "JetBrains Mono", "Cascadia Mono", "Consolas", "Menlo", "Monospaced"
     };

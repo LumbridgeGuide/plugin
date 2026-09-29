@@ -24,15 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * Builds a gear config on the website from what the player is wearing and carrying. Nothing is stored against the
- * player's account: the items only become an ordinary gear config.
- */
 @Singleton
 public class GearConfigExportService {
 
     private static final int RUNE_POUCH_ID = 12791;
     private static final int DIVINE_RUNE_POUCH_ID = 27281;
+
     private static final int[] POUCH_RUNE_VARBITS = {
             VarbitID.RUNE_POUCH_TYPE_1, VarbitID.RUNE_POUCH_TYPE_2,
             VarbitID.RUNE_POUCH_TYPE_3, VarbitID.RUNE_POUCH_TYPE_4
@@ -48,15 +45,16 @@ public class GearConfigExportService {
     private final LumbridgeGuideClient apiClient;
 
     @Inject
-    public GearConfigExportService(
-            Client client, ClientThread clientThread, ItemManager itemManager, LumbridgeGuideClient apiClient) {
+    public GearConfigExportService(Client client,
+                                   ClientThread clientThread,
+                                   ItemManager itemManager,
+                                   LumbridgeGuideClient apiClient) {
         this.client = client;
         this.clientThread = clientThread;
         this.itemManager = itemManager;
         this.apiClient = apiClient;
     }
 
-    /** Reads the player's items on the client thread, then creates the config. The callback runs off the Swing thread. */
     public void create(String name, boolean includeEquipment, boolean includeInventory, Consumer<Result> onComplete) {
         clientThread.invoke(() -> {
             if (client.getGameState() != GameState.LOGGED_IN) {

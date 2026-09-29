@@ -12,17 +12,16 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.PluginPanel;
 
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
+import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.GridBagLayout;
 import java.util.Arrays;
 
 public class SidebarPanel extends PluginPanel {
@@ -36,6 +35,7 @@ public class SidebarPanel extends PluginPanel {
     private final LumbridgeGuideConfig config;
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
+    private final GearTabPanel gearTab;
 
     public SidebarPanel(
             BoardDataService boardDataService,
@@ -53,22 +53,23 @@ public class SidebarPanel extends PluginPanel {
         setBackground(Theme.PANEL_BACKGROUND);
 
         JLabel pluginTitle = Components.label("Lumbridge Guide", 16f, Font.BOLD, Theme.TEXT_PRIMARY);
-        pluginTitle.setHorizontalAlignment(SwingConstants.CENTER);
-        pluginTitle.setBorder(new EmptyBorder(0, 0, 8, 0));
+        pluginTitle.setBorder(new EmptyBorder(2, 0, 10, 0));
         add(pluginTitle, BorderLayout.NORTH);
 
         bingoTab = new BingoTabPanel(boardDataService, config, itemManager, skillIconManager);
+        gearTab = new GearTabPanel(gearTagService, gearConfigExportService);
 
         centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);
         centerPanel.add(buildNoKeyCard(), NO_KEY_CARD);
-        centerPanel.add(buildTabsCard(
-                bingoTab,
-                new GearTabPanel(gearTagService, gearConfigExportService),
-                new AccountTabPanel(accountSyncService)), TABS_CARD);
+        centerPanel.add(buildTabsCard(new AccountTabPanel(accountSyncService)), TABS_CARD);
         add(centerPanel, BorderLayout.CENTER);
 
         refresh();
+    }
+
+    public void setBankOpen(boolean open) {
+        SwingUtilities.invokeLater(() -> gearTab.setBankOpen(open));
     }
 
     public void refresh() {
@@ -87,7 +88,7 @@ public class SidebarPanel extends PluginPanel {
         });
     }
 
-    private static JPanel buildTabsCard(BingoTabPanel bingoTab, GearTabPanel gearTab, AccountTabPanel accountTab) {
+    private JPanel buildTabsCard(AccountTabPanel accountTab) {
         CardLayout tabCards = new CardLayout();
         JPanel display = new JPanel(tabCards);
         display.setOpaque(false);
@@ -97,7 +98,7 @@ public class SidebarPanel extends PluginPanel {
 
         TabBar tabBar = new TabBar(Arrays.asList(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB),
                 name -> tabCards.show(display, name));
-        tabBar.setBorder(new EmptyBorder(0, 0, 8, 0));
+        tabBar.setBorder(new EmptyBorder(0, 0, 12, 0));
 
         JPanel card = new JPanel(new BorderLayout());
         card.setOpaque(false);
@@ -107,20 +108,30 @@ public class SidebarPanel extends PluginPanel {
     }
 
     private static JPanel buildNoKeyCard() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setOpaque(false);
+        Section card = new Section(0);
 
         JLabel title = Components.label("API key needed", 14f, Font.BOLD, Theme.TEXT_PRIMARY);
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        title.setBorder(new EmptyBorder(30, 0, 8, 0));
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(title);
+        card.add(Box.createVerticalStrut(6));
+        card.add(Components.wrapped("Set your API key in the plugin settings to get started.",
+                Components.CONTENT_WIDTH - 12, 12f, Font.PLAIN, Theme.TEXT_SECONDARY));
+        card.add(Box.createVerticalStrut(8));
 
-        JComponent message = Components.wrapped("Set your API key in the plugin settings to get started.",
-                Components.CONTENT_WIDTH - 20, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
-        message.setAlignmentX(Component.CENTER_ALIGNMENT);
+        String[] steps = {
+            "Sign in on the Lumbridge Guide website",
+            "Settings, then Account: copy your plugin key",
+            "Paste it into this plugin's settings",
+        };
+        for (int index = 0; index < steps.length; index++) {
+            card.add(Components.wrapped((index + 1) + ".  " + steps[index], Components.CONTENT_WIDTH - 12, 11f,
+                    Font.PLAIN, Theme.TEXT_MUTED));
+            card.add(Box.createVerticalStrut(3));
+        }
 
-        panel.add(title);
-        panel.add(message);
-        return panel;
+        JPanel wrapper = new JPanel(new GridBagLayout());
+        wrapper.setOpaque(false);
+        wrapper.add(card);
+        return wrapper;
     }
 }

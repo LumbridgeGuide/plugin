@@ -6,22 +6,19 @@ import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.bingo.data.TileItemEntry;
 import com.lumbridgeguide.ui.Badge;
 import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.Section;
 import com.lumbridgeguide.ui.Theme;
 import net.runelite.api.Skill;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.util.AsyncBufferedImage;
 
-import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -30,11 +27,11 @@ import java.util.Locale;
 
 public class TileDetailPanel extends JPanel {
 
-    private static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 16;
+    private static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 24;
 
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
-    private final JPanel content;
+    private final Section content;
 
     public TileDetailPanel(ItemManager itemManager, SkillIconManager skillIconManager, Runnable onClose) {
         super(new BorderLayout(0, 8));
@@ -42,13 +39,10 @@ public class TileDetailPanel extends JPanel {
         this.skillIconManager = skillIconManager;
         setOpaque(false);
 
-        JButton closeButton = Components.secondaryButton("‹  Back to tiles");
+        JButton closeButton = Components.linkButton("‹  Back to tiles");
         closeButton.addActionListener(event -> onClose.run());
-        closeButton.setHorizontalAlignment(JButton.LEFT);
 
-        content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setOpaque(false);
+        content = new Section(4);
 
         JPanel contentWrapper = new JPanel(new BorderLayout());
         contentWrapper.setOpaque(false);
@@ -61,21 +55,23 @@ public class TileDetailPanel extends JPanel {
     public void show(PluginTileData tile, PluginBoardData board) {
         content.removeAll();
 
-        JPanel badges = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        JPanel badges = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         badges.setOpaque(false);
         badges.setAlignmentX(LEFT_ALIGNMENT);
-        badges.add(new Badge(TileText.typeName(tile).toUpperCase(Locale.ROOT),
-                Theme.SURFACE_OVERLAY, Theme.ACCENT));
-        if (board.isTilePointsEnabled() && tile.getPoints() > 0) {
-            badges.add(new Badge(tile.getPoints() + (tile.getPoints() == 1 ? " POINT" : " POINTS"),
-                    Theme.SURFACE_OVERLAY, Theme.TEXT_SECONDARY));
-        }
-        addRow(badges, 6);
+        badges.add(Badge.chip(TileText.badgeLabel(tile)));
+        addRow(badges, 0);
 
-        addRow(Components.wrapped(tile.getTitle(), Components.CONTENT_WIDTH, 16f, Font.BOLD, Theme.TEXT_PRIMARY), 8);
+        addRow(Components.wrapped(tile.getTitle(), TEXT_WIDTH, 16f, Font.BOLD, Theme.TEXT_PRIMARY), 8);
+
+        if (board.isTilePointsEnabled() && tile.getPoints() > 0) {
+            JLabel points = Components.label(tile.getPoints() + (tile.getPoints() == 1 ? " POINT" : " POINTS"),
+                    11f, Font.BOLD, Theme.ACCENT);
+            points.setFont(Theme.monoFont(Font.BOLD, 10f));
+            addRow(points, 4);
+        }
 
         if (tile.getDescription() != null && !tile.getDescription().isEmpty()) {
-            addRow(Components.wrapped(tile.getDescription(), Components.CONTENT_WIDTH, 12f, Font.PLAIN,
+            addRow(Components.wrapped(tile.getDescription(), TEXT_WIDTH, 12f, Font.PLAIN,
                     Theme.TEXT_SECONDARY), 8);
         }
 
@@ -94,7 +90,7 @@ public class TileDetailPanel extends JPanel {
             return;
         }
 
-        addRow(sectionHeading("Requirements"), 14);
+        addRow(Components.sectionLabel("Requirements"), 14);
 
         if (hasSkill) {
             addRow(skillRow(tile), 6);
@@ -103,7 +99,7 @@ public class TileDetailPanel extends JPanel {
             String kills = tile.getKillCount() != null && tile.getKillCount() > 0
                     ? "Kill " + tile.getMonsterName() + " x" + tile.getKillCount()
                     : "Kill " + tile.getMonsterName();
-            addRow(card(Components.wrapped(kills, TEXT_WIDTH, 12f, Font.BOLD, Theme.TEXT_PRIMARY)), 6);
+            addRow(Components.wrapped(kills, TEXT_WIDTH, 12f, Font.BOLD, Theme.TEXT_PRIMARY), 6);
         }
         if (hasItems) {
             List<TileItemEntry> items = tile.getItems();
@@ -127,7 +123,7 @@ public class TileDetailPanel extends JPanel {
         String text = (xp.isEmpty() ? "" : xp + " in ") + TileText.capitalise(tile.getSkill());
         row.add(Components.wrapped(text, TEXT_WIDTH - 30, 12f, Font.BOLD, Theme.TEXT_PRIMARY),
                 BorderLayout.CENTER);
-        return card(row);
+        return row;
     }
 
     private JPanel itemRow(TileItemEntry item) {
@@ -142,39 +138,25 @@ public class TileDetailPanel extends JPanel {
         row.add(icon, BorderLayout.WEST);
         row.add(Components.wrapped(item.getName(), TEXT_WIDTH - 46, 12f, Font.BOLD, Theme.TEXT_PRIMARY),
                 BorderLayout.CENTER);
-        return card(row);
+        return row;
     }
 
     private void addClaimStatus(PluginTileData tile, PluginBoardData board) {
-        addRow(sectionHeading("Status"), 14);
+        addRow(Components.sectionLabel("Status"), 14);
 
         if (!tile.isClaimed()) {
-            addRow(card(Components.label("Not claimed yet", 12f, Font.BOLD, Theme.TEXT_MUTED)), 6);
+            addRow(Components.statusLine("Not claimed yet", Theme.TEXT_MUTED, Theme.TEXT_SECONDARY), 6);
             return;
         }
 
         PluginTeamData team = board.getMyTeam();
         boolean mine = team != null && team.getId() != null && team.getId().equals(tile.getClaimedByTeamId());
         if (mine) {
-            Color teamColor = Theme.parseTeamColor(team.getColor());
-            addRow(card(Components.label("Claimed by " + team.getName(), 12f, Font.BOLD, teamColor)), 6);
+            addRow(Components.statusLine("Claimed by " + team.getName(), Theme.parseTeamColor(team.getColor()),
+                    Theme.TEXT_PRIMARY), 6);
         } else {
-            addRow(card(Components.label("Claimed by another team", 12f, Font.BOLD, Theme.SUCCESS)), 6);
+            addRow(Components.statusLine("Claimed by another team", Theme.TEXT_MUTED, Theme.TEXT_PRIMARY), 6);
         }
-    }
-
-    private static JLabel sectionHeading(String text) {
-        return Components.label(text.toUpperCase(Locale.ROOT), 10f, Font.BOLD, Theme.TEXT_MUTED);
-    }
-
-    private static JPanel card(java.awt.Component child) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(Theme.SURFACE_RAISED);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.BORDER),
-                new EmptyBorder(8, 8, 8, 8)));
-        card.add(child, BorderLayout.CENTER);
-        return card;
     }
 
     private void addRow(javax.swing.JComponent component, int spaceAbove) {

@@ -6,13 +6,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 public class TileListPanel extends JPanel {
-
-    private static final int GAP = 6;
 
     public TileListPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -33,7 +30,6 @@ public class TileListPanel extends JPanel {
                 TileRowPanel row = new TileRowPanel(tile, board, () -> onTileSelected.accept(tile));
                 row.setAlignmentX(LEFT_ALIGNMENT);
                 add(row);
-                add(Box.createVerticalStrut(GAP));
             }
         }
 

@@ -65,6 +65,34 @@ public final class AccountStatusText {
         }
     }
 
+    /** The account type as the website words it, such as "Hardcore ironman". Regular accounts are "Main". */
+    static String accountTypeLabel(String accountType) {
+        if (accountType == null) {
+            return "";
+        }
+        switch (accountType) {
+            case "IRONMAN":
+                return "Ironman";
+            case "ULTIMATE_IRONMAN":
+                return "Ultimate ironman";
+            case "HARDCORE_IRONMAN":
+                return "Hardcore ironman";
+            case "GROUP_IRONMAN":
+                return "Group ironman";
+            case "HARDCORE_GROUP_IRONMAN":
+                return "Hardcore group ironman";
+            case "UNRANKED_GROUP_IRONMAN":
+                return "Unranked group ironman";
+            default:
+                return "Main";
+        }
+    }
+
+    /** A short badge for the link status, such as LINKED, or an empty string while it is unknown. */
+    static String statusBadge(String status) {
+        return status == null ? "" : status.replace('_', ' ');
+    }
+
     /** RuneLite's IRONMAN varbit value to the backend's account type. */
     static String accountType(int ironmanVarbit) {
         switch (ironmanVarbit) {

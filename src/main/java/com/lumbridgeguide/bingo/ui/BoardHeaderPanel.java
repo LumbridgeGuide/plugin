@@ -4,9 +4,14 @@ import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.SwatchIcon;
 import com.lumbridgeguide.ui.Theme;
 import com.lumbridgeguide.ui.WrapText;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.time.Duration;
 import java.time.Instant;
@@ -15,85 +20,100 @@ import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import net.runelite.client.ui.FontManager;
 
+/** The board's name, the viewer's team, time left, a big count of claimed tiles and the code for screenshots. */
 public class BoardHeaderPanel extends JPanel {
 
+    private final WrapText titleLabel;
+    private final JPanel teamRow;
+    private final JLabel teamLabel;
+    private final JLabel timingLabel;
+    private final JLabel claimedCount;
+    private final JLabel claimedCaption;
     private final JLabel codeCaption;
     private final VerificationCodePanel codePanel;
-    private final WrapText titleLabel;
-    private final JLabel teamLabel;
-    private final JLabel statsLabel;
-    private final JLabel timingLabel;
 
     public BoardHeaderPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(false);
-        setBorder(new EmptyBorder(0, 0, 8, 0));
+        setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        codeCaption = Components.label("Verification code", 11f, Font.PLAIN, Theme.TEXT_MUTED);
-        codeCaption.setAlignmentX(LEFT_ALIGNMENT);
-        codeCaption.setBorder(new EmptyBorder(0, 0, 4, 0));
+        titleLabel = Components.wrapped("", Components.CONTENT_WIDTH, 16f, Font.BOLD, Theme.TEXT_PRIMARY);
 
+        teamLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        teamLabel.setIconTextGap(6);
+        timingLabel = Components.label("", 11f, Font.PLAIN, Theme.WARNING);
+        teamRow = new JPanel(new BorderLayout(6, 0));
+        teamRow.setOpaque(false);
+        teamRow.setAlignmentX(LEFT_ALIGNMENT);
+        teamRow.add(teamLabel, BorderLayout.CENTER);
+        teamRow.add(timingLabel, BorderLayout.EAST);
+
+        claimedCount = new JLabel("0");
+        claimedCount.setFont(FontManager.getRunescapeBoldFont().deriveFont(32f));
+        claimedCount.setForeground(Theme.TEXT_PRIMARY);
+        claimedCaption = Components.label("", 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        JPanel claimedRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        ((FlowLayout) claimedRow.getLayout()).setAlignOnBaseline(true);
+        claimedRow.setOpaque(false);
+        claimedRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        claimedRow.add(claimedCount);
+        claimedRow.add(Box.createHorizontalStrut(6));
+        claimedRow.add(claimedCaption);
+        claimedRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, claimedRow.getPreferredSize().height));
+
+        codeCaption = Components.sectionLabel("Verification code");
         codePanel = new VerificationCodePanel();
         codePanel.setAlignmentX(LEFT_ALIGNMENT);
 
-        titleLabel = Components.wrapped("", Components.CONTENT_WIDTH, 15f, Font.BOLD, Theme.TEXT_PRIMARY);
-
-        teamLabel = Components.label("", 12f, Font.BOLD, Theme.TEXT_SECONDARY);
-        teamLabel.setAlignmentX(LEFT_ALIGNMENT);
-        teamLabel.setBorder(new EmptyBorder(4, 0, 0, 0));
-
-        statsLabel = Components.label("", 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
-        statsLabel.setAlignmentX(LEFT_ALIGNMENT);
-        statsLabel.setBorder(new EmptyBorder(4, 0, 0, 0));
-
-        timingLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_MUTED);
-        timingLabel.setAlignmentX(LEFT_ALIGNMENT);
-        timingLabel.setBorder(new EmptyBorder(2, 0, 0, 0));
-
-        add(codeCaption);
-        add(codePanel);
-        add(Box.createVerticalStrut(10));
         add(titleLabel);
-        add(teamLabel);
-        add(statsLabel);
-        add(timingLabel);
+        add(Box.createVerticalStrut(4));
+        add(teamRow);
+        add(Box.createVerticalStrut(6));
+        add(claimedRow);
+        add(Box.createVerticalStrut(8));
+        add(codeCaption);
+        add(Box.createVerticalStrut(4));
+        add(codePanel);
     }
 
     public void update(PluginBoardData board) {
         if (board == null) {
             titleLabel.setText("");
             teamLabel.setText("");
-            statsLabel.setText("");
             timingLabel.setText("");
+            claimedCount.setText("");
+            claimedCaption.setText("");
             codePanel.setCode(null);
             codeCaption.setVisible(false);
             return;
         }
 
-        boolean hasCode = board.getVerificationCode() != null && !board.getVerificationCode().isEmpty();
-        codeCaption.setVisible(hasCode);
-        codePanel.setCode(board.getVerificationCode());
-
         titleLabel.setText(board.getTitle());
 
         PluginTeamData team = board.getMyTeam();
+        Color teamColor = team != null ? Theme.parseTeamColor(team.getColor()) : Theme.ACCENT;
         if (team != null && team.getName() != null) {
-            Color teamColor = Theme.parseTeamColor(team.getColor());
             teamLabel.setText("Team: " + team.getName());
-            teamLabel.setForeground(teamColor);
-            teamLabel.setVisible(true);
+            teamLabel.setIcon(new SwatchIcon(teamColor));
         } else {
-            teamLabel.setVisible(false);
+            teamLabel.setText("");
+            teamLabel.setIcon(null);
         }
+        timingLabel.setText(formatTiming(board.getEndsAt()));
+        teamRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, teamRow.getPreferredSize().height));
 
         int totalTiles = board.getTiles() != null ? board.getTiles().size() : 0;
         long claimedTiles = board.getTiles() != null
                 ? board.getTiles().stream().filter(PluginTileData::isClaimed).count()
                 : 0;
-        statsLabel.setText(claimedTiles + " of " + totalTiles + " tiles claimed");
+        claimedCount.setText(String.valueOf(claimedTiles));
+        claimedCaption.setText("of " + totalTiles + " tiles claimed");
 
-        timingLabel.setText(formatTiming(board.getEndsAt()));
+        boolean hasCode = board.getVerificationCode() != null && !board.getVerificationCode().isEmpty();
+        codeCaption.setVisible(hasCode);
+        codePanel.setCode(board.getVerificationCode());
 
         revalidate();
         repaint();

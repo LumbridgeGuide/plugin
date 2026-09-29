@@ -4,7 +4,15 @@ import com.google.gson.Gson;
 import com.lumbridgeguide.LumbridgeGuideConfig;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
