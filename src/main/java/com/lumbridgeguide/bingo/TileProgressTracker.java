@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,6 +61,7 @@ public class TileProgressTracker {
     private final Map<String, Long> progress = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> dirtyTilesByBoard = new ConcurrentHashMap<>();
     private Instant lastReport = Instant.EPOCH;
+    private BiConsumer<PluginBoardData, PluginTileData> onTargetReached = (board, tile) -> { };
 
     @Inject
     public TileProgressTracker(Client client, ConfigManager configManager, LumbridgeGuideConfig config,
@@ -70,6 +72,11 @@ public class TileProgressTracker {
         this.boardDataService = boardDataService;
         this.apiClient = apiClient;
         this.gson = gson;
+    }
+
+    /** Called on the client thread when tracked progress first reaches a tile's target. */
+    public void setOnTargetReached(BiConsumer<PluginBoardData, PluginTileData> listener) {
+        onTargetReached = listener;
     }
 
     /** The player's tracked progress on a tile this session, fresher than what the last sync carried. */
@@ -168,6 +175,12 @@ public class TileProgressTracker {
         Long previous = progress.put(tile.getId(), value);
         if (previous == null || previous != value) {
             dirtyTilesByBoard.computeIfAbsent(board.getId(), id -> ConcurrentHashMap.newKeySet()).add(tile.getId());
+        }
+        long target = "kill_count".equals(tile.getType())
+                ? (tile.getKillCount() == null ? 0 : tile.getKillCount())
+                : tile.getXpTarget();
+        if (target > 0 && value >= target && (previous == null || previous < target)) {
+            onTargetReached.accept(board, tile);
         }
     }
 

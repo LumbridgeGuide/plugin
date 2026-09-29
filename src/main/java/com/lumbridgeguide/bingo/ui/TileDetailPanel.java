@@ -30,6 +30,7 @@ import java.awt.Font;
 import java.util.List;
 import java.util.Locale;
 import java.util.OptionalLong;
+import java.util.function.BiConsumer;
 
 public class TileDetailPanel extends JPanel {
 
@@ -38,14 +39,17 @@ public class TileDetailPanel extends JPanel {
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
     private final TileProgressTracker progressTracker;
+    private final BiConsumer<PluginTileData, PluginBoardData> onSendProof;
     private final Card content;
 
     public TileDetailPanel(ItemManager itemManager, SkillIconManager skillIconManager,
-                           TileProgressTracker progressTracker, Runnable onClose) {
+                           TileProgressTracker progressTracker, Runnable onClose,
+                           BiConsumer<PluginTileData, PluginBoardData> onSendProof) {
         super(new BorderLayout(0, 8));
         this.itemManager = itemManager;
         this.skillIconManager = skillIconManager;
         this.progressTracker = progressTracker;
+        this.onSendProof = onSendProof;
         setOpaque(false);
 
         JButton closeButton = Components.linkButton("‹  Back to tiles");
@@ -87,6 +91,7 @@ public class TileDetailPanel extends JPanel {
         addProgress(tile);
         addRequirements(tile);
         addClaimStatus(tile, board);
+        addSendProof(tile, board);
 
         revalidate();
         repaint();
@@ -150,6 +155,18 @@ public class TileDetailPanel extends JPanel {
                 addRow(row, 5);
             }
         }
+    }
+
+    /** Any tile the viewer's team has not claimed can have proof sent by hand, from a screenshot taken now. */
+    private void addSendProof(PluginTileData tile, PluginBoardData board) {
+        PluginTeamData team = board.getMyTeam();
+        boolean mine = team != null && tile.isClaimed() && team.getId().equals(tile.getClaimedByTeamId());
+        if (team == null || mine || board.getVerificationCode() == null) {
+            return;
+        }
+        JButton sendProof = Components.linkButton("Send proof from a screenshot  ›");
+        sendProof.addActionListener(event -> onSendProof.accept(tile, board));
+        addRow(sendProof, 14);
     }
 
     private void addRequirements(PluginTileData tile) {

@@ -4,6 +4,7 @@ import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.account.AccountSyncService;
 import com.lumbridgeguide.account.ui.AccountTabPanel;
 import com.lumbridgeguide.bingo.BoardDataService;
+import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.ui.BingoTabPanel;
 import com.lumbridgeguide.gear.GearConfigExportService;
@@ -42,6 +43,7 @@ public class SidebarPanel extends PluginPanel {
     public SidebarPanel(
             BoardDataService boardDataService,
             TileProgressTracker tileProgressTracker,
+            ProofService proofService,
             GearTagService gearTagService,
             GearConfigExportService gearConfigExportService,
             TripCheckService tripCheckService,
@@ -60,7 +62,8 @@ public class SidebarPanel extends PluginPanel {
         pluginTitle.setBorder(new EmptyBorder(2, 0, 10, 0));
         add(pluginTitle, BorderLayout.NORTH);
 
-        bingoTab = new BingoTabPanel(boardDataService, tileProgressTracker, config, itemManager, skillIconManager);
+        bingoTab = new BingoTabPanel(boardDataService, tileProgressTracker, proofService, config, itemManager,
+                skillIconManager);
         gearTab = new GearTabPanel(gearTagService, gearConfigExportService, tripCheckService,
                 config.includeMissingItems());
 

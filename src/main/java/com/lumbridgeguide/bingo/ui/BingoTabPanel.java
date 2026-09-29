@@ -2,6 +2,7 @@ package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.bingo.BoardDataService;
+import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
@@ -66,6 +67,7 @@ public class BingoTabPanel extends JPanel {
     public BingoTabPanel(
             BoardDataService boardDataService,
             TileProgressTracker tileProgressTracker,
+            ProofService proofService,
             LumbridgeGuideConfig config,
             ItemManager itemManager,
             SkillIconManager skillIconManager) {
@@ -147,10 +149,27 @@ public class BingoTabPanel extends JPanel {
 
         JPanel overviewRoot = new JPanel(new BorderLayout());
         overviewRoot.setOpaque(false);
-        overviewRoot.add(viewTabs, BorderLayout.NORTH);
+        ProofOfferPanel proofOffer = new ProofOfferPanel(proofService);
+        JPanel overviewTop = new JPanel();
+        overviewTop.setLayout(new BoxLayout(overviewTop, BoxLayout.Y_AXIS));
+        overviewTop.setOpaque(false);
+        proofOffer.setAlignmentX(LEFT_ALIGNMENT);
+        viewTabs.setAlignmentX(LEFT_ALIGNMENT);
+        overviewTop.add(proofOffer);
+        overviewTop.add(Box.createVerticalStrut(10));
+        overviewTop.add(viewTabs);
+        overviewRoot.add(overviewTop, BorderLayout.NORTH);
+        proofService.setOnOffer(offer -> SwingUtilities.invokeLater(() -> {
+            proofOffer.show(offer);
+            cards.show(this, OVERVIEW_CARD);
+        }));
         overviewRoot.add(views, BorderLayout.CENTER);
 
-        detailPanel = new TileDetailPanel(itemManager, skillIconManager, tileProgressTracker, this::closeDetail);
+        detailPanel = new TileDetailPanel(itemManager, skillIconManager, tileProgressTracker, this::closeDetail,
+                (tile, board) -> {
+                    closeDetail();
+                    proofService.captureManually(board, tile);
+                });
 
         add(overviewRoot, OVERVIEW_CARD);
         add(scrolling(detailPanel), DETAIL_CARD);

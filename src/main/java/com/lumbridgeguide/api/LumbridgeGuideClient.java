@@ -8,6 +8,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -18,6 +19,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.util.Map;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -32,6 +34,7 @@ public class LumbridgeGuideClient {
 
     private static final MediaType JSON_MEDIA_TYPE =
             MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType PNG_MEDIA_TYPE = MediaType.parse("image/png");
 
     private final OkHttpClient httpClient;
     private final Gson gson;
@@ -78,6 +81,19 @@ public class LumbridgeGuideClient {
     public <T> void post(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .post(jsonBody(body))
+                .build();
+        executeAsync(request, onSuccess, onFailure);
+    }
+
+    /** Posts form fields and a PNG image as multipart form data, for uploads such as proof screenshots. */
+    public void postImage(String path, Map<String, String> fields, String imagePart, byte[] png,
+                          Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
+        MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
+        fields.forEach(body::addFormDataPart);
+        body.addFormDataPart(imagePart, imagePart + ".png", RequestBody.create(PNG_MEDIA_TYPE, png));
+        Request request = newRequestBuilder(resolveUrl(path))
+                .removeHeader("Content-Type")
+                .post(body.build())
                 .build();
         executeAsync(request, onSuccess, onFailure);
     }

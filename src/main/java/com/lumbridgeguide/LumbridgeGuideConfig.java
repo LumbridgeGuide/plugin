@@ -74,6 +74,18 @@ public interface LumbridgeGuideConfig extends Config {
         return true;
     }
 
+    @ConfigItem(
+            keyName = "offerProof",
+            name = "Offer to send proof",
+            description = "When a drop, kill count or XP target matches an open tile, take a screenshot with the board "
+                    + "code and offer to send it as proof",
+            section = bingoSection,
+            position = 4
+    )
+    default boolean offerProof() {
+        return true;
+    }
+
     @Range(max = 60)
     @Units(Units.MINUTES)
     @ConfigItem(

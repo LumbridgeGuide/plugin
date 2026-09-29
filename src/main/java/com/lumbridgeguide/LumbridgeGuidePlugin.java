@@ -3,6 +3,7 @@ package com.lumbridgeguide;
 import com.google.inject.Provides;
 import com.lumbridgeguide.account.AccountSyncService;
 import com.lumbridgeguide.bingo.BoardDataService;
+import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TeamChatPrefix;
 import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
@@ -31,6 +32,7 @@ import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.NpcLootReceived;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.plugins.Plugin;
@@ -85,6 +87,9 @@ public class LumbridgeGuidePlugin extends Plugin {
     private TileProgressTracker tileProgressTracker;
 
     @Inject
+    private ProofService proofService;
+
+    @Inject
     private ItemManager itemManager;
 
     @Inject
@@ -118,7 +123,8 @@ public class LumbridgeGuidePlugin extends Plugin {
     }
 
     private void addPanel() {
-        panel = new SidebarPanel(boardDataService, tileProgressTracker, gearTagService, gearConfigExportService,
+        panel = new SidebarPanel(boardDataService, tileProgressTracker, proofService, gearTagService,
+                gearConfigExportService,
                 tripCheckService, accountSyncService, itemManager, skillIconManager, config);
 
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
@@ -197,6 +203,11 @@ public class LumbridgeGuidePlugin extends Plugin {
         if (event.getGroupId() == InterfaceID.BANKMAIN && panel != null) {
             panel.setBankOpen(false);
         }
+    }
+
+    @Subscribe
+    public void onNpcLootReceived(NpcLootReceived event) {
+        proofService.onLoot(event.getItems());
     }
 
     @Subscribe
