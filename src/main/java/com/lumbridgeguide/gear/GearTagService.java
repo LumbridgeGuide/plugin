@@ -25,13 +25,16 @@ import net.runelite.client.plugins.banktags.tabs.TagTab;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.IntUnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -150,9 +153,12 @@ public class GearTagService {
         }
 
         Set<Integer> owned = new HashSet<>();
+        Map<Integer, Integer> ownedByVariation = new HashMap<>();
         for (Item item : bank.getItems()) {
             if (item.getId() > 0 && item.getQuantity() > 0) {
-                owned.add(variation(item.getId()));
+                int itemId = itemManager.canonicalize(item.getId());
+                owned.add(itemId);
+                ownedByVariation.putIfAbsent(ItemVariationMapping.map(itemId), itemId);
             }
         }
 
@@ -166,20 +172,21 @@ public class GearTagService {
             if (itemId < 0) {
                 continue;
             }
-            boolean have = owned.contains(variation(itemId));
-            if (!have) {
+            int bankItem = bankItemFor(itemId, owned, ownedByVariation, ItemVariationMapping::map);
+            if (bankItem < 0) {
                 missing.add(itemId);
             }
-            if (have || includeMissing) {
-                placed[position] = itemId;
-                tagged.add(itemId);
+            if (bankItem >= 0 || includeMissing) {
+                int shown = bankItem >= 0 ? bankItem : itemId;
+                placed[position] = shown;
+                tagged.add(shown);
             }
         }
 
         String tag = tagName(gear.getName());
         tagManager.removeTag(tag);
         for (int itemId : tagged) {
-            tagManager.addTag(itemId, tag, true);
+            tagManager.addTag(itemId, tag, false);
         }
         layoutManager.saveLayout(new Layout(tag, placed));
         if (tabManager.find(tag) == null && !tagged.isEmpty()) {
@@ -199,8 +206,17 @@ public class GearTagService {
         return new Result(true, summary(tag, tagged.size(), missing.size(), includeMissing), missingNames);
     }
 
-    private int variation(int itemId) {
-        return ItemVariationMapping.map(itemManager.canonicalize(itemId));
+    /**
+     * The bank item to lay out for a config item: the exact item if the bank has it, otherwise another variation the
+     * player owns (a different potion dose or poison level), otherwise -1. Tags are then added for that exact item
+     * only, since a tag on every variation pulls the variations the config did not ask for into the tab as well.
+     */
+    static int bankItemFor(int itemId, Set<Integer> owned, Map<Integer, Integer> ownedByVariation,
+                           IntUnaryOperator variation) {
+        if (owned.contains(itemId)) {
+            return itemId;
+        }
+        return ownedByVariation.getOrDefault(variation.applyAsInt(itemId), -1);
     }
 
     private static int iconItem(PluginGearData gear, Set<Integer> tagged) {
