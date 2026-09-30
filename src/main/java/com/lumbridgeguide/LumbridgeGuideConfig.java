@@ -67,12 +67,14 @@ public interface LumbridgeGuideConfig extends Config {
     @ConfigItem(
             keyName = "trackTileProgress",
             name = "Track tile progress",
-            description = "Count your kills and XP towards kill count and XP tiles, and share the count with your team",
+            description = "Count your kills and XP towards kill count and XP tiles on your running boards. Sends "
+                    + "Lumbridge Guide your progress on those tiles once a minute so your team can see it. Off by "
+                    + "default",
             section = bingoSection,
             position = 3
     )
     default boolean trackTileProgress() {
-        return true;
+        return false;
     }
 
     @ConfigItem(
@@ -188,20 +190,12 @@ public interface LumbridgeGuideConfig extends Config {
         return false;
     }
 
-    @ConfigSection(
-            name = "API Settings",
-            description = "Configuration for the API connection",
-            position = 999,
-            closedByDefault = true
-    )
-    String apiSection = "apiSection";
-
     @ConfigItem(
             keyName = "apiKey",
             name = "API Key",
             description = "Your API key from the Lumbridge Guide website. Keep this private!",
             secret = true,
-            section = apiSection,
+            section = accountSection,
             position = 0
     )
     default String apiKey() {

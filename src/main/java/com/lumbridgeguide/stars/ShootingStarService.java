@@ -8,9 +8,13 @@ import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.GameObjectDespawned;
+import net.runelite.api.events.GameObjectSpawned;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.gameval.ObjectID;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
+import net.runelite.client.eventbus.Subscribe;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -72,15 +76,18 @@ public class ShootingStarService {
         return playerLocation;
     }
 
-    /** Remembers where the player is, for distances in the list. Called every game tick on the client thread. */
-    public void onGameTick() {
+    /** Remembers where the player is, for distances in the list. */
+    @Subscribe
+    public void onGameTick(GameTick tick) {
         if (client.getLocalPlayer() != null) {
             playerLocation = client.getLocalPlayer().getWorldLocation();
         }
     }
 
-    /** Called on the client thread whenever a game object appears, and again as a star shrinks a size. */
-    public void onObjectSpawned(GameObject object) {
+    /** A star spawns again each time it shrinks a size. */
+    @Subscribe
+    public void onGameObjectSpawned(GameObjectSpawned event) {
+        GameObject object = event.getGameObject();
         Integer size = STAR_SIZES.get(object.getId());
         if (size == null) {
             return;
@@ -103,9 +110,13 @@ public class ShootingStarService {
         }
     }
 
-    public void onObjectDespawned(GameObject object) {
+    /** A shrinking star can spawn its next size before the old one despawns, so only the size showing clears it. */
+    @Subscribe
+    public void onGameObjectDespawned(GameObjectDespawned event) {
+        GameObject object = event.getGameObject();
         ShootingStarData star = nearbyStar;
-        if (star != null && STAR_SIZES.containsKey(object.getId())
+        Integer size = STAR_SIZES.get(object.getId());
+        if (star != null && size != null && size == star.getLevel()
                 && object.getWorldLocation().getX() == star.getX() && object.getWorldLocation().getY() == star.getY()) {
             nearbyStar = null;
             onNearbyStar.accept(null);

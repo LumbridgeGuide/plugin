@@ -8,9 +8,16 @@ import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
 import net.runelite.api.Skill;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.StatChanged;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.eventbus.Subscribe;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -41,7 +48,8 @@ public class TileProgressTracker {
 
     private static final Pattern KILL_COUNT_MESSAGE =
             Pattern.compile("Your (.+?) (?:kill|harvest|lap|completion) count is: ?([\\d,]+)");
-    private static final String BASELINE_KEY_PREFIX = "tileProgressBaseline.";
+    /** Baselines are kept in the RuneScape profile config under this prefix, one entry per board. */
+    public static final String BASELINE_KEY_PREFIX = "tileProgressBaseline.";
     private static final Duration REPORT_INTERVAL = Duration.ofMinutes(1);
     private static final Type BASELINE_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
 
@@ -89,12 +97,13 @@ public class TileProgressTracker {
         return config.trackTileProgress();
     }
 
-    /** Reads XP tiles again. Called on the client thread when a stat changes and when the player logs in. */
-    public void onStatsChanged() {
+    /** Every skill reports a change as the player logs in, so this also takes the first reading after login. */
+    @Subscribe
+    public void onStatChanged(StatChanged event) {
         if (!config.trackTileProgress()) {
             return;
         }
-        for (PluginBoardData board : runningBoards()) {
+        for (PluginBoardData board : boardDataService.getRunningBoards()) {
             for (PluginTileData tile : tiles(board)) {
                 if (!"skill_xp".equals(tile.getType())) {
                     continue;
@@ -104,16 +113,16 @@ public class TileProgressTracker {
         }
     }
 
-    /** Reads a kill count chat message. Called on the client thread for game messages. */
-    public void onGameMessage(String message) {
-        if (!config.trackTileProgress()) {
+    @Subscribe
+    public void onChatMessage(ChatMessage event) {
+        if (event.getType() != ChatMessageType.GAMEMESSAGE || !config.trackTileProgress()) {
             return;
         }
-        Optional<KillCount> killCount = parseKillCount(message);
+        Optional<KillCount> killCount = parseKillCount(event.getMessage());
         if (killCount.isEmpty()) {
             return;
         }
-        for (PluginBoardData board : runningBoards()) {
+        for (PluginBoardData board : boardDataService.getRunningBoards()) {
             for (PluginTileData tile : tiles(board)) {
                 if ("kill_count".equals(tile.getType()) && tile.getMonsterName() != null
                         && tile.getMonsterName().equalsIgnoreCase(killCount.get().getMonster())) {
@@ -123,9 +132,11 @@ public class TileProgressTracker {
         }
     }
 
-    /** Sends changed progress at most once a minute. Called every game tick. */
-    public void reportIfDue() {
-        if (dirtyTilesByBoard.isEmpty() || Duration.between(lastReport, Instant.now()).compareTo(REPORT_INTERVAL) < 0) {
+    /** Sends changed progress at most once a minute. */
+    @Subscribe
+    public void onGameTick(GameTick tick) {
+        if (dirtyTilesByBoard.isEmpty() || !apiClient.hasApiKey()
+                || Duration.between(lastReport, Instant.now()).compareTo(REPORT_INTERVAL) < 0) {
             return;
         }
         lastReport = Instant.now();
@@ -140,7 +151,13 @@ public class TileProgressTracker {
             }
             apiClient.post("/plugin/bingo/" + boardId + "/progress", Map.of("entries", entries),
                     response -> { },
-                    response -> log.debug("Progress report failed with status {}", response.getStatusCode()));
+                    response -> {
+                        log.debug("Progress report failed with status {}", response.getStatusCode());
+                        if (response.getStatusCode() == -1 || response.getStatusCode() >= 500) {
+                            dirtyTilesByBoard.computeIfAbsent(boardId, id -> ConcurrentHashMap.newKeySet())
+                                    .addAll(tileIds);
+                        }
+                    });
         }
     }
 
@@ -184,28 +201,6 @@ public class TileProgressTracker {
         }
     }
 
-    private List<PluginBoardData> runningBoards() {
-        Instant now = Instant.now();
-        List<PluginBoardData> running = new ArrayList<>();
-        for (PluginBoardData board : boardDataService.getBoards()) {
-            if (isAfter(now, board.getStartsAt()) && !isAfter(now, board.getEndsAt())) {
-                running.add(board);
-            }
-        }
-        return running;
-    }
-
-    private static boolean isAfter(Instant now, String isoInstant) {
-        if (isoInstant == null || isoInstant.isEmpty()) {
-            return false;
-        }
-        try {
-            return !now.isBefore(Instant.parse(isoInstant));
-        } catch (RuntimeException ignored) {
-            return false;
-        }
-    }
-
     private static List<PluginTileData> tiles(PluginBoardData board) {
         return board.getTiles() == null ? List.of() : board.getTiles();
     }
@@ -233,9 +228,12 @@ public class TileProgressTracker {
                 gson.toJson(baselines));
     }
 
-    /** Forgets session progress, for example after switching accounts. */
-    public void reset() {
-        progress.clear();
-        dirtyTilesByBoard.clear();
+    /** Forgets session progress on logout, so switching accounts starts clean. */
+    @Subscribe
+    public void onGameStateChanged(GameStateChanged event) {
+        if (event.getGameState() == GameState.LOGIN_SCREEN) {
+            progress.clear();
+            dirtyTilesByBoard.clear();
+        }
     }
 }

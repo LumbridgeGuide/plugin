@@ -15,9 +15,14 @@ import net.runelite.api.GameState;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
 import net.runelite.api.WorldType;
+import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.StatChanged;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.eventbus.Subscribe;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,6 +30,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -72,8 +78,50 @@ public class AccountSyncService {
         publish();
     }
 
-    /** Call on the first game tick after a real login, when skills and quests have loaded. */
-    public void onLoggedIn() {
+    private static final Set<GameState> LOGGED_OUT_STATES = EnumSet.of(
+            GameState.UNKNOWN,
+            GameState.STARTING,
+            GameState.LOGIN_SCREEN,
+            GameState.LOGIN_SCREEN_AUTHENTICATOR,
+            GameState.LOGGING_IN);
+
+    private boolean awaitingLogin = true;
+    private boolean loginPending;
+
+    /** Called when the plugin starts, which may be while the player is already logged in. */
+    public void startUp() {
+        awaitingLogin = true;
+        loginPending = client.getGameState() == GameState.LOGGED_IN;
+    }
+
+    /**
+     * Hopping worlds passes through loading states without logging out, so only a real logout or login counts. The
+     * login is handled on the next tick, once skills and quests have loaded.
+     */
+    @Subscribe
+    public void onGameStateChanged(GameStateChanged event) {
+        GameState state = event.getGameState();
+        if (LOGGED_OUT_STATES.contains(state)) {
+            if (!awaitingLogin) {
+                loginPending = false;
+                onLoggedOut();
+            }
+            awaitingLogin = true;
+        } else if (state == GameState.LOGGED_IN && awaitingLogin) {
+            awaitingLogin = false;
+            loginPending = true;
+        }
+    }
+
+    @Subscribe
+    public void onGameTick(GameTick tick) {
+        if (loginPending) {
+            loginPending = false;
+            onLoggedIn();
+        }
+    }
+
+    private void onLoggedIn() {
         message = null;
         lastSynced = null;
         loadAccount(config.syncOnLoginLogout());
@@ -105,7 +153,7 @@ public class AccountSyncService {
                 this::onFailure);
     }
 
-    public void onLoggedOut() {
+    private void onLoggedOut() {
         AccountSyncPayload snapshot = latest;
         if (snapshot != null && config.syncOnLoginLogout() && "LINKED".equals(linkStatus)) {
             send(snapshot, false);
@@ -117,16 +165,20 @@ public class AccountSyncService {
         publish();
     }
 
-    /** Call from the client thread on every stat change. */
-    public void onStatChanged() {
+    @Subscribe
+    public void onStatChanged(StatChanged event) {
         AccountSyncPayload snapshot = latest;
         if (snapshot != null) {
             latest = snapshot.toBuilder().skills(readSkills()).build();
         }
     }
 
-    /** Call from the client thread after a quest is completed. */
-    public void onQuestPointsChanged() {
+    /** Quest points change when a quest is completed. */
+    @Subscribe
+    public void onVarbitChanged(VarbitChanged event) {
+        if (event.getVarpId() != VarPlayerID.QP) {
+            return;
+        }
         AccountSyncPayload snapshot = latest;
         if (snapshot != null) {
             latest = snapshot.toBuilder().quests(readQuests()).questPoints(readQuestPoints()).build();

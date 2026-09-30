@@ -15,9 +15,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /** Board data is cached on disk so the panel has boards to show before the first refresh finishes. */
 @Slf4j
@@ -44,6 +46,25 @@ public class BoardDataService {
             return Collections.emptyList();
         }
         return Collections.unmodifiableList(cachedData.getBoards());
+    }
+
+    /** Boards that have started and not yet ended, the only ones progress and proof can count towards. */
+    public List<PluginBoardData> getRunningBoards() {
+        Instant now = Instant.now();
+        return getBoards().stream()
+                .filter(board -> reached(now, board.getStartsAt()) && !reached(now, board.getEndsAt()))
+                .collect(Collectors.toList());
+    }
+
+    private static boolean reached(Instant now, String isoInstant) {
+        if (isoInstant == null || isoInstant.isEmpty()) {
+            return false;
+        }
+        try {
+            return !now.isBefore(Instant.parse(isoInstant));
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     public Optional<PluginBoardData> getBoardById(String boardId) {

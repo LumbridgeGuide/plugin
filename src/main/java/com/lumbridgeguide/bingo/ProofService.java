@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
+import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.NpcLootReceived;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.game.ItemVariationMapping;
@@ -34,7 +36,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -92,13 +93,14 @@ public class ProofService {
         onOffer = listener;
     }
 
-    /** Checks a batch of loot against the open item drop tiles. Called on the client thread. */
-    public void onLoot(Collection<ItemStack> items) {
+    /** Checks each batch of NPC loot against the open item drop tiles. */
+    @Subscribe
+    public void onNpcLootReceived(NpcLootReceived event) {
         Set<Integer> dropped = new HashSet<>();
-        for (ItemStack item : items) {
+        for (ItemStack item : event.getItems()) {
             dropped.add(ItemVariationMapping.map(itemManager.canonicalize(item.getId())));
         }
-        for (PluginBoardData board : boardDataService.getBoards()) {
+        for (PluginBoardData board : boardDataService.getRunningBoards()) {
             for (PluginTileData tile : board.getTiles() == null ? List.<PluginTileData>of() : board.getTiles()) {
                 if ("item_drop".equals(tile.getType()) && matches(tile, dropped)) {
                     offer(board, tile, "Drop matched a tile");

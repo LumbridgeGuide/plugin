@@ -7,8 +7,10 @@ import com.lumbridgeguide.notifications.data.NotificationData;
 import com.lumbridgeguide.notifications.data.NotificationPageData;
 import com.lumbridgeguide.notifications.data.UnreadCountData;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.events.GameTick;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
+import net.runelite.client.eventbus.Subscribe;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,7 +36,7 @@ public class InboxService {
     private final Gson gson;
 
     private Instant lastPoll = Instant.EPOCH;
-    private int unreadCount = -1;
+    private volatile int unreadCount = -1;
     private IntConsumer onUnreadCount = count -> { };
 
     @Inject
@@ -53,8 +55,9 @@ public class InboxService {
         }
     }
 
-    /** Checks the unread count once a minute. Called every game tick. */
-    public void pollIfDue() {
+    /** Checks the unread count once a minute. */
+    @Subscribe
+    public void onGameTick(GameTick tick) {
         if (!apiClient.hasApiKey() || Duration.between(lastPoll, Instant.now()).compareTo(POLL_INTERVAL) < 0) {
             return;
         }
