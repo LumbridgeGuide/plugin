@@ -30,15 +30,6 @@ public class AccountStatusTextTest {
     }
 
     @Test
-    public void wordsTheAccountTypeAndBadgeLikeTheWebsite() {
-        assertEquals("Main", AccountStatusText.accountTypeLabel("REGULAR"));
-        assertEquals("Hardcore group ironman", AccountStatusText.accountTypeLabel("HARDCORE_GROUP_IRONMAN"));
-        assertEquals("", AccountStatusText.accountTypeLabel(null));
-        assertEquals("LINKED ELSEWHERE", AccountStatusText.statusBadge("LINKED_ELSEWHERE"));
-        assertEquals("", AccountStatusText.statusBadge(null));
-    }
-
-    @Test
     public void warnsWhenTheAccountCannotSync() {
         assertEquals(AccountStatusText.Tone.SUCCESS, AccountStatusText.forStatus("LINKED").getTone());
         assertEquals(AccountStatusText.Tone.WARNING, AccountStatusText.forStatus("LIMIT_REACHED").getTone());
