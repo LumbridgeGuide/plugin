@@ -63,6 +63,7 @@ public class BingoTabPanel extends JPanel {
     private final StandingsPanel activityPanel;
 
     private int currentIndex;
+    private int shownOffers;
 
     public BingoTabPanel(
             BoardDataService boardDataService,
@@ -159,9 +160,13 @@ public class BingoTabPanel extends JPanel {
         overviewTop.add(Box.createVerticalStrut(10));
         overviewTop.add(viewTabs);
         overviewRoot.add(overviewTop, BorderLayout.NORTH);
-        proofService.setOnOffer(offer -> SwingUtilities.invokeLater(() -> {
-            proofOffer.show(offer);
-            cards.show(this, OVERVIEW_CARD);
+        proofService.setOnQueueChanged(queue -> SwingUtilities.invokeLater(() -> {
+            boolean grew = queue.size() > shownOffers;
+            shownOffers = queue.size();
+            proofOffer.showQueue(queue);
+            if (grew) {
+                cards.show(this, OVERVIEW_CARD);
+            }
         }));
         overviewRoot.add(views, BorderLayout.CENTER);
 

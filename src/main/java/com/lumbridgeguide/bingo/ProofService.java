@@ -15,6 +15,10 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
+import net.runelite.api.Skill;
+import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.eventbus.Subscribe;
@@ -45,15 +49,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
 @Slf4j
 @Singleton
 public class ProofService {
 
+    /** A screenshot ready to send as proof for one tile. */
     @Value
     public static class Offer {
+        String id;
         PluginBoardData board;
         PluginTileData tile;
         String reason;
@@ -62,6 +73,7 @@ public class ProofService {
         long accountHash;
     }
 
+    private static final int PRUNE_EVERY_TICKS = 100;
     private static final DateTimeFormatter STAMP_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final Color STAMP_BACKGROUND = new Color(0, 0, 0, 190);
     private static final Color STAMP_ACCENT = new Color(0xE07A3A);
@@ -78,16 +90,24 @@ public class ProofService {
     private final Client client;
     private final Gson gson;
 
-    private final Set<String> offeredTiles = new HashSet<>();
+    private final ProofOfferStore store;
+    private final ScheduledExecutorService executor;
 
+    private final Set<String> offeredTiles = ConcurrentHashMap.newKeySet();
+    private final List<Offer> queue = new CopyOnWriteArrayList<>();
+    private boolean restored;
+    private int ticksSincePrune;
+
+    /** The offers waiting to be sent, oldest first. Called on any thread whenever the queue changes. */
     @Setter
-    private Consumer<Offer> onOffer = offer -> { };
+    private Consumer<List<Offer>> onQueueChanged = offers -> { };
 
     @Inject
     public ProofService(LumbridgeGuideConfig config, BoardDataService boardDataService,
                         LumbridgeGuideClient apiClient, DrawManager drawManager, ItemManager itemManager,
                         ChatMessageManager chatMessageManager, TileProgressTracker progressTracker,
-                        SkillIconManager skillIconManager, Client client, Gson gson) {
+                        SkillIconManager skillIconManager, Client client, ProofOfferStore store,
+                        ScheduledExecutorService executor, Gson gson) {
         this.config = config;
         this.boardDataService = boardDataService;
         this.apiClient = apiClient;
@@ -97,6 +117,8 @@ public class ProofService {
         this.progressTracker = progressTracker;
         this.skillIconManager = skillIconManager;
         this.client = client;
+        this.store = store;
+        this.executor = executor;
         this.gson = gson;
         progressTracker.setOnTargetReached((board, tile) -> offer(board, tile,
                 "kill_count".equals(tile.getType()) ? "Kill count reached" : "XP target reached"));
@@ -119,6 +141,105 @@ public class ProofService {
 
     public void captureManually(PluginBoardData board, PluginTileData tile) {
         capture(board, tile, "Proof for this tile");
+    }
+
+    public List<Offer> getQueue() {
+        return List.copyOf(queue);
+    }
+
+    /** Drops an offer the player doesn't want to send, here and on disk. */
+    public void dismiss(Offer offer) {
+        remove(offer);
+    }
+
+    /**
+     * Offers saved before the client last closed come back once the player is in game and the boards have loaded.
+     * Offers whose board has ended, or whose tile the team has claimed some other way, are dropped as they're found.
+     */
+    @Subscribe
+    public void onGameTick(GameTick tick) {
+        if (!restored && boardDataService.hasCachedData()) {
+            restored = true;
+            long accountHash = client.getAccountHash();
+            executor.execute(() -> restore(accountHash));
+        }
+        if (++ticksSincePrune >= PRUNE_EVERY_TICKS) {
+            ticksSincePrune = 0;
+            queue.stream().filter(offer -> current(offer.getBoard().getId(), offer.getTile().getId()).isEmpty())
+                    .forEach(this::remove);
+        }
+    }
+
+    /** The queue belongs to the account that was logged in, so it is cleared on logout and restored on login. */
+    @Subscribe
+    public void onGameStateChanged(GameStateChanged event) {
+        if (event.getGameState() == GameState.LOGIN_SCREEN) {
+            restored = false;
+            offeredTiles.clear();
+            queue.clear();
+            onQueueChanged.accept(List.of());
+        }
+    }
+
+    private void restore(long accountHash) {
+        for (ProofOfferStore.Loaded loaded : store.load(accountHash)) {
+            ProofOfferStore.Saved saved = loaded.getSaved();
+            Optional<Offer> offer = current(saved.getBoardId(), saved.getTileId()).map(boardAndTile -> new Offer(
+                    saved.getId(),
+                    boardAndTile.getKey(),
+                    boardAndTile.getValue(),
+                    saved.getReason(),
+                    loaded.getScreenshot(),
+                    xpOf(saved),
+                    saved.getAccountHash()));
+            if (offer.isEmpty() || queue.stream().anyMatch(queued -> queued.getId().equals(saved.getId()))) {
+                if (offer.isEmpty()) {
+                    store.delete(accountHash, saved.getId());
+                }
+                continue;
+            }
+            offeredTiles.add(saved.getBoardId() + saved.getTileId());
+            queue.add(offer.get());
+        }
+        onQueueChanged.accept(getQueue());
+    }
+
+    private static TileProgressTracker.XpReading xpOf(ProofOfferStore.Saved saved) {
+        if (saved.getXpSkill() == null || saved.getXpTotal() == null) {
+            return null;
+        }
+        try {
+            return new TileProgressTracker.XpReading(
+                    Skill.valueOf(saved.getXpSkill()), saved.getXpGained(), saved.getXpTotal());
+        } catch (IllegalArgumentException unknownSkill) {
+            return null;
+        }
+    }
+
+    /** The board and tile as the latest sync has them, only while the board runs and the team still needs the tile. */
+    private Optional<Map.Entry<PluginBoardData, PluginTileData>> current(String boardId, String tileId) {
+        return boardDataService.getRunningBoards().stream()
+                .filter(board -> board.getId().equals(boardId))
+                .findFirst()
+                .flatMap(board -> (board.getTiles() == null ? List.<PluginTileData>of() : board.getTiles()).stream()
+                        .filter(tile -> tile.getId().equals(tileId) && isOpenForMyTeam(board, tile))
+                        .findFirst()
+                        .map(tile -> Map.entry(board, tile)));
+    }
+
+    private void enqueue(Offer offer) {
+        queue.add(offer);
+        while (queue.size() > ProofOfferStore.MAX_SAVED) {
+            queue.remove(0);
+        }
+        onQueueChanged.accept(getQueue());
+    }
+
+    private void remove(Offer offer) {
+        if (queue.removeIf(queued -> queued.getId().equals(offer.getId()))) {
+            onQueueChanged.accept(getQueue());
+        }
+        executor.execute(() -> store.delete(offer.getAccountHash(), offer.getId()));
     }
 
     public void submit(Offer offer, Consumer<String> onDone) {
@@ -150,6 +271,7 @@ public class ProofService {
                         boardDataService.refresh();
                     }
                     onDone.accept(result == null ? "Sent" : result.getMessage());
+                    remove(offer);
                 },
                 response -> onDone.accept(failureMessage(response)));
     }
@@ -192,8 +314,9 @@ public class ProofService {
                 .build());
     }
 
+    /** Only a frame of the game itself is proof, never the login or welcome screen. */
     private void capture(PluginBoardData board, PluginTileData tile, String reason) {
-        if (board.getVerificationCode() == null) {
+        if (board.getVerificationCode() == null || client.getGameState() != GameState.LOGGED_IN) {
             return;
         }
         TileProgressTracker.XpReading xp = "skill_xp".equals(tile.getType())
@@ -206,7 +329,18 @@ public class ProofService {
             if (xp != null) {
                 drawXpCard(screenshot, xp, tile.getXpTarget(), icon);
             }
-            onOffer.accept(new Offer(board, tile, reason, screenshot, xp, accountHash));
+            Offer offer = new Offer(UUID.randomUUID().toString(), board, tile, reason, screenshot, xp, accountHash);
+            enqueue(offer);
+            executor.execute(() -> store.save(new ProofOfferStore.Saved(
+                    offer.getId(),
+                    board.getId(),
+                    tile.getId(),
+                    reason,
+                    xp == null ? null : xp.getSkill().name(),
+                    xp == null ? null : xp.getGained(),
+                    xp == null ? null : xp.getTotal(),
+                    accountHash,
+                    System.currentTimeMillis()), screenshot));
         });
     }
 

@@ -77,6 +77,7 @@ public class TileProgressTracker {
     private final Map<String, Long> progress = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> dirtyTilesByBoard = new ConcurrentHashMap<>();
     private Instant lastReport = Instant.EPOCH;
+    private volatile boolean seedingAfterLogin = true;
     private BiConsumer<PluginBoardData, PluginTileData> onTargetReached = (board, tile) -> { };
 
     @Inject
@@ -114,7 +115,11 @@ public class TileProgressTracker {
         return config.trackTileProgress();
     }
 
-    /** Every skill reports a change as the player logs in, so this also takes the first reading after login. */
+    /**
+     * Every skill reports a change as the player logs in, so this also takes the first reading after login. Readings
+     * from before the first game tick only seed progress: a target already reached in an earlier session is not a new
+     * completion, and offering it again would screenshot the welcome screen.
+     */
     @Subscribe
     public void onStatChanged(StatChanged event) {
         if (!config.trackTileProgress()) {
@@ -125,7 +130,8 @@ public class TileProgressTracker {
                 if (!"skill_xp".equals(tile.getType())) {
                     continue;
                 }
-                skillOf(tile).ifPresent(skill -> record(board, tile, client.getSkillExperience(skill), 0));
+                skillOf(tile).ifPresent(skill ->
+                        record(board, tile, client.getSkillExperience(skill), 0, !seedingAfterLogin));
             }
         }
     }
@@ -143,7 +149,7 @@ public class TileProgressTracker {
             for (PluginTileData tile : tiles(board)) {
                 if ("kill_count".equals(tile.getType()) && tile.getMonsterName() != null
                         && tile.getMonsterName().equalsIgnoreCase(killCount.get().getMonster())) {
-                    record(board, tile, killCount.get().getCount(), 1);
+                    record(board, tile, killCount.get().getCount(), 1, true);
                 }
             }
         }
@@ -152,6 +158,7 @@ public class TileProgressTracker {
     /** Sends changed progress at most once a minute. */
     @Subscribe
     public void onGameTick(GameTick tick) {
+        seedingAfterLogin = false;
         if (dirtyTilesByBoard.isEmpty() || !apiClient.hasApiKey()
                 || Duration.between(lastReport, Instant.now()).compareTo(REPORT_INTERVAL) < 0) {
             return;
@@ -197,7 +204,8 @@ public class TileProgressTracker {
      * Records a reading for a tile. The first reading on a board sets the baseline, less {@code alreadyCounted}: a
      * kill count message arrives after the kill, so that kill already counts towards the tile.
      */
-    private void record(PluginBoardData board, PluginTileData tile, long reading, long alreadyCounted) {
+    private void record(
+            PluginBoardData board, PluginTileData tile, long reading, long alreadyCounted, boolean mayComplete) {
         Map<String, Long> baselines = baselines(board.getId());
         Long baseline = baselines.get(tile.getId());
         if (baseline == null) {
@@ -213,7 +221,7 @@ public class TileProgressTracker {
         long target = "kill_count".equals(tile.getType())
                 ? (tile.getKillCount() == null ? 0 : tile.getKillCount())
                 : tile.getXpTarget();
-        if (target > 0 && value >= target && (previous == null || previous < target)) {
+        if (mayComplete && target > 0 && value >= target && (previous == null || previous < target)) {
             onTargetReached.accept(board, tile);
         }
     }
@@ -251,6 +259,7 @@ public class TileProgressTracker {
         if (event.getGameState() == GameState.LOGIN_SCREEN) {
             progress.clear();
             dirtyTilesByBoard.clear();
+            seedingAfterLogin = true;
         }
     }
 }
