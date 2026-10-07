@@ -167,6 +167,7 @@ public class ProofService {
         }
         if (++ticksSincePrune >= PRUNE_EVERY_TICKS) {
             ticksSincePrune = 0;
+            rearmRejected();
             queue.stream().filter(offer -> current(offer.getBoard().getId(), offer.getTile().getId()).isEmpty())
                     .forEach(this::remove);
         }
@@ -180,6 +181,22 @@ public class ProofService {
             offeredTiles.clear();
             queue.clear();
             onQueueChanged.accept(List.of());
+        }
+    }
+
+    /**
+     * Proof the owner turned down frees the tile up again: completing it again, such as another drop or kill, offers
+     * fresh proof. Proof already waiting in the queue keeps the tile from being offered twice.
+     */
+    private void rearmRejected() {
+        for (PluginBoardData board : boardDataService.getRunningBoards()) {
+            for (PluginTileData tile : board.getTiles() == null ? List.<PluginTileData>of() : board.getTiles()) {
+                String key = board.getId() + tile.getId();
+                boolean queued = queue.stream().anyMatch(offer -> offer.getTile().getId().equals(tile.getId()));
+                if (tile.isProofRejected() && !queued && offeredTiles.remove(key)) {
+                    progressTracker.rearm(tile.getId());
+                }
+            }
         }
     }
 
@@ -269,9 +286,7 @@ public class ProofService {
         apiClient.postImage("/plugin/bingo/" + offer.getBoard().getId() + "/submissions", fields, "image", png,
                 response -> {
                     SubmissionResultData result = gson.fromJson(response.getBody(), SubmissionResultData.class);
-                    if (result != null && result.isClaimed()) {
-                        boardDataService.refresh();
-                    }
+                    boardDataService.refresh();
                     onDone.accept(result == null ? "Sent" : result.getMessage());
                     remove(offer);
                 },
@@ -305,7 +320,8 @@ public class ProofService {
     }
 
     private void offer(PluginBoardData board, PluginTileData tile, String reason) {
-        if (!config.offerProof() || !isOpenForMyTeam(board, tile) || !offeredTiles.add(board.getId() + tile.getId())) {
+        if (!config.offerProof() || !isOpenForMyTeam(board, tile) || tile.isProofPending()
+                || !offeredTiles.add(board.getId() + tile.getId())) {
             return;
         }
         popup.show("Bingo tile complete!", tile.getTitle() + "<br>" + board.getTitle(),

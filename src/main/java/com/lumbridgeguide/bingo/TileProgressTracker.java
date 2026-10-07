@@ -111,6 +111,11 @@ public class TileProgressTracker {
         });
     }
 
+    /** Forgets that a tile's target was reached, so the next reading at or past it counts as a completion again. */
+    public void rearm(String tileId) {
+        progress.remove(tileId);
+    }
+
     public boolean isTracking() {
         return config.trackTileProgress();
     }

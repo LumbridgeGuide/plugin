@@ -111,6 +111,12 @@ class TileRowPanel extends JPanel {
             }
             summary.append(mine ? "Your team" : "Claimed");
         }
+        if (!mine && (tile.isProofPending() || tile.isProofRejected())) {
+            if (summary.length() > 0) {
+                summary.append("  ·  ");
+            }
+            summary.append(tile.isProofPending() ? "Proof waiting for review" : "Proof not accepted");
+        }
         return summary.toString();
     }
 }
