@@ -59,6 +59,14 @@ public class TileProgressTracker {
         long count;
     }
 
+    /** A skill's XP for XP proof: what tracking counted since its baseline, and the skill's total XP now. */
+    @Value
+    public static class XpReading {
+        Skill skill;
+        Long gained;
+        long total;
+    }
+
     private final Client client;
     private final ConfigManager configManager;
     private final LumbridgeGuideConfig config;
@@ -91,6 +99,15 @@ public class TileProgressTracker {
     public OptionalLong progressFor(String tileId) {
         Long value = progress.get(tileId);
         return value == null ? OptionalLong.empty() : OptionalLong.of(value);
+    }
+
+    /** The player's XP on an XP tile right now. Gained is missing when tracking never took a baseline for the tile. */
+    public Optional<XpReading> xpReading(PluginBoardData board, PluginTileData tile) {
+        return skillOf(tile).map(skill -> {
+            long total = client.getSkillExperience(skill);
+            Long baseline = baselines(board.getId()).get(tile.getId());
+            return new XpReading(skill, baseline == null ? null : Math.max(0, total - baseline), total);
+        });
     }
 
     public boolean isTracking() {
