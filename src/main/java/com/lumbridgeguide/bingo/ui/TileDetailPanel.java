@@ -16,6 +16,7 @@ import net.runelite.api.Skill;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.util.AsyncBufferedImage;
+import net.runelite.client.util.LinkBrowser;
 
 import javax.swing.Box;
 import javax.swing.ImageIcon;
@@ -157,10 +158,19 @@ public class TileDetailPanel extends JPanel {
         }
     }
 
-    /** Any tile the viewer's team has not claimed can have proof sent by hand, from a screenshot taken now. */
+    /**
+     * Any tile the viewer's team has not claimed can have proof sent by hand, from a screenshot taken now. A tile the
+     * team has claimed links to its accepted proof on the website instead.
+     */
     private void addSendProof(PluginTileData tile, PluginBoardData board) {
         PluginTeamData team = board.getMyTeam();
         boolean mine = team != null && tile.isClaimed() && team.getId().equals(tile.getClaimedByTeamId());
+        if (mine && board.getWebUrl() != null && !board.getWebUrl().isEmpty()) {
+            JButton openProof = Components.linkButton("Open proof on the website  ›");
+            openProof.addActionListener(event -> LinkBrowser.browse(board.getWebUrl() + "?tile=" + tile.getId()));
+            addRow(openProof, 14);
+            return;
+        }
         if (team == null || mine || board.getVerificationCode() == null) {
             return;
         }
