@@ -6,11 +6,13 @@ import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.notifications.data.NotificationData;
 import com.lumbridgeguide.notifications.data.NotificationPageData;
 import com.lumbridgeguide.notifications.data.UnreadCountData;
+import com.lumbridgeguide.ui.Theme;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.util.ColorUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -73,8 +75,9 @@ public class InboxService {
                 int fresh = count - unreadCount;
                 chatMessageManager.queue(QueuedMessage.builder()
                         .type(ChatMessageType.CONSOLE)
-                        .runeLiteFormattedMessage("Lumbridge Guide: " + fresh + " new notification"
-                                + (fresh == 1 ? "" : "s") + ". Open the panel's Inbox to see them.")
+                        .runeLiteFormattedMessage(ColorUtil.wrapWithColorTag("[Lumbridge Guide]", Theme.accent())
+                                + " You have " + fresh + " new notification" + (fresh == 1 ? "" : "s")
+                                + ", open the inbox to check!")
                         .build());
             }
             unreadCount = count;
