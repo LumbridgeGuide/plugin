@@ -91,6 +91,7 @@ public class ProofService {
     private final Gson gson;
 
     private final ProofOfferStore store;
+    private final TileCompletePopup popup;
     private final ScheduledExecutorService executor;
 
     private final Set<String> offeredTiles = ConcurrentHashMap.newKeySet();
@@ -107,7 +108,7 @@ public class ProofService {
                         LumbridgeGuideClient apiClient, DrawManager drawManager, ItemManager itemManager,
                         ChatMessageManager chatMessageManager, TileProgressTracker progressTracker,
                         SkillIconManager skillIconManager, Client client, ProofOfferStore store,
-                        ScheduledExecutorService executor, Gson gson) {
+                        TileCompletePopup popup, ScheduledExecutorService executor, Gson gson) {
         this.config = config;
         this.boardDataService = boardDataService;
         this.apiClient = apiClient;
@@ -118,6 +119,7 @@ public class ProofService {
         this.skillIconManager = skillIconManager;
         this.client = client;
         this.store = store;
+        this.popup = popup;
         this.executor = executor;
         this.gson = gson;
         progressTracker.setOnTargetReached((board, tile) -> offer(board, tile,
@@ -306,7 +308,8 @@ public class ProofService {
         if (!config.offerProof() || !isOpenForMyTeam(board, tile) || !offeredTiles.add(board.getId() + tile.getId())) {
             return;
         }
-        capture(board, tile, reason);
+        popup.show("Bingo tile complete!", tile.getTitle() + "<br>" + board.getTitle(),
+                () -> capture(board, tile, reason));
         chatMessageManager.queue(QueuedMessage.builder()
                 .type(ChatMessageType.CONSOLE)
                 .runeLiteFormattedMessage("Lumbridge Guide: " + tile.getTitle()
