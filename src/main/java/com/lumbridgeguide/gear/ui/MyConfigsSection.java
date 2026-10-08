@@ -2,9 +2,7 @@ package com.lumbridgeguide.gear.ui;
 
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.data.OwnedGearConfig;
-import com.lumbridgeguide.ui.Card;
 import com.lumbridgeguide.ui.Components;
-import com.lumbridgeguide.ui.DotIcon;
 import com.lumbridgeguide.ui.Section;
 import com.lumbridgeguide.ui.Theme;
 import com.lumbridgeguide.ui.TimeText;
@@ -14,7 +12,6 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -23,11 +20,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -36,45 +31,24 @@ import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
- * The player's own gear configs from the website, each one click away from a bank tag tab. Importing someone else's
- * config by its code stays on the Bank tab page.
+ * The player's own gear configs from the website, listed like the bingo tiles. Clicking one opens its trip check, where
+ * its bank tag tab is made. Importing someone else's config by its code stays on the Bank tab page.
  */
 class MyConfigsSection extends Section {
 
     private final GearTagService gearTagService;
-    private final Consumer<OwnedGearConfig> onCheck;
-    private final JPanel bankNotice;
+    private final Consumer<OwnedGearConfig> onOpen;
     private final JLabel countLabel;
     private final JTextField filterField;
-    private final JCheckBox includeMissingBox;
     private final JPanel list;
     private final WrapText messageText;
     private final List<ConfigRow> rows = new ArrayList<>();
-    private boolean bankOpen;
     private boolean loaded;
-    private boolean making;
 
-    MyConfigsSection(GearTagService gearTagService, boolean includeMissingByDefault,
-                     Consumer<OwnedGearConfig> onCheck) {
+    MyConfigsSection(GearTagService gearTagService, Consumer<OwnedGearConfig> onOpen) {
         super(0);
         this.gearTagService = gearTagService;
-        this.onCheck = onCheck;
-
-        bankNotice = new JPanel(new BorderLayout()) {
-            @Override
-            protected void paintComponent(Graphics graphics) {
-                graphics.setColor(getBackground());
-                graphics.fillRect(0, 0, getWidth(), getHeight());
-            }
-        };
-        bankNotice.setOpaque(false);
-        bankNotice.setBackground(new Color(Theme.WARNING.getRed(), Theme.WARNING.getGreen(),
-                Theme.WARNING.getBlue(), 26));
-        bankNotice.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.WARNING.darker()), new EmptyBorder(7, 9, 7, 9)));
-        bankNotice.add(Components.statusLine("Open your bank to make a tab.", Theme.WARNING, Theme.TEXT_PRIMARY));
-        bankNotice.setAlignmentX(LEFT_ALIGNMENT);
-        bankNotice.setMaximumSize(new Dimension(Integer.MAX_VALUE, bankNotice.getPreferredSize().height));
+        this.onOpen = onOpen;
 
         countLabel = Components.sectionLabel("Your configs");
         JButton refreshLink = Components.linkButton("↻ Refresh");
@@ -106,9 +80,6 @@ class MyConfigsSection extends Section {
             }
         });
 
-        includeMissingBox = GearForm.checkBox("Include missing items");
-        includeMissingBox.setSelected(includeMissingByDefault);
-
         list = new JPanel();
         list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
         list.setOpaque(false);
@@ -116,26 +87,18 @@ class MyConfigsSection extends Section {
 
         messageText = GearForm.status(" ");
 
-        Card card = new Card(12);
-        card.add(header);
-        card.add(Box.createVerticalStrut(8));
-        card.add(filterField);
-        card.add(Box.createVerticalStrut(8));
-        card.add(includeMissingBox);
-        card.add(Box.createVerticalStrut(4));
-        card.add(list);
-        card.add(messageText);
-
         WrapText help = Components.wrapped("Configs you own on the website. Click one to check what you carry "
-                + "against it. For anyone else's config, paste its code on the Bank tab page.",
+                + "against it and make its bank tab. For anyone else's config, paste its code on the Bank tab page.",
                 Components.CONTENT_WIDTH, 10f, Font.PLAIN, Theme.TEXT_MUTED);
 
-        add(bankNotice);
-        add(Box.createVerticalStrut(10));
-        add(card);
+        add(header);
+        add(Box.createVerticalStrut(8));
+        add(filterField);
+        add(Box.createVerticalStrut(6));
+        add(list);
+        add(messageText);
         add(Box.createVerticalStrut(8));
         add(help);
-        setBankOpen(false);
     }
 
     /** Loads the list the first time the subtab is opened, so players who never use it cost no request. */
@@ -143,14 +106,6 @@ class MyConfigsSection extends Section {
         if (!loaded) {
             load();
         }
-    }
-
-    void setBankOpen(boolean open) {
-        bankOpen = open;
-        bankNotice.setVisible(!open);
-        rows.forEach(ConfigRow::refreshEnabled);
-        revalidate();
-        repaint();
     }
 
     private void load() {
@@ -192,97 +147,61 @@ class MyConfigsSection extends Section {
         repaint();
     }
 
-    /** One config: its name, how many items and when it changed, and the button that makes its tab. */
+    private static String detailText(OwnedGearConfig config) {
+        String when = TimeText.ago(config.getUpdatedAt());
+        return config.getItemCount() + " items" + (when.isEmpty() ? "" : "  ·  " + when);
+    }
+
+    /** One config, drawn like a bingo tile row: its name, item count and last change over a hairline rule. */
     private final class ConfigRow extends JPanel {
 
         private final OwnedGearConfig config;
-        private final JLabel detailLabel;
-        private final JButton makeButton;
 
         private ConfigRow(OwnedGearConfig config) {
-            super(new BorderLayout(8, 0));
+            super(new BorderLayout(7, 0));
             this.config = config;
+            setBackground(Theme.SURFACE_RAISED);
             setOpaque(false);
             setAlignmentX(LEFT_ALIGNMENT);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_SUBTLE), new EmptyBorder(7, 1, 7, 1)));
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_SUBTLE), new EmptyBorder(7, 2, 7, 2)));
 
             JPanel text = new JPanel();
             text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
             text.setOpaque(false);
             JLabel name = Components.label(config.getName(), 12f, Font.PLAIN, Theme.TEXT_PRIMARY);
-            detailLabel = Components.label(defaultDetail(), 10f, Font.PLAIN, Theme.TEXT_MUTED);
+            JLabel detail = Components.label(detailText(config), 10f, Font.PLAIN, Theme.TEXT_MUTED);
+            detail.setBorder(new EmptyBorder(1, 0, 0, 0));
             text.add(name);
-            text.add(Box.createVerticalStrut(1));
-            text.add(detailLabel);
-            text.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            text.setToolTipText("Trip check: compare what you wear and carry with this config");
-            text.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent mouseEvent) {
-                    onCheck.accept(config);
-                }
-            });
-
-            makeButton = Components.rowButton("Make tab");
-            makeButton.addActionListener(event -> make());
-            JPanel buttonHolder = new JPanel(new BorderLayout());
-            buttonHolder.setOpaque(false);
-            buttonHolder.add(makeButton, BorderLayout.CENTER);
+            text.add(detail);
 
             add(text, BorderLayout.CENTER);
-            add(buttonHolder, BorderLayout.EAST);
-            refreshEnabled();
+            add(Components.label("›", 13f, Font.PLAIN, Theme.TEXT_MUTED), BorderLayout.EAST);
+
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent mouseEvent) {
+                    setOpaque(true);
+                    repaint();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent mouseEvent) {
+                    setOpaque(false);
+                    repaint();
+                }
+
+                @Override
+                public void mouseClicked(MouseEvent mouseEvent) {
+                    onOpen.accept(config);
+                }
+            });
         }
 
         @Override
         public Dimension getMaximumSize() {
             return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
-        }
-
-        private String defaultDetail() {
-            String when = TimeText.ago(config.getUpdatedAt());
-            return config.getItemCount() + " items" + (when.isEmpty() ? "" : "  ·  " + when);
-        }
-
-        private void refreshEnabled() {
-            makeButton.setEnabled(bankOpen && !making);
-        }
-
-        private void make() {
-            if (!bankOpen || making) {
-                return;
-            }
-            making = true;
-            makeButton.setText("Making...");
-            rows.forEach(ConfigRow::refreshEnabled);
-            gearTagService.generate(config.getId(), includeMissingBox.isSelected(),
-                    result -> SwingUtilities.invokeLater(() -> finish(result)));
-        }
-
-        private void finish(GearTagService.Result result) {
-            making = false;
-            makeButton.setText(result.isSuccess() ? "Remake" : "Make tab");
-            rows.forEach(ConfigRow::refreshEnabled);
-            if (!result.isSuccess()) {
-                showDetail(result.getMessage(), Theme.ERROR, null);
-                return;
-            }
-            List<String> missing = result.getMissingItems();
-            if (missing.isEmpty()) {
-                showDetail("Tab made", Theme.SUCCESS, null);
-            } else {
-                showDetail("Tab made  ·  " + missing.size() + " missing", Theme.SUCCESS,
-                        "Not in your bank: " + String.join(", ", missing));
-            }
-        }
-
-        private void showDetail(String text, Color colour, String tooltip) {
-            detailLabel.setText(text);
-            detailLabel.setForeground(colour);
-            detailLabel.setIcon(colour == Theme.ERROR ? new DotIcon(colour) : null);
-            detailLabel.setToolTipText(tooltip);
-            revalidate();
         }
     }
 }

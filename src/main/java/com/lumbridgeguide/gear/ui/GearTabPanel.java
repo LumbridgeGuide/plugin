@@ -15,8 +15,8 @@ import java.awt.CardLayout;
 import java.util.Arrays;
 
 /**
- * The Gear tab: "Bank tab" makes a tag tab from any config's code, "My configs" makes one from the player's own configs
- * in a click, and "Create config" exports what they wear and carry.
+ * The Gear tab: "Bank tab" makes a tag tab from any config's code, "My configs" lists the player's own configs and
+ * opens each one's trip check, where its tab is made, and "Create config" exports what they wear and carry.
  */
 public class GearTabPanel extends JPanel {
 
@@ -39,7 +39,7 @@ public class GearTabPanel extends JPanel {
         CardLayout cards = new CardLayout();
         JPanel display = new JPanel(cards);
         tripCheckPanel = new TripCheckPanel(tripCheckService, gearTagService, () -> cards.show(display, MY_CONFIGS));
-        myConfigsSection = new MyConfigsSection(gearTagService, includeMissingByDefault, config -> {
+        myConfigsSection = new MyConfigsSection(gearTagService, config -> {
             tripCheckPanel.show(config);
             cards.show(display, TRIP_CHECK);
         });
@@ -64,7 +64,6 @@ public class GearTabPanel extends JPanel {
 
     public void setBankOpen(boolean open) {
         bankTabSection.setBankOpen(open);
-        myConfigsSection.setBankOpen(open);
         tripCheckPanel.setBankOpen(open);
     }
 
