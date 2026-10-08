@@ -19,6 +19,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Skill;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.eventbus.Subscribe;
@@ -28,6 +29,7 @@ import net.runelite.client.game.ItemStack;
 import net.runelite.client.game.ItemVariationMapping;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.DrawManager;
+import net.runelite.client.util.Text;
 
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
@@ -88,6 +90,7 @@ public class ProofService {
     private final TileProgressTracker progressTracker;
     private final SkillIconManager skillIconManager;
     private final Client client;
+    private final ClientThread clientThread;
     private final Gson gson;
 
     private final ProofOfferStore store;
@@ -107,8 +110,8 @@ public class ProofService {
     public ProofService(LumbridgeGuideConfig config, BoardDataService boardDataService,
                         LumbridgeGuideClient apiClient, DrawManager drawManager, ItemManager itemManager,
                         ChatMessageManager chatMessageManager, TileProgressTracker progressTracker,
-                        SkillIconManager skillIconManager, Client client, ProofOfferStore store,
-                        TileCompletePopup popup, ScheduledExecutorService executor, Gson gson) {
+                        SkillIconManager skillIconManager, Client client, ClientThread clientThread,
+                        ProofOfferStore store, TileCompletePopup popup, ScheduledExecutorService executor, Gson gson) {
         this.config = config;
         this.boardDataService = boardDataService;
         this.apiClient = apiClient;
@@ -118,6 +121,7 @@ public class ProofService {
         this.progressTracker = progressTracker;
         this.skillIconManager = skillIconManager;
         this.client = client;
+        this.clientThread = clientThread;
         this.store = store;
         this.popup = popup;
         this.executor = executor;
@@ -142,7 +146,7 @@ public class ProofService {
     }
 
     public void captureManually(PluginBoardData board, PluginTileData tile) {
-        capture(board, tile, "Proof for this tile");
+        clientThread.invoke(() -> capture(board, tile, "Proof for this tile"));
     }
 
     public List<Offer> getQueue() {
@@ -261,7 +265,12 @@ public class ProofService {
         executor.execute(() -> store.delete(offer.getAccountHash(), offer.getId()));
     }
 
+    /** Encodes the screenshot off the calling thread, since a full-size PNG takes long enough to stall the panel. */
     public void submit(Offer offer, Consumer<String> onDone) {
+        executor.execute(() -> send(offer, onDone));
+    }
+
+    private void send(Offer offer, Consumer<String> onDone) {
         byte[] png;
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -287,8 +296,8 @@ public class ProofService {
                 response -> {
                     SubmissionResultData result = gson.fromJson(response.getBody(), SubmissionResultData.class);
                     boardDataService.refresh();
-                    onDone.accept(result == null ? "Sent" : result.getMessage());
                     remove(offer);
+                    onDone.accept(result == null ? "Sent" : result.getMessage());
                 },
                 response -> onDone.accept(failureMessage(response)));
     }
@@ -324,11 +333,11 @@ public class ProofService {
                 || !offeredTiles.add(board.getId() + tile.getId())) {
             return;
         }
-        popup.show("Bingo tile complete!", tile.getTitle() + "<br>" + board.getTitle(),
-                () -> capture(board, tile, reason));
+        popup.show("Bingo tile complete!", Text.escapeJagex(tile.getTitle()) + "<br>"
+                + Text.escapeJagex(board.getTitle()), () -> capture(board, tile, reason));
         chatMessageManager.queue(QueuedMessage.builder()
                 .type(ChatMessageType.CONSOLE)
-                .runeLiteFormattedMessage("Lumbridge Guide: " + tile.getTitle()
+                .runeLiteFormattedMessage("Lumbridge Guide: " + Text.escapeJagex(tile.getTitle())
                         + " matches a tile. Open the panel to send proof.")
                 .build());
     }

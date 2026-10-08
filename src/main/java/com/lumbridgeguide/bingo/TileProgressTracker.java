@@ -130,13 +130,12 @@ public class TileProgressTracker {
         if (!config.trackTileProgress()) {
             return;
         }
+        Skill changed = event.getSkill();
         for (PluginBoardData board : boardDataService.getRunningBoards()) {
             for (PluginTileData tile : tiles(board)) {
-                if (!"skill_xp".equals(tile.getType())) {
-                    continue;
+                if ("skill_xp".equals(tile.getType()) && skillOf(tile).filter(changed::equals).isPresent()) {
+                    record(board, tile, event.getXp(), 0, !seedingAfterLogin);
                 }
-                skillOf(tile).ifPresent(skill ->
-                        record(board, tile, client.getSkillExperience(skill), 0, !seedingAfterLogin));
             }
         }
     }

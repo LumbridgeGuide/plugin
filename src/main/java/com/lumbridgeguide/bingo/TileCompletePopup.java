@@ -27,7 +27,8 @@ class TileCompletePopup {
     private static final int RESIZABLE_CLASSIC_SLOT = WidgetUtil.packComponentId(161, 13);
     private static final int RESIZABLE_MODERN_SLOT = WidgetUtil.packComponentId(164, 13);
     private static final int FIXED_SLOT = WidgetUtil.packComponentId(548, 42);
-    private static final int TITLE_COLOUR = 0xFF981F;
+    /** Lumbridge orange, so the popup never passes for the game's own orange-titled notifications. */
+    private static final int TITLE_COLOUR = 0xE07A3A;
     /** How long the popup takes to grow to full size before the screenshot is taken. */
     private static final long OPEN_ANIMATION_MILLIS = 1200;
 
@@ -72,6 +73,9 @@ class TileCompletePopup {
 
     private void closeWhenFinished(WidgetNode node) {
         clientThread.invokeLater(() -> {
+            if (client.getGameState() != GameState.LOGGED_IN) {
+                return true;
+            }
             Widget panel = client.getWidget(NOTIFICATION_INTERFACE, NOTIFICATION_PANEL);
             if (panel != null && panel.getWidth() > 0) {
                 return false;
