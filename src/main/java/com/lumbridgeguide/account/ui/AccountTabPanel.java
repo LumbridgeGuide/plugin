@@ -2,6 +2,7 @@ package com.lumbridgeguide.account.ui;
 
 import com.lumbridgeguide.account.AccountStatusText;
 import com.lumbridgeguide.account.AccountSyncService;
+import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.ui.Badge;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.Card;
@@ -23,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import net.runelite.client.util.LinkBrowser;
 
 /** The RuneScape account that is logged in, whether it is linked, and the button that syncs it. */
 public class AccountTabPanel extends JPanel {
@@ -108,6 +110,11 @@ public class AccountTabPanel extends JPanel {
         add(card);
         add(Box.createVerticalStrut(12));
         add(disclosure);
+
+        JButton privacy = Components.linkButton("Privacy policy");
+        privacy.addActionListener(event -> LinkBrowser.browse(LumbridgeGuideClient.websiteUrl() + "/privacy"));
+        add(Box.createVerticalStrut(4));
+        add(privacy);
 
         accountSyncService.setListener(view -> SwingUtilities.invokeLater(() -> show(view)));
     }

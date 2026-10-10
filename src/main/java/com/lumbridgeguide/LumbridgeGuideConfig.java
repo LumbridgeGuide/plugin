@@ -138,7 +138,7 @@ public interface LumbridgeGuideConfig extends Config {
             position = 0
     )
     default boolean showStarsTab() {
-        return true;
+        return false;
     }
 
     @ConfigItem(
@@ -149,7 +149,7 @@ public interface LumbridgeGuideConfig extends Config {
             position = 1
     )
     default boolean promptNearbyStars() {
-        return true;
+        return false;
     }
 
     @ConfigSection(
