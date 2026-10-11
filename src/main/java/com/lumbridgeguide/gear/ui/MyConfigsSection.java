@@ -31,8 +31,9 @@ import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
- * The player's own gear configs from the website, listed like the bingo tiles. Clicking one opens its trip check, where
- * its bank tag tab is made. Importing someone else's config by its code stays on the Bank tab page.
+ * The player's own gear configs from the website, listed like the bingo tiles. Each row's button makes the config's bank
+ * tag tab while the bank is open, and clicking the row opens its trip check. Importing someone else's config by its
+ * code stays on the Bank tab page.
  */
 class MyConfigsSection extends Section {
 
@@ -42,25 +43,29 @@ class MyConfigsSection extends Section {
     private final JTextField filterField;
     private final JPanel list;
     private final WrapText messageText;
+    private final JLabel bankNote;
     private final List<ConfigRow> rows = new ArrayList<>();
     private boolean loaded;
+    private boolean bankOpen;
 
     MyConfigsSection(GearTagService gearTagService, Consumer<OwnedGearConfig> onOpen) {
         super(0);
         this.gearTagService = gearTagService;
         this.onOpen = onOpen;
 
-        countLabel = Components.sectionLabel("Your configs");
-        JButton refreshLink = Components.linkButton("↻ Refresh");
-        refreshLink.setForeground(Theme.TEXT_SECONDARY);
-        refreshLink.setFont(Components.font(10f, Font.PLAIN));
+        countLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        JButton refreshLink = Components.textLink("Refresh");
         refreshLink.addActionListener(event -> load());
-        JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
-        header.setAlignmentX(LEFT_ALIGNMENT);
-        header.add(countLabel, BorderLayout.WEST);
-        header.add(refreshLink, BorderLayout.EAST);
-        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, header.getPreferredSize().height));
+        JPanel trailing = new JPanel();
+        trailing.setLayout(new BoxLayout(trailing, BoxLayout.X_AXIS));
+        trailing.setOpaque(false);
+        trailing.add(countLabel);
+        trailing.add(Box.createHorizontalStrut(8));
+        trailing.add(refreshLink);
+        JPanel header = Components.sectionHeader("Your configs", trailing);
+
+        bankNote = Components.statusLine("Open your bank to make a tab", Theme.WARNING, Theme.WARNING);
+        bankNote.setFont(Components.font(11f, Font.PLAIN));
 
         filterField = GearForm.textField("Filter configs");
         filterField.getDocument().addDocumentListener(new DocumentListener() {
@@ -87,18 +92,25 @@ class MyConfigsSection extends Section {
 
         messageText = GearForm.status(" ");
 
-        WrapText help = Components.wrapped("Configs you own on the website. Click one to check what you carry "
-                + "against it and make its bank tab. For anyone else's config, paste its code on the Bank tab page.",
-                Components.CONTENT_WIDTH, 10f, Font.PLAIN, Theme.TEXT_MUTED);
-
         add(header);
         add(Box.createVerticalStrut(8));
         add(filterField);
-        add(Box.createVerticalStrut(6));
+        add(Box.createVerticalStrut(8));
+        add(bankNote);
+        add(Box.createVerticalStrut(4));
         add(list);
         add(messageText);
-        add(Box.createVerticalStrut(8));
-        add(help);
+    }
+
+    /** Called on the Swing thread when the bank opens or closes: tabs can only be made with the bank open. */
+    void setBankOpen(boolean open) {
+        bankOpen = open;
+        bankNote.setVisible(!open);
+        for (ConfigRow row : rows) {
+            row.makeTab.setEnabled(open);
+        }
+        revalidate();
+        repaint();
     }
 
     /** Loads the list the first time the subtab is opened, so players who never use it cost no request. */
@@ -124,7 +136,7 @@ class MyConfigsSection extends Section {
             rows.add(row);
             list.add(row);
         }
-        countLabel.setText(("Your configs  ·  " + configs.size()).toUpperCase(Locale.ROOT));
+        countLabel.setText(String.valueOf(configs.size()));
         showMessage(configs.isEmpty()
                 ? "No gear configs yet. Make one on the website or from the Create config page."
                 : null);
@@ -142,6 +154,7 @@ class MyConfigsSection extends Section {
 
     private void showMessage(String message) {
         messageText.setText(message == null ? "" : message);
+        messageText.setForeground(Theme.TEXT_MUTED);
         messageText.setVisible(message != null);
         revalidate();
         repaint();
@@ -152,10 +165,25 @@ class MyConfigsSection extends Section {
         return config.getItemCount() + " items" + (when.isEmpty() ? "" : "  ·  " + when);
     }
 
-    /** One config, drawn like a bingo tile row: its name, item count and last change over a hairline rule. */
+    private void makeTab(ConfigRow row) {
+        row.makeTab.setEnabled(false);
+        row.makeTab.setText("Making...");
+        gearTagService.generate(row.config.getId(), true, result -> SwingUtilities.invokeLater(() -> {
+            row.makeTab.setEnabled(bankOpen);
+            row.makeTab.setText("Make tab");
+            showMessage(row.config.getName() + ": " + result.getMessage());
+            messageText.setForeground(result.isSuccess() ? Theme.SUCCESS : Theme.ERROR);
+        }));
+    }
+
+    /**
+     * One config, drawn like a bingo tile row: its name, item count and last change, and a button that makes its bank
+     * tab, over a hairline rule.
+     */
     private final class ConfigRow extends JPanel {
 
         private final OwnedGearConfig config;
+        private final JButton makeTab;
 
         private ConfigRow(OwnedGearConfig config) {
             super(new BorderLayout(7, 0));
@@ -171,13 +199,21 @@ class MyConfigsSection extends Section {
             text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
             text.setOpaque(false);
             JLabel name = Components.label(config.getName(), 12f, Font.PLAIN, Theme.TEXT_PRIMARY);
-            JLabel detail = Components.label(detailText(config), 10f, Font.PLAIN, Theme.TEXT_MUTED);
+            JLabel detail = Components.label(detailText(config), 11f, Font.PLAIN, Theme.TEXT_MUTED);
             detail.setBorder(new EmptyBorder(1, 0, 0, 0));
             text.add(name);
             text.add(detail);
 
+            makeTab = Components.smallButton("Make tab", false);
+            makeTab.setEnabled(bankOpen);
+            makeTab.setToolTipText("Make this config's bank tab. Your bank has to be open.");
+            makeTab.addActionListener(event -> makeTab(this));
+            JPanel buttonHolder = new JPanel(new java.awt.GridBagLayout());
+            buttonHolder.setOpaque(false);
+            buttonHolder.add(makeTab);
+
             add(text, BorderLayout.CENTER);
-            add(Components.label("›", 13f, Font.PLAIN, Theme.TEXT_MUTED), BorderLayout.EAST);
+            add(buttonHolder, BorderLayout.EAST);
 
             addMouseListener(new MouseAdapter() {
                 @Override

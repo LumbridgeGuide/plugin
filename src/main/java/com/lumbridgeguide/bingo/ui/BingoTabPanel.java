@@ -15,11 +15,9 @@ import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.util.LinkBrowser;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
@@ -27,7 +25,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,7 +39,7 @@ public class BingoTabPanel extends JPanel {
     private static final String DETAIL_CARD = "detail";
     private static final String TILES_VIEW = "Tiles";
     private static final String STANDINGS_VIEW = "Standings";
-    private static final String ACTIVITY_VIEW = "Activity";
+    private static final String CLAIMS_VIEW = "Claims";
 
     private final BoardDataService boardDataService;
     private final LumbridgeGuideConfig config;
@@ -53,14 +51,13 @@ public class BingoTabPanel extends JPanel {
     private final TileDetailPanel detailPanel;
     private final EmptyState emptyState;
     private final JButton emptyRefreshButton;
-    private final JLabel tilesCaption;
     private final JScrollPane listScroll;
     private final JPanel buttonBar;
     private final JButton openButton;
     private final JButton refreshButton;
     private final TabBar viewTabs;
     private final StandingsPanel standingsPanel;
-    private final StandingsPanel activityPanel;
+    private final StandingsPanel claimsPanel;
 
     private int currentIndex;
     private int shownOffers;
@@ -78,9 +75,10 @@ public class BingoTabPanel extends JPanel {
         setLayout(cards);
         setOpaque(false);
 
+        TileIcons icons = new TileIcons(itemManager, skillIconManager);
         navigator = new BoardNavigatorPanel(this::stepBoard);
-        headerPanel = new BoardHeaderPanel();
-        tileList = new TileListPanel();
+        headerPanel = new BoardHeaderPanel(navigator);
+        tileList = new TileListPanel(icons, tileProgressTracker);
 
         emptyRefreshButton = Components.secondaryButton("Refresh");
         emptyRefreshButton.addActionListener(event -> onRefreshClicked());
@@ -89,19 +87,6 @@ public class BingoTabPanel extends JPanel {
         emptyState = new EmptyState("No active boards",
                 "Boards you join on the website show up here once they start.", emptyRefreshButton,
                 openWebsiteButton);
-
-        tilesCaption = Components.sectionLabel("Tiles");
-        tilesCaption.setBorder(new EmptyBorder(0, 0, 2, 0));
-
-        JPanel topSection = new JPanel();
-        topSection.setLayout(new BoxLayout(topSection, BoxLayout.Y_AXIS));
-        topSection.setOpaque(false);
-        navigator.setAlignmentX(LEFT_ALIGNMENT);
-        headerPanel.setAlignmentX(LEFT_ALIGNMENT);
-        topSection.add(headerPanel);
-        topSection.add(navigator);
-        topSection.add(Box.createVerticalStrut(12));
-        topSection.add(tilesCaption);
 
         JPanel listContent = new JPanel(new BorderLayout());
         listContent.setOpaque(false);
@@ -124,7 +109,7 @@ public class BingoTabPanel extends JPanel {
         refreshButton = Components.secondaryButton("Refresh");
         refreshButton.addActionListener(event -> onRefreshClicked());
 
-        buttonBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        buttonBar = new JPanel(new GridLayout(1, 2, 6, 0));
         buttonBar.setOpaque(false);
         buttonBar.setBorder(new EmptyBorder(10, 0, 0, 0));
         buttonBar.add(refreshButton);
@@ -132,21 +117,20 @@ public class BingoTabPanel extends JPanel {
 
         JPanel overview = new JPanel(new BorderLayout());
         overview.setOpaque(false);
-        overview.add(topSection, BorderLayout.NORTH);
         overview.add(listScroll, BorderLayout.CENTER);
         overview.add(buttonBar, BorderLayout.SOUTH);
 
         standingsPanel = new StandingsPanel(StandingsPanel.Mode.STANDINGS);
-        activityPanel = new StandingsPanel(StandingsPanel.Mode.ACTIVITY);
+        claimsPanel = new StandingsPanel(StandingsPanel.Mode.CLAIMS);
         CardLayout viewCards = new CardLayout();
         JPanel views = new JPanel(viewCards);
         views.setOpaque(false);
         views.add(overview, TILES_VIEW);
         views.add(scrolling(topAligned(standingsPanel)), STANDINGS_VIEW);
-        views.add(scrolling(topAligned(activityPanel)), ACTIVITY_VIEW);
-        viewTabs = new TabBar(Arrays.asList(TILES_VIEW, STANDINGS_VIEW, ACTIVITY_VIEW), TabBar.Style.TEXT,
+        views.add(scrolling(topAligned(claimsPanel)), CLAIMS_VIEW);
+        viewTabs = new TabBar(Arrays.asList(TILES_VIEW, STANDINGS_VIEW, CLAIMS_VIEW), TabBar.Style.PILL,
                 name -> viewCards.show(views, name));
-        viewTabs.setBorder(new EmptyBorder(0, 0, 10, 0));
+        viewTabs.setBorder(new EmptyBorder(14, 0, 10, 0));
 
         JPanel overviewRoot = new JPanel(new BorderLayout());
         overviewRoot.setOpaque(false);
@@ -155,9 +139,10 @@ public class BingoTabPanel extends JPanel {
         overviewTop.setLayout(new BoxLayout(overviewTop, BoxLayout.Y_AXIS));
         overviewTop.setOpaque(false);
         proofOffer.setAlignmentX(LEFT_ALIGNMENT);
+        headerPanel.setAlignmentX(LEFT_ALIGNMENT);
         viewTabs.setAlignmentX(LEFT_ALIGNMENT);
         overviewTop.add(proofOffer);
-        overviewTop.add(Box.createVerticalStrut(10));
+        overviewTop.add(headerPanel);
         overviewTop.add(viewTabs);
         overviewRoot.add(overviewTop, BorderLayout.NORTH);
         proofService.setOnQueueChanged(queue -> SwingUtilities.invokeLater(() -> {
@@ -170,7 +155,7 @@ public class BingoTabPanel extends JPanel {
         }));
         overviewRoot.add(views, BorderLayout.CENTER);
 
-        detailPanel = new TileDetailPanel(itemManager, skillIconManager, tileProgressTracker, this::closeDetail,
+        detailPanel = new TileDetailPanel(icons, tileProgressTracker, this::closeDetail,
                 (tile, board) -> {
                     closeDetail();
                     proofService.captureManually(board, tile);
@@ -189,7 +174,6 @@ public class BingoTabPanel extends JPanel {
         emptyState.getParent().setVisible(!hasBoards);
         tileList.setVisible(hasBoards);
         headerPanel.setVisible(hasBoards);
-        tilesCaption.setVisible(hasBoards);
         buttonBar.setVisible(hasBoards);
         viewTabs.setVisible(hasBoards);
         openButton.setEnabled(false);
@@ -220,7 +204,7 @@ public class BingoTabPanel extends JPanel {
         headerPanel.update(board);
         tileList.update(board, config.unclaimedFirst(), tile -> openDetail(tile, board));
         standingsPanel.update(board);
-        activityPanel.update(board);
+        claimsPanel.update(board);
         openButton.setEnabled(board.getWebUrl() != null && !board.getWebUrl().isEmpty());
         cards.show(this, OVERVIEW_CARD);
         listScroll.getVerticalScrollBar().setValue(0);

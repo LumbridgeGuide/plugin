@@ -33,7 +33,7 @@ public class ActionButton extends JButton {
         this.kind = kind;
         setFont(FontManager.getRunescapeBoldFont());
         setForeground(kind == Kind.PRIMARY ? Theme.TEXT_INVERSE : Theme.TEXT_PRIMARY);
-        setBorder(new EmptyBorder(7, 14, 7, 14));
+        setBorder(new EmptyBorder(7, 8, 7, 8));
         setContentAreaFilled(false);
         setFocusPainted(false);
         setOpaque(false);

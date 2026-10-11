@@ -1,69 +1,58 @@
 package com.lumbridgeguide.bingo.ui;
 
+import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.Theme;
 import net.runelite.client.ui.FontManager;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.Font;
 import java.util.function.IntConsumer;
 
-/** Steps between the viewer's active boards. Hidden when there is only one. */
+/** Steps between the viewer's active boards, shown as "‹ 1/2 ›" beside the board's name. Hidden when there is one. */
 class BoardNavigatorPanel extends JPanel {
 
     private final JLabel positionLabel;
 
     BoardNavigatorPanel(IntConsumer onStep) {
-        super(new BorderLayout(6, 0));
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         setOpaque(false);
-        setBorder(new EmptyBorder(3, 4, 3, 4));
 
         JButton previousButton = arrowButton("‹");
         JButton nextButton = arrowButton("›");
+        previousButton.setToolTipText("Previous board");
+        nextButton.setToolTipText("Next board");
         previousButton.addActionListener(event -> onStep.accept(-1));
         nextButton.addActionListener(event -> onStep.accept(1));
 
-        positionLabel = new JLabel("", SwingConstants.CENTER);
-        positionLabel.setFont(FontManager.getRunescapeFont());
-        positionLabel.setForeground(Theme.TEXT_SECONDARY);
+        positionLabel = Components.monoLabel("", 10f, Font.PLAIN, Theme.TEXT_MUTED);
+        positionLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
 
-        add(previousButton, BorderLayout.WEST);
-        add(positionLabel, BorderLayout.CENTER);
-        add(nextButton, BorderLayout.EAST);
+        add(previousButton);
+        add(positionLabel);
+        add(nextButton);
     }
 
     void update(int currentIndex, int total) {
-        positionLabel.setText("Board " + (currentIndex + 1) + " of " + total);
+        positionLabel.setText((currentIndex + 1) + "/" + total);
         setVisible(total > 1);
     }
 
     @Override
     public Dimension getMaximumSize() {
-        return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
-    }
-
-    @Override
-    protected void paintComponent(Graphics graphics) {
-        Graphics2D canvas = (Graphics2D) graphics.create();
-        canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        canvas.setColor(Theme.SURFACE_INSET);
-        canvas.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.ARC, Theme.ARC);
-        canvas.dispose();
+        return getPreferredSize();
     }
 
     private static JButton arrowButton(String text) {
         JButton button = new JButton(text);
         button.setFont(FontManager.getRunescapeBoldFont());
         button.setForeground(Theme.TEXT_SECONDARY);
-        button.setBorder(new EmptyBorder(2, 4, 2, 4));
+        button.setBorder(new EmptyBorder(0, 2, 0, 2));
         button.setContentAreaFilled(false);
         button.setFocusPainted(false);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

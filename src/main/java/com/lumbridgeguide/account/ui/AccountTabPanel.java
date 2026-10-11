@@ -23,7 +23,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
 import net.runelite.client.util.LinkBrowser;
 
 /** The RuneScape account that is logged in, whether it is linked, and the button that syncs it. */
@@ -98,22 +97,21 @@ public class AccountTabPanel extends JPanel {
         card.add(lastSyncedText);
 
         JComponent disclosure = Components.wrapped(
-                "Sync sends this account's name, account type, skill levels, XP and quest progress to Lumbridge "
-                        + "Guide. The first Sync now links the account to you.",
+                "Your name, account type, levels, XP and quests. The first sync links the account to you.",
                 Components.CONTENT_WIDTH, 11f, Font.PLAIN, Theme.TEXT_MUTED);
         disclosure.setAlignmentX(LEFT_ALIGNMENT);
 
-        JLabel heading = Components.sectionLabel("RuneScape account");
-        heading.setBorder(new EmptyBorder(0, 0, 6, 0));
-
-        add(heading);
+        add(Components.sectionHeader("RuneScape account"));
+        add(Box.createVerticalStrut(8));
         add(card);
-        add(Box.createVerticalStrut(12));
+        add(Box.createVerticalStrut(18));
+        add(Components.sectionHeader("What gets sent"));
+        add(Box.createVerticalStrut(8));
         add(disclosure);
 
-        JButton privacy = Components.linkButton("Privacy policy");
+        JButton privacy = Components.textLink("Privacy policy  ›");
         privacy.addActionListener(event -> LinkBrowser.browse(LumbridgeGuideClient.websiteUrl() + "/privacy"));
-        add(Box.createVerticalStrut(4));
+        add(Box.createVerticalStrut(6));
         add(privacy);
 
         accountSyncService.setListener(view -> SwingUtilities.invokeLater(() -> show(view)));

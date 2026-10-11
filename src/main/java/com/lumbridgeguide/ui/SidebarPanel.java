@@ -17,6 +17,7 @@ import com.lumbridgeguide.stars.ShootingStarService;
 import com.lumbridgeguide.stars.ui.StarsTabPanel;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 import javax.swing.BorderFactory;
@@ -74,7 +75,10 @@ public class SidebarPanel extends PluginPanel {
         setBackground(Theme.PANEL_BACKGROUND);
 
         JLabel pluginTitle = Components.label("Lumbridge Guide", 16f, Font.BOLD, Theme.TEXT_PRIMARY);
-        inboxButton = Components.rowButton("Inbox");
+        inboxButton = Components.linkButton("");
+        inboxButton.setIcon(new BellIcon());
+        inboxButton.setIconTextGap(3);
+        inboxButton.setFont(FontManager.getRunescapeSmallFont());
         inboxButton.setToolTipText("Your Lumbridge Guide notifications");
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
@@ -103,7 +107,7 @@ public class SidebarPanel extends PluginPanel {
             inboxPanel.load();
         });
         inboxService.setOnUnreadCount(count -> SwingUtilities.invokeLater(() -> {
-            inboxButton.setText(count > 0 ? "Inbox  " + count : "Inbox");
+            inboxButton.setText(count > 0 ? String.valueOf(count) : "");
             inboxButton.revalidate();
         }));
 

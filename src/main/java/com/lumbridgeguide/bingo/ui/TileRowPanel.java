@@ -1,10 +1,11 @@
 package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.bingo.data.PluginBoardData;
-import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.ui.Badge;
+import com.lumbridgeguide.ui.CheckIcon;
 import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.IconWell;
 import com.lumbridgeguide.ui.Theme;
 
 import javax.swing.BorderFactory;
@@ -12,7 +13,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -21,51 +21,51 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.OptionalLong;
 
 /**
- * One tile in the list: its type chip, title, points and who claimed it, over a hairline rule. The viewer's team's
- * tiles carry a bar in the team's colour down the left.
+ * One tile in the list: the tile's icon, its title, one short detail (progress, points or who claimed it) and at the
+ * end its state. A tile the viewer's team claimed is in the team's colour with a tick; a tile another team claimed
+ * fades.
  */
 class TileRowPanel extends JPanel {
 
-    private static final int TITLE_WIDTH = 132;
-
-    TileRowPanel(PluginTileData tile, PluginBoardData board, Runnable onClick) {
-        super(new BorderLayout(7, 0));
+    TileRowPanel(PluginTileData tile, PluginBoardData board, TileIcons icons, OptionalLong tracked, Runnable onClick) {
+        super(new BorderLayout(8, 0));
         setBackground(Theme.SURFACE_RAISED);
         setOpaque(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_SUBTLE), new EmptyBorder(6, 2, 6, 4)));
 
-        boolean mine = isClaimedByMyTeam(tile, board);
+        boolean mine = TileState.isMine(tile, board);
+        boolean takenByOther = tile.isClaimed() && !mine;
         Color teamColor = mine ? Theme.parseTeamColor(board.getMyTeam().getColor()) : null;
-        Border rule = BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_SUBTLE);
-        Border bar = mine ? BorderFactory.createMatteBorder(0, 2, 0, 0, teamColor) : new EmptyBorder(0, 0, 0, 0);
-        setBorder(BorderFactory.createCompoundBorder(rule, BorderFactory.createCompoundBorder(bar,
-                new EmptyBorder(7, mine ? 5 : 2, 7, 2))));
 
-        JPanel chipHolder = new JPanel(new BorderLayout());
-        chipHolder.setOpaque(false);
-        chipHolder.add(Badge.chip(TileText.badgeLabel(tile)), BorderLayout.NORTH);
+        IconWell icon = new IconWell(28);
+        icon.setImage(icons.imageFor(tile));
+        if (takenByOther) {
+            icon.setIconOpacity(0.45f);
+        }
+        JPanel iconHolder = new JPanel(new BorderLayout());
+        iconHolder.setOpaque(false);
+        iconHolder.add(icon, BorderLayout.CENTER);
 
         JPanel textColumn = new JPanel();
         textColumn.setLayout(new BoxLayout(textColumn, BoxLayout.Y_AXIS));
         textColumn.setOpaque(false);
-
-        JComponent title = Components.wrapped(tile.getTitle(), TITLE_WIDTH, 12f, Font.PLAIN, Theme.TEXT_PRIMARY);
-        title.setAlignmentX(LEFT_ALIGNMENT);
+        JLabel title = Components.label(tile.getTitle(), 12f, Font.PLAIN,
+                takenByOther ? Theme.TEXT_SECONDARY : Theme.TEXT_PRIMARY);
+        title.setToolTipText(tile.getTitle());
         textColumn.add(title);
+        JLabel meta = Components.label(metaText(tile, board, mine, tracked), 11f, Font.PLAIN,
+                mine ? teamColor : Theme.TEXT_MUTED);
+        meta.setBorder(new EmptyBorder(1, 0, 0, 0));
+        textColumn.add(meta);
 
-        String summary = summaryText(tile, board, mine);
-        if (!summary.isEmpty()) {
-            JLabel summaryLabel = Components.label(summary, 10f, Font.PLAIN, mine ? teamColor : Theme.TEXT_MUTED);
-            summaryLabel.setAlignmentX(LEFT_ALIGNMENT);
-            summaryLabel.setBorder(new EmptyBorder(1, 0, 0, 0));
-            textColumn.add(summaryLabel);
-        }
-
-        add(chipHolder, BorderLayout.WEST);
+        add(iconHolder, BorderLayout.WEST);
         add(textColumn, BorderLayout.CENTER);
-        add(Components.label("›", 13f, Font.PLAIN, Theme.TEXT_MUTED), BorderLayout.EAST);
+        add(trailing(tile, mine, teamColor), BorderLayout.EAST);
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -92,31 +92,40 @@ class TileRowPanel extends JPanel {
         return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
     }
 
-    private static boolean isClaimedByMyTeam(PluginTileData tile, PluginBoardData board) {
-        PluginTeamData team = board.getMyTeam();
-        return tile.isClaimed()
-                && team != null
-                && team.getId() != null
-                && team.getId().equals(tile.getClaimedByTeamId());
+    private static JComponent trailing(PluginTileData tile, boolean mine, Color teamColor) {
+        JPanel holder = new JPanel(new BorderLayout());
+        holder.setOpaque(false);
+        JComponent end;
+        if (mine) {
+            end = new JLabel(new CheckIcon(teamColor));
+        } else if (!tile.isClaimed() && tile.isProofPending()) {
+            end = Badge.status("Pending", Theme.WARNING);
+        } else if (!tile.isClaimed() && tile.isProofRejected()) {
+            end = Badge.status("Not accepted", Theme.ERROR);
+        } else {
+            end = Components.label("›", 13f, Font.PLAIN, Theme.TEXT_MUTED);
+        }
+        JPanel centre = new JPanel(new java.awt.GridBagLayout());
+        centre.setOpaque(false);
+        centre.add(end);
+        holder.add(centre, BorderLayout.CENTER);
+        return holder;
     }
 
-    private static String summaryText(PluginTileData tile, PluginBoardData board, boolean mine) {
-        StringBuilder summary = new StringBuilder();
-        if (board.isTilePointsEnabled() && tile.getPoints() > 0) {
-            summary.append(tile.getPoints()).append(tile.getPoints() == 1 ? " point" : " points");
+    private static String metaText(PluginTileData tile, PluginBoardData board, boolean mine, OptionalLong tracked) {
+        if (mine) {
+            return "Your team";
         }
         if (tile.isClaimed()) {
-            if (summary.length() > 0) {
-                summary.append("  ·  ");
-            }
-            summary.append(mine ? "Your team" : "Claimed");
+            return TileState.claimingTeamName(tile, board);
         }
-        if (!mine && (tile.isProofPending() || tile.isProofRejected())) {
-            if (summary.length() > 0) {
-                summary.append("  ·  ");
-            }
-            summary.append(tile.isProofPending() ? "Proof waiting for review" : "Proof not accepted");
+        String progress = TileState.progressText(tile, tracked);
+        if (!progress.isEmpty()) {
+            return progress;
         }
-        return summary.toString();
+        if (board.isTilePointsEnabled() && tile.getPoints() > 0) {
+            return tile.getPoints() + (tile.getPoints() == 1 ? " point" : " points");
+        }
+        return TileText.typeName(tile);
     }
 }

@@ -1,9 +1,11 @@
 package com.lumbridgeguide.bingo.ui;
 
+import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import java.util.Comparator;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
@@ -11,7 +13,12 @@ import javax.swing.JPanel;
 
 public class TileListPanel extends JPanel {
 
-    public TileListPanel() {
+    private final TileIcons icons;
+    private final TileProgressTracker progressTracker;
+
+    TileListPanel(TileIcons icons, TileProgressTracker progressTracker) {
+        this.icons = icons;
+        this.progressTracker = progressTracker;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(false);
     }
@@ -27,7 +34,9 @@ public class TileListPanel extends JPanel {
 
             List<PluginTileData> tiles = board.getTiles().stream().sorted(order).collect(Collectors.toList());
             for (PluginTileData tile : tiles) {
-                TileRowPanel row = new TileRowPanel(tile, board, () -> onTileSelected.accept(tile));
+                OptionalLong tracked = progressTracker == null ? OptionalLong.empty()
+                        : progressTracker.progressFor(tile.getId());
+                TileRowPanel row = new TileRowPanel(tile, board, icons, tracked, () -> onTileSelected.accept(tile));
                 row.setAlignmentX(LEFT_ALIGNMENT);
                 add(row);
             }

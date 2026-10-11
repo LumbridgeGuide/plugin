@@ -1,7 +1,6 @@
 package com.lumbridgeguide.gear.ui;
 
 import com.lumbridgeguide.gear.GearTagService;
-import com.lumbridgeguide.ui.Card;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.Section;
 import com.lumbridgeguide.ui.Theme;
@@ -16,7 +15,7 @@ import java.awt.Color;
 import java.util.List;
 import java.util.Optional;
 
-/** Generates a bank tag tab from a gear code while the bank is open, then lists what was missing in a second card. */
+/** Generates a bank tag tab from a gear code while the bank is open, then lists what was missing. */
 class BankTabSection extends Section {
 
     private static final String BANK_CLOSED_HINT = "Open your bank to generate a tab.";
@@ -26,7 +25,7 @@ class BankTabSection extends Section {
     private final JTextField codeField;
     private final JButton generateButton;
     private final WrapText statusLabel;
-    private final Card missingPanel;
+    private final Section missingPanel;
     private boolean bankOpen;
     private boolean generating;
     private boolean showingBankHint = true;
@@ -47,27 +46,25 @@ class BankTabSection extends Section {
 
         statusLabel = GearForm.status(BANK_CLOSED_HINT);
 
-        missingPanel = new Card(12);
+        missingPanel = new Section(0);
         missingPanel.setVisible(false);
 
-        Card form = new Card(12);
-        form.add(GearForm.title("Bank tab"));
-        form.add(Box.createVerticalStrut(6));
-        form.add(GearForm.help("Tag all items for a config and created a tag-tab with a defined layout."));
+        Section form = new Section(0);
+        form.add(Components.sectionHeader("Make a bank tab"));
+        form.add(Box.createVerticalStrut(8));
+        form.add(GearForm.help("Paste a gear code to lay out its tab."));
         form.add(Box.createVerticalStrut(10));
-        form.add(Components.sectionLabel("Gear code or gear page link"));
-        form.add(Box.createVerticalStrut(5));
         form.add(codeField);
         form.add(Box.createVerticalStrut(10));
+        includeMissingBox.setToolTipText("Show items you don't have as placeholders in the tab");
         form.add(includeMissingBox);
-        form.add(GearForm.checkBoxHint("Show items you don't have as placeholders in the tab"));
         form.add(Box.createVerticalStrut(10));
         form.add(generateButton);
         form.add(Box.createVerticalStrut(8));
         form.add(statusLabel);
 
         add(form);
-        add(Box.createVerticalStrut(10));
+        add(Box.createVerticalStrut(16));
         add(missingPanel);
     }
 
@@ -115,11 +112,12 @@ class BankTabSection extends Section {
     private void showMissing(List<String> names) {
         missingPanel.removeAll();
         if (!names.isEmpty()) {
-            missingPanel.add(Components.sectionLabel("Missing items  ·  " + names.size()));
-            missingPanel.add(Box.createVerticalStrut(4));
+            missingPanel.add(Components.sectionHeader("Missing items", Components.label(String.valueOf(names.size()),
+                    11f, java.awt.Font.PLAIN, Theme.TEXT_MUTED)));
+            missingPanel.add(Box.createVerticalStrut(6));
             for (String name : names) {
                 missingPanel.add(Components.statusLine(name, Theme.WARNING, Theme.TEXT_PRIMARY));
-                missingPanel.add(Box.createVerticalStrut(3));
+                missingPanel.add(Box.createVerticalStrut(5));
             }
         }
         missingPanel.setVisible(!names.isEmpty());

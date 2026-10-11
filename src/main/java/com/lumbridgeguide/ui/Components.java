@@ -2,9 +2,13 @@ package com.lumbridgeguide.ui;
 
 import net.runelite.client.ui.FontManager;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -60,9 +64,52 @@ public final class Components {
             }
         };
         label.setFont(Theme.labelFont());
-        label.setForeground(Theme.TEXT_MUTED);
+        label.setForeground(Theme.TEXT_SECONDARY);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         return label;
+    }
+
+    /**
+     * A section heading as on the website: the small uppercase label, a hairline running to the right edge, and an
+     * optional link or note at the end, such as "Copy" or "Refresh".
+     */
+    public static JPanel sectionHeader(String text, JComponent trailing) {
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
+        header.setOpaque(false);
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel label = sectionLabel(text);
+        label.setAlignmentY(Component.CENTER_ALIGNMENT);
+        header.add(label);
+        header.add(Box.createHorizontalStrut(8));
+        header.add(new Rule());
+        if (trailing != null) {
+            trailing.setAlignmentY(Component.CENTER_ALIGNMENT);
+            header.add(Box.createHorizontalStrut(8));
+            header.add(trailing);
+        }
+        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, header.getPreferredSize().height));
+        return header;
+    }
+
+    public static JPanel sectionHeader(String text) {
+        return sectionHeader(text, null);
+    }
+
+    /** A small accent link for the end of a section heading or a row, such as "Refresh". */
+    public static JButton textLink(String text) {
+        JButton button = linkButton(text);
+        button.setFont(FontManager.getRunescapeSmallFont());
+        button.setForeground(Theme.accentText());
+        return button;
+    }
+
+    /** A compact button for an action inside a row, such as "Make tab" or "Accept". */
+    public static JButton smallButton(String text, boolean primary) {
+        ActionButton button = new ActionButton(text, primary ? ActionButton.Kind.PRIMARY : ActionButton.Kind.SECONDARY);
+        button.setFont(FontManager.getRunescapeSmallFont());
+        button.setBorder(new EmptyBorder(3, 8, 3, 8));
+        return button;
     }
 
     /**
@@ -106,7 +153,7 @@ public final class Components {
     public static JButton linkButton(String text) {
         JButton button = new JButton(text);
         button.setFont(FontManager.getRunescapeBoldFont());
-        button.setForeground(Theme.accent());
+        button.setForeground(Theme.accentText());
         button.setBorder(new EmptyBorder(0, 0, 0, 0));
         button.setContentAreaFilled(false);
         button.setFocusPainted(false);
@@ -138,7 +185,7 @@ public final class Components {
         JTextField field = new JTextField() {
             @Override
             protected void paintComponent(Graphics graphics) {
-                graphics.setColor(Theme.SURFACE_INSET);
+                graphics.setColor(Theme.SURFACE_OVERLAY);
                 graphics.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.ARC, Theme.ARC);
                 super.paintComponent(graphics);
                 if (getText().isEmpty() && !isFocusOwner()) {
@@ -153,7 +200,7 @@ public final class Components {
         field.setToolTipText(tooltip);
         field.setFont(FontManager.getRunescapeFont());
         field.setOpaque(false);
-        field.setBackground(Theme.SURFACE_INSET);
+        field.setBackground(Theme.SURFACE_OVERLAY);
         field.setForeground(Theme.TEXT_PRIMARY);
         field.setCaretColor(Theme.TEXT_PRIMARY);
         field.setBorder(new CompoundBorder(new RoundedBorder(Theme.BORDER),

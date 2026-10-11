@@ -1,7 +1,6 @@
 package com.lumbridgeguide.gear.ui;
 
 import com.lumbridgeguide.gear.GearConfigExportService;
-import com.lumbridgeguide.ui.Card;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.Section;
 import com.lumbridgeguide.ui.Theme;
@@ -50,18 +49,17 @@ class CreateConfigSection extends Section {
             }
         });
 
-        Card form = new Card(12);
-        form.add(GearForm.title("Create config"));
-        form.add(Box.createVerticalStrut(6));
-        form.add(GearForm.help("Makes a gear config on the website from what you're wearing and carrying, rune "
-                + "pouch included."));
+        Section form = new Section(0);
+        form.add(Components.sectionHeader("Create a config"));
+        form.add(Box.createVerticalStrut(8));
+        form.add(GearForm.help("Save what you're wearing and carrying as a config."));
         form.add(Box.createVerticalStrut(10));
         form.add(includeEquipmentBox);
         form.add(Box.createVerticalStrut(4));
         form.add(includeInventoryBox);
         form.add(Box.createVerticalStrut(10));
-        form.add(Components.sectionLabel("Name"));
-        form.add(Box.createVerticalStrut(5));
+        form.add(GearForm.fieldLabel("Name"));
+        form.add(Box.createVerticalStrut(4));
         form.add(configNameField);
         form.add(Box.createVerticalStrut(10));
         form.add(createButton);

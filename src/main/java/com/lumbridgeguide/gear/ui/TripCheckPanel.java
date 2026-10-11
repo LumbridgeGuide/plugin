@@ -3,7 +3,6 @@ package com.lumbridgeguide.gear.ui;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.gear.data.OwnedGearConfig;
-import com.lumbridgeguide.ui.Card;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.DotIcon;
 import com.lumbridgeguide.ui.ProgressBar;
@@ -29,8 +28,9 @@ class TripCheckPanel extends Section {
 
     private final TripCheckService tripCheckService;
     private final GearTagService gearTagService;
-    private final Card card;
+    private final Section card;
     private final JButton makeTabButton;
+    private final JButton recheck;
     private final WrapText statusText;
     private OwnedGearConfig config;
     private boolean bankOpen;
@@ -41,30 +41,21 @@ class TripCheckPanel extends Section {
         this.gearTagService = gearTagService;
 
         JButton back = Components.linkButton("‹  My configs");
+        back.setForeground(Theme.TEXT_SECONDARY);
+        back.setFont(Components.font(12f, Font.PLAIN));
         back.addActionListener(event -> onBack.run());
-        JButton recheck = Components.linkButton("↻ Recheck");
-        recheck.setForeground(Theme.TEXT_SECONDARY);
-        recheck.setFont(Components.font(10f, Font.PLAIN));
+        recheck = Components.textLink("Recheck");
         recheck.addActionListener(event -> run());
-        JPanel top = new JPanel(new BorderLayout());
-        top.setOpaque(false);
-        top.setAlignmentX(LEFT_ALIGNMENT);
-        top.add(back, BorderLayout.WEST);
-        top.add(recheck, BorderLayout.EAST);
-        top.setMaximumSize(new Dimension(Integer.MAX_VALUE, top.getPreferredSize().height));
 
-        card = new Card(12);
+        card = new Section(0);
 
         makeTabButton = Components.fullWidthButton("Make tab in bank");
         makeTabButton.addActionListener(event -> makeTab());
         statusText = GearForm.status(" ");
 
-        add(top);
+        add(back);
         add(Box.createVerticalStrut(10));
         add(card);
-        add(Box.createVerticalStrut(8));
-        add(Components.wrapped("Compares what you wear and carry with the config before you leave the bank.",
-                Components.CONTENT_WIDTH, 10f, Font.PLAIN, Theme.TEXT_MUTED));
     }
 
     void show(OwnedGearConfig newConfig) {
@@ -82,8 +73,8 @@ class TripCheckPanel extends Section {
             return;
         }
         card.removeAll();
-        card.add(Components.sectionLabel("Trip check"));
-        card.add(Box.createVerticalStrut(6));
+        card.add(Components.sectionHeader("Trip check", recheck));
+        card.add(Box.createVerticalStrut(8));
         card.add(Components.wrapped(config.getName(), GearForm.TEXT_WIDTH, 14f, Font.BOLD, Theme.TEXT_PRIMARY));
         card.add(Box.createVerticalStrut(6));
         card.add(GearForm.status("Checking your items..."));
@@ -95,8 +86,8 @@ class TripCheckPanel extends Section {
 
     private void showCheck(TripCheckService.Check check) {
         card.removeAll();
-        card.add(Components.sectionLabel("Trip check"));
-        card.add(Box.createVerticalStrut(6));
+        card.add(Components.sectionHeader("Trip check", recheck));
+        card.add(Box.createVerticalStrut(8));
         card.add(Components.wrapped(check.getName(), GearForm.TEXT_WIDTH, 14f, Font.BOLD, Theme.TEXT_PRIMARY));
         card.add(Box.createVerticalStrut(6));
 
@@ -122,9 +113,10 @@ class TripCheckPanel extends Section {
         addTally("Rune pouch", check.getPouchHave(), check.getPouchTotal(), false);
 
         if (!check.getMissing().isEmpty()) {
-            card.add(Box.createVerticalStrut(10));
-            card.add(Components.sectionLabel("Missing  ·  " + check.getMissing().size()));
-            card.add(Box.createVerticalStrut(4));
+            card.add(Box.createVerticalStrut(16));
+            card.add(Components.sectionHeader("Missing", Components.label(String.valueOf(check.getMissing().size()),
+                    11f, Font.PLAIN, Theme.TEXT_MUTED)));
+            card.add(Box.createVerticalStrut(6));
             for (TripCheckService.Missing missing : check.getMissing()) {
                 addMissing(missing);
             }
@@ -181,14 +173,14 @@ class TripCheckPanel extends Section {
         row.setBorder(new EmptyBorder(2, 0, 2, 0));
         String name = missing.getCount() > 1 ? missing.getName() + " x" + missing.getCount() : missing.getName();
         row.add(Components.label(name, 11f, Font.PLAIN, Theme.TEXT_PRIMARY), BorderLayout.CENTER);
-        row.add(Components.label(where, 10f, Font.PLAIN, tone), BorderLayout.EAST);
+        row.add(Components.label(where, 11f, Font.PLAIN, tone), BorderLayout.EAST);
         addRow(row);
     }
 
     private void showError(String message) {
         card.removeAll();
-        card.add(Components.sectionLabel("Trip check"));
-        card.add(Box.createVerticalStrut(6));
+        card.add(Components.sectionHeader("Trip check", recheck));
+        card.add(Box.createVerticalStrut(8));
         WrapText error = GearForm.status(message);
         error.setForeground(Theme.ERROR);
         card.add(error);

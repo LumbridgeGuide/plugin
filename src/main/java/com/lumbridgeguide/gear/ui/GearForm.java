@@ -19,16 +19,9 @@ import java.awt.Font;
 /** The building blocks both gear subtabs share, so their forms look and line up the same. */
 final class GearForm {
 
-    /** Text inside a gear card, which is narrower than the panel by the card's padding. */
-    static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 24;
+    static final int TEXT_WIDTH = Components.CONTENT_WIDTH;
 
     private GearForm() {
-    }
-
-    static JLabel title(String text) {
-        JLabel title = Components.label(text, 15f, Font.BOLD, Theme.TEXT_PRIMARY);
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return title;
     }
 
     static JComponent help(String text) {
@@ -37,23 +30,19 @@ final class GearForm {
         return help;
     }
 
+    /** A small label above a field, such as "Name". */
+    static JLabel fieldLabel(String text) {
+        JLabel label = Components.label(text, 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return label;
+    }
+
     static JTextField textField(String tooltip) {
         return Components.textField(tooltip);
     }
 
     static JCheckBox checkBox(String text) {
         return Components.checkBox(text);
-    }
-
-    /** A muted line under a checkbox, lined up with the checkbox's text rather than its box. */
-    static JComponent checkBoxHint(String text) {
-        JPanel hint = new JPanel(new BorderLayout());
-        hint.setOpaque(false);
-        hint.setBorder(new EmptyBorder(0, 23, 0, 0));
-        hint.setAlignmentX(Component.LEFT_ALIGNMENT);
-        hint.add(Components.wrapped(text, TEXT_WIDTH - 23, 10f, Font.PLAIN, Theme.TEXT_MUTED));
-        hint.setMaximumSize(new Dimension(Integer.MAX_VALUE, hint.getPreferredSize().height));
-        return hint;
     }
 
     static JButton actionButton(String text) {

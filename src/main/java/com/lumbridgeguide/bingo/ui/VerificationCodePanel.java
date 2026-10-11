@@ -17,8 +17,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * Shows a bingo verification code as large characters in individual boxes, like the website. Clicking anywhere on it
- * copies the code.
+ * Shows a bingo verification code as large characters in outlined boxes, like the website. Clicking anywhere on it,
+ * or on the Copy link above it, copies the code.
  */
 class VerificationCodePanel extends JPanel {
 
@@ -76,21 +76,19 @@ class VerificationCodePanel extends JPanel {
         int boxWidth = (getWidth() - GAP * (count - 1)) / count;
         for (int index = 0; index < count; index++) {
             int boxX = index * (boxWidth + GAP);
-            canvas.setColor(Theme.SURFACE_INSET);
-            canvas.fillRoundRect(boxX, 0, boxWidth, HEIGHT - 1, Theme.ARC, Theme.ARC);
             canvas.setColor(Theme.BORDER);
             canvas.drawRoundRect(boxX, 0, boxWidth - 1, HEIGHT - 2, Theme.ARC, Theme.ARC);
 
             String character = String.valueOf(code.charAt(index));
             int textX = boxX + (boxWidth - metrics.stringWidth(character)) / 2;
             int textY = (HEIGHT - metrics.getHeight()) / 2 + metrics.getAscent();
-            canvas.setColor(Theme.accent());
+            canvas.setColor(Theme.accentText());
             canvas.drawString(character, textX, textY);
         }
         canvas.dispose();
     }
 
-    private void copy() {
+    void copy() {
         if (code.isEmpty()) {
             return;
         }

@@ -15,14 +15,14 @@ import java.awt.CardLayout;
 import java.util.Arrays;
 
 /**
- * The Gear tab: "Bank tab" makes a tag tab from any config's code, "My configs" lists the player's own configs and
- * opens each one's trip check, where its tab is made, and "Create config" exports what they wear and carry.
+ * The Gear tab: "Bank tab" makes a tag tab from any config's code, "My configs" lists the player's own configs, each
+ * with a button for its tab and a trip check behind it, and "Create" exports what they wear and carry.
  */
 public class GearTabPanel extends JPanel {
 
     private static final String BANK_TAB = "Bank tab";
     private static final String MY_CONFIGS = "My configs";
-    private static final String CREATE_CONFIG = "Create config";
+    private static final String CREATE_CONFIG = "Create";
     private static final String TRIP_CHECK = "tripCheck";
 
     private final BankTabSection bankTabSection;
@@ -50,7 +50,7 @@ public class GearTabPanel extends JPanel {
         display.add(topAligned(new CreateConfigSection(gearConfigExportService)), CREATE_CONFIG);
         display.add(scrolling(topAligned(tripCheckPanel)), TRIP_CHECK);
 
-        TabBar subtabs = new TabBar(Arrays.asList(BANK_TAB, MY_CONFIGS, CREATE_CONFIG), TabBar.Style.TEXT, name -> {
+        TabBar subtabs = new TabBar(Arrays.asList(BANK_TAB, MY_CONFIGS, CREATE_CONFIG), TabBar.Style.PILL, name -> {
             cards.show(display, name);
             if (MY_CONFIGS.equals(name)) {
                 myConfigsSection.loadIfNeeded();
@@ -64,6 +64,7 @@ public class GearTabPanel extends JPanel {
 
     public void setBankOpen(boolean open) {
         bankTabSection.setBankOpen(open);
+        myConfigsSection.setBankOpen(open);
         tripCheckPanel.setBankOpen(open);
     }
 

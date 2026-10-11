@@ -2,9 +2,7 @@ package com.lumbridgeguide.stars.ui;
 
 import com.lumbridgeguide.stars.ShootingStarData;
 import com.lumbridgeguide.stars.ShootingStarService;
-import com.lumbridgeguide.ui.Card;
 import com.lumbridgeguide.ui.Components;
-import com.lumbridgeguide.ui.DotIcon;
 import com.lumbridgeguide.ui.Section;
 import com.lumbridgeguide.ui.Theme;
 import com.lumbridgeguide.ui.TimeText;
@@ -13,6 +11,7 @@ import net.runelite.api.coords.WorldPoint;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,13 +23,12 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 /** The star next to the player, ready to report, and the live stars other players have reported. */
 public class StarsTabPanel extends Section {
 
     private final ShootingStarService starService;
-    private final Card nearbyCard;
+    private final Section nearbyCard;
     private final JLabel listLabel;
     private final Section list;
     private boolean loaded;
@@ -39,20 +37,19 @@ public class StarsTabPanel extends Section {
         super(0);
         this.starService = starService;
 
-        nearbyCard = new Card(12);
+        nearbyCard = new Section(0);
         nearbyCard.setVisible(false);
 
-        listLabel = Components.sectionLabel("Live stars");
-        JButton refresh = Components.linkButton("↻ Refresh");
-        refresh.setForeground(Theme.TEXT_SECONDARY);
-        refresh.setFont(Components.font(10f, Font.PLAIN));
+        listLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        JButton refresh = Components.textLink("Refresh");
         refresh.addActionListener(event -> load());
-        JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
-        header.setAlignmentX(LEFT_ALIGNMENT);
-        header.add(listLabel, BorderLayout.WEST);
-        header.add(refresh, BorderLayout.EAST);
-        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, header.getPreferredSize().height));
+        JPanel trailing = new JPanel();
+        trailing.setLayout(new BoxLayout(trailing, BoxLayout.X_AXIS));
+        trailing.setOpaque(false);
+        trailing.add(listLabel);
+        trailing.add(Box.createHorizontalStrut(8));
+        trailing.add(refresh);
+        JPanel header = Components.sectionHeader("Live stars", trailing);
 
         list = new Section(0);
 
@@ -62,7 +59,7 @@ public class StarsTabPanel extends Section {
         add(Box.createVerticalStrut(4));
         add(list);
         add(Box.createVerticalStrut(8));
-        add(Components.wrapped("Stars you report also show on the website map.", Components.CONTENT_WIDTH, 10f,
+        add(Components.wrapped("Stars you report also show on the website map.", Components.CONTENT_WIDTH, 11f,
                 Font.PLAIN, Theme.TEXT_MUTED));
 
         starService.setOnNearbyStar(star -> SwingUtilities.invokeLater(() -> showNearby(star)));
@@ -93,11 +90,8 @@ public class StarsTabPanel extends Section {
         nearbyCard.removeAll();
         nearbyCard.setVisible(star != null);
         if (star != null) {
-            JLabel label = Components.sectionLabel("Star next to you");
-            label.setIcon(new DotIcon(Theme.accent()));
-            label.setIconTextGap(6);
-            nearbyCard.add(label);
-            nearbyCard.add(Box.createVerticalStrut(6));
+            nearbyCard.add(Components.sectionHeader("Star next to you"));
+            nearbyCard.add(Box.createVerticalStrut(8));
 
             JPanel summary = new JPanel(new BorderLayout(8, 0));
             summary.setOpaque(false);
@@ -115,8 +109,8 @@ public class StarsTabPanel extends Section {
             nearbyCard.add(summary);
             nearbyCard.add(Box.createVerticalStrut(8));
 
-            WrapText result = Components.wrapped("Report it so others can find it.", Components.CONTENT_WIDTH - 24,
-                    10f, Font.PLAIN, Theme.TEXT_MUTED);
+            WrapText result = Components.wrapped("Report it so others can find it.", Components.CONTENT_WIDTH,
+                    11f, Font.PLAIN, Theme.TEXT_MUTED);
             JButton report = Components.fullWidthButton("Report star");
             report.addActionListener(event -> {
                 report.setEnabled(false);
@@ -135,7 +129,7 @@ public class StarsTabPanel extends Section {
 
     private void showStars(List<ShootingStarData> stars) {
         list.removeAll();
-        listLabel.setText(("Live stars  ·  " + stars.size()).toUpperCase(Locale.ROOT));
+        listLabel.setText(String.valueOf(stars.size()));
         if (stars.isEmpty()) {
             list.add(message("No stars reported right now."));
         }
@@ -151,15 +145,14 @@ public class StarsTabPanel extends Section {
         row.setAlignmentX(LEFT_ALIGNMENT);
         row.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_SUBTLE), new EmptyBorder(7, 0, 7, 0)));
-        JLabel size = Components.monoLabel(String.valueOf(star.getLevel()), 13f, Font.BOLD, Theme.accent());
+        JLabel size = Components.monoLabel(String.valueOf(star.getLevel()), 13f, Font.BOLD, Theme.accentText());
         size.setHorizontalAlignment(SwingConstants.CENTER);
-        size.setPreferredSize(new Dimension(24, 24));
-        size.setBorder(BorderFactory.createLineBorder(Theme.BORDER_SUBTLE));
+        size.setPreferredSize(new Dimension(20, 24));
         JPanel text = new JPanel(new BorderLayout());
         text.setOpaque(false);
         text.add(Components.label("World " + star.getWorld(), 12f, Font.PLAIN, Theme.TEXT_PRIMARY),
                 BorderLayout.NORTH);
-        text.add(Components.label(details(star), 10f, Font.PLAIN, Theme.TEXT_MUTED), BorderLayout.SOUTH);
+        text.add(Components.label(details(star), 11f, Font.PLAIN, Theme.TEXT_MUTED), BorderLayout.SOUTH);
         row.add(size, BorderLayout.WEST);
         row.add(text, BorderLayout.CENTER);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
