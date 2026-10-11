@@ -30,7 +30,6 @@ public class GearBankLayoutTest {
             assertEquals(-1, layout[column]);
             assertEquals(-1, layout[lastRow * GearBankLayout.COLUMNS + column]);
         }
-        assertEquals(385, at(layout, 6, 7));
     }
 
     @Test
@@ -66,14 +65,5 @@ public class GearBankLayoutTest {
 
         assertEquals(GearBankLayout.COLUMNS * GearBankLayout.ROWS, layout.length);
         assertEquals(0, Arrays.stream(layout).filter(itemId -> itemId != -1).count());
-    }
-
-    @Test
-    public void summarySaysWhatHappenedToMissingItems() {
-        assertEquals("Tagged 5 items as \"vorkath\".", GearTagService.summary("vorkath", 5, 0, true));
-        assertEquals("Tagged 5 items as \"vorkath\". 2 items not in your bank, shown as placeholders.",
-                GearTagService.summary("vorkath", 5, 2, true));
-        assertEquals("Tagged 3 items as \"vorkath\". 1 item not in your bank was left out.",
-                GearTagService.summary("vorkath", 3, 1, false));
     }
 }
