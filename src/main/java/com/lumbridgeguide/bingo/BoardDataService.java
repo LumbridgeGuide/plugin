@@ -78,31 +78,24 @@ public class BoardDataService {
 
     /** {@code onComplete} runs whether or not the request succeeds. */
     public void refresh(Runnable onComplete) {
+        Runnable done = onComplete == null ? () -> { } : onComplete;
         if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");
             clearCache();
-            if (onComplete != null) {
-                onComplete.run();
-            }
+            done.run();
             return;
         }
 
         apiClient.get("/plugin/sync",
                 response ->
                 {
-                    log.info("[LUMBY GUIDE] Sync successful, status code: {}", response.getStatusCode());
                     handleSyncSuccess(response);
-                    if (onComplete != null) {
-                        onComplete.run();
-                    }
+                    done.run();
                 },
                 response ->
                 {
-                    log.warn("[LUMBY GUIDE] Sync failed, status code: {}", response.getStatusCode());
                     handleSyncFailure(response);
-                    if (onComplete != null) {
-                        onComplete.run();
-                    }
+                    done.run();
                 });
     }
 
