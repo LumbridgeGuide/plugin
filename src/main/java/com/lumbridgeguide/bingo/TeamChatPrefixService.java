@@ -50,12 +50,12 @@ public class TeamChatPrefixService {
         if (!isOwnName(client.getLocalPlayer().getName(), chatMessage.getName())) {
             return;
         }
-        PluginTeamData team = activeTeam();
-        if (team == null || team.getName() == null) {
+        String prefix = ownTeamPrefix();
+        if (prefix == null) {
             return;
         }
         MessageNode messageNode = chatMessage.getMessageNode();
-        messageNode.setName(TeamChatPrefix.of(team.getName(), team.getColor()) + messageNode.getName());
+        messageNode.setName(prefix + messageNode.getName());
     }
 
     /** The chat input is redrawn by the game, so the prefix is put back every tick. */
@@ -68,13 +68,12 @@ public class TeamChatPrefixService {
         if (chatboxInput == null || client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null) {
             return;
         }
-        PluginTeamData team = activeTeam();
-        if (team == null || team.getName() == null) {
+        String prefix = ownTeamPrefix();
+        if (prefix == null) {
             return;
         }
         String playerName = client.getLocalPlayer().getName();
         String currentText = chatboxInput.getText();
-        String prefix = TeamChatPrefix.of(team.getName(), team.getColor());
         if (currentText != null && currentText.contains(playerName) && !currentText.contains(prefix)) {
             chatboxInput.setText(currentText.replace(playerName + ":", prefix + playerName + ":"));
         }
@@ -85,8 +84,10 @@ public class TeamChatPrefixService {
         return localName != null && chatName != null && Text.sanitize(localName).equals(Text.sanitize(chatName));
     }
 
-    private PluginTeamData activeTeam() {
+    /** The chat prefix for the player's team on the first active board, or null without one */
+    private String ownTeamPrefix() {
         List<PluginBoardData> boards = boardDataService.getBoards();
-        return boards.isEmpty() ? null : boards.get(0).getMyTeam();
+        PluginTeamData team = boards.isEmpty() ? null : boards.get(0).getMyTeam();
+        return team == null || team.getName() == null ? null : TeamChatPrefix.of(team.getName(), team.getColor());
     }
 }
