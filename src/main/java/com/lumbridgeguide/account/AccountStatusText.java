@@ -1,9 +1,8 @@
 package com.lumbridgeguide.account;
 
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Value;
 
 /**
  * Maps the backend's link statuses and error codes to what the sidebar shows. Kept free of game and Swing types so
@@ -19,11 +18,10 @@ public final class AccountStatusText {
         MUTED
     }
 
-    @Getter
-    @AllArgsConstructor
-    static final class Line {
-        private final String text;
-        private final Tone tone;
+    @Value
+    static class Line {
+        String text;
+        Tone tone;
     }
 
     static Line forStatus(String status) {
