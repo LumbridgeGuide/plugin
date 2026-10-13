@@ -20,6 +20,7 @@ import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -57,9 +58,10 @@ public class GearConfigExportService {
     }
 
     public void create(String name, boolean includeEquipment, boolean includeInventory, Consumer<Result> onComplete) {
+        Consumer<Result> onSwing = result -> SwingUtilities.invokeLater(() -> onComplete.accept(result));
         clientThread.invoke(() -> {
             if (client.getGameState() != GameState.LOGGED_IN) {
-                onComplete.accept(Result.failure("Log in to the game first."));
+                onSwing.accept(Result.failure("Log in to the game first."));
                 return;
             }
             List<GearConfigPayload.InventoryEntry> inventory = includeInventory ? readInventory() : new ArrayList<>();
@@ -79,9 +81,9 @@ public class GearConfigExportService {
                     response -> {
                         GearConfigCreatedData created =
                                 apiClient.deserialize(response.getBody(), GearConfigCreatedData.class);
-                        onComplete.accept(Result.success(created.getUrl()));
+                        onSwing.accept(Result.success(created.getUrl()));
                     },
-                    response -> onComplete.accept(Result.failure(
+                    response -> onSwing.accept(Result.failure(
                             apiClient.failureMessage(response, "Could not create the gear config"))));
         });
     }

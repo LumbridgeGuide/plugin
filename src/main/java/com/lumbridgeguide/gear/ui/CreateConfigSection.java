@@ -11,7 +11,6 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import java.awt.Color;
 
 /** Creates a gear config on the website from what the player is wearing and carrying. */
@@ -81,7 +80,7 @@ class CreateConfigSection extends Section {
         showStatus("Reading your items...", Theme.TEXT_MUTED);
 
         gearConfigExportService.create(configNameField.getText(), includeEquipmentBox.isSelected(),
-                includeInventoryBox.isSelected(), result -> SwingUtilities.invokeLater(() ->
+                includeInventoryBox.isSelected(), result ->
                 {
                     createButton.setEnabled(true);
                     createButton.setText("Create");
@@ -89,7 +88,7 @@ class CreateConfigSection extends Section {
                     createdUrl = result.getUrl();
                     openButton.setVisible(result.isSuccess() && createdUrl != null);
                     revalidate();
-                }));
+                });
     }
 
     private void showStatus(String message, Color color) {
