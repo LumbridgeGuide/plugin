@@ -299,7 +299,9 @@ public class ProofService {
                 },
                 response -> onDone.accept(response.getStatusCode() == 403
                         ? "You need to be on a team on this board"
-                        : apiClient.failureMessage(response, "Sending failed")));
+                        : apiClient.failureMessage(response, response.getStatusCode() == 400
+                                || response.getStatusCode() == 409
+                                ? "The website turned this proof down" : "Sending failed")));
     }
 
     private void offer(PluginBoardData board, PluginTileData tile, String reason) {
