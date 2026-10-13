@@ -23,6 +23,7 @@ import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -237,7 +238,7 @@ public class AccountSyncService {
         Set<String> worldTypes = client.getWorldType().stream().map(WorldType::name).collect(Collectors.toSet());
         return AccountSyncPayload.builder()
                 .accountHash(accountHash)
-                .displayName(displayName.replace(' ', ' '))
+                .displayName(Text.sanitize(displayName))
                 .accountType(AccountStatusText.accountType(client.getVarbitValue(VarbitID.IRONMAN)))
                 .worldTypes(worldTypes)
                 .skills(readSkills())

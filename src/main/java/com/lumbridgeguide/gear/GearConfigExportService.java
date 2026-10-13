@@ -16,6 +16,7 @@ import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -139,7 +140,7 @@ public class GearConfigExportService {
 
     private String defaultName() {
         String playerName = client.getLocalPlayer() == null ? null : client.getLocalPlayer().getName();
-        return playerName == null ? "Gear setup" : playerName.replace('\u00A0', ' ') + " setup";
+        return playerName == null ? "Gear setup" : Text.sanitize(playerName) + " setup";
     }
 
     private String itemName(int itemId) {
