@@ -146,13 +146,7 @@ public class GearTagService {
 
         Set<Integer> owned = new HashSet<>();
         Map<Integer, Integer> ownedByVariation = new HashMap<>();
-        for (Item item : bank.getItems()) {
-            if (item.getId() > 0 && item.getQuantity() > 0) {
-                int itemId = itemManager.canonicalize(item.getId());
-                owned.add(itemId);
-                ownedByVariation.putIfAbsent(ItemVariationMapping.map(itemId), itemId);
-            }
-        }
+        readBank(bank, owned, ownedByVariation);
 
         int[] shape = GearBankLayout.positions(gear);
         int[] placed = new int[shape.length];
@@ -176,6 +170,22 @@ public class GearTagService {
         }
 
         String tag = tagName(gear.getName());
+        writeTag(tag, gear, tagged, placed);
+        log.info("Gear tag '{}' generated: {} item(s), {} missing", tag, tagged.size(), missing.size());
+        return new Result(true, summary(tag, tagged.size(), missing.size(), includeMissing), itemNames(missing));
+    }
+
+    private void readBank(ItemContainer bank, Set<Integer> owned, Map<Integer, Integer> ownedByVariation) {
+        for (Item item : bank.getItems()) {
+            if (item.getId() > 0 && item.getQuantity() > 0) {
+                int itemId = itemManager.canonicalize(item.getId());
+                owned.add(itemId);
+                ownedByVariation.putIfAbsent(ItemVariationMapping.map(itemId), itemId);
+            }
+        }
+    }
+
+    private void writeTag(String tag, PluginGearData gear, Set<Integer> tagged, int[] placed) {
         tagManager.removeTag(tag);
         for (int itemId : tagged) {
             tagManager.addTag(itemId, tag, false);
@@ -189,13 +199,14 @@ public class GearTagService {
             tabManager.save();
         }
         bankTagsService.openBankTag(tag, BankTagsService.OPTION_ALLOW_MODIFICATIONS);
+    }
 
-        log.info("Gear tag '{}' generated: {} item(s), {} missing", tag, tagged.size(), missing.size());
-        List<String> missingNames = new ArrayList<>();
-        for (int itemId : missing) {
-            missingNames.add(itemManager.getItemComposition(itemId).getName());
+    private List<String> itemNames(Set<Integer> itemIds) {
+        List<String> names = new ArrayList<>();
+        for (int itemId : itemIds) {
+            names.add(itemManager.getItemComposition(itemId).getName());
         }
-        return new Result(true, summary(tag, tagged.size(), missing.size(), includeMissing), missingNames);
+        return names;
     }
 
     /**
