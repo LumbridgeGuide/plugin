@@ -142,7 +142,15 @@ public class LumbridgeGuideClient {
 
                     if (response.isSuccessful()) {
                         if (onSuccess != null) {
-                            onSuccess.accept(apiResponse);
+                            try {
+                                onSuccess.accept(apiResponse);
+                            } catch (RuntimeException exception) {
+                                log.warn("Could not handle the response from {}", request.url().encodedPath(),
+                                        exception);
+                                if (onFailure != null) {
+                                    onFailure.accept(ApiResponse.error(response.code(), ""));
+                                }
+                            }
                         }
                     } else {
                         if (onFailure != null) {

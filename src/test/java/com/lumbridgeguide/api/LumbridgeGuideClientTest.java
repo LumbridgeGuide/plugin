@@ -87,6 +87,25 @@ public class LumbridgeGuideClientTest {
         assertFalse(apiKeyHeaders.containsKey("/elsewhere"));
     }
 
+    @Test
+    public void routesAThrowingSuccessCallbackToFailure() throws InterruptedException {
+        body = "";
+        CountDownLatch done = new CountDownLatch(1);
+        AtomicReference<ApiResponse> failure = new AtomicReference<>();
+
+        client("key-123").get("/plugin/sync",
+                response -> {
+                    throw new IllegalStateException("empty body");
+                },
+                response -> {
+                    failure.set(response);
+                    done.countDown();
+                });
+
+        assertTrue("onFailure was never called", done.await(5, TimeUnit.SECONDS));
+        assertEquals(200, failure.get().getStatusCode());
+    }
+
     private LumbridgeGuideClient client(String apiKey) {
         LumbridgeGuideConfig config = new LumbridgeGuideConfig() {
             @Override
