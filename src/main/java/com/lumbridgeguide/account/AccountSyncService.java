@@ -30,7 +30,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -78,45 +77,23 @@ public class AccountSyncService {
         publish();
     }
 
-    private static final Set<GameState> LOGGED_OUT_STATES = EnumSet.of(
-            GameState.UNKNOWN,
-            GameState.STARTING,
-            GameState.LOGIN_SCREEN,
-            GameState.LOGIN_SCREEN_AUTHENTICATOR,
-            GameState.LOGGING_IN);
-
-    private boolean awaitingLogin = true;
-    private boolean loginPending;
+    private final LoginTracker loginTracker = new LoginTracker();
 
     /** Called when the plugin starts, which may be while the player is already logged in. */
     public void startUp() {
-        awaitingLogin = true;
-        loginPending = client.getGameState() == GameState.LOGGED_IN;
+        loginTracker.start(client.getGameState() == GameState.LOGGED_IN);
     }
 
-    /**
-     * Hopping worlds passes through loading states without logging out, so only a real logout or login counts. The
-     * login is handled on the next tick, once skills and quests have loaded.
-     */
     @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
-        GameState state = event.getGameState();
-        if (LOGGED_OUT_STATES.contains(state)) {
-            if (!awaitingLogin) {
-                loginPending = false;
-                onLoggedOut();
-            }
-            awaitingLogin = true;
-        } else if (state == GameState.LOGGED_IN && awaitingLogin) {
-            awaitingLogin = false;
-            loginPending = true;
+        if (loginTracker.onGameState(event.getGameState())) {
+            onLoggedOut();
         }
     }
 
     @Subscribe
     public void onGameTick(GameTick tick) {
-        if (loginPending) {
-            loginPending = false;
+        if (loginTracker.onTick()) {
             onLoggedIn();
         }
     }
