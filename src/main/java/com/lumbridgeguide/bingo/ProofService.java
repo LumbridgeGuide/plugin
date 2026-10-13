@@ -2,6 +2,7 @@ package com.lumbridgeguide.bingo;
 
 import com.google.gson.Gson;
 import com.lumbridgeguide.LumbridgeGuideConfig;
+import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
@@ -297,11 +298,19 @@ public class ProofService {
                     remove(offer);
                     onDone.accept(result == null ? "Sent" : result.getMessage());
                 },
-                response -> onDone.accept(response.getStatusCode() == 403
-                        ? "You need to be on a team on this board"
-                        : apiClient.failureMessage(response, response.getStatusCode() == 400
-                                || response.getStatusCode() == 409
-                                ? "The website turned this proof down" : "Sending failed")));
+                response -> onDone.accept(failureMessage(response)));
+    }
+
+    private String failureMessage(ApiResponse response) {
+        switch (response.getStatusCode()) {
+            case 403:
+                return "You need to be on a team on this board";
+            case 400:
+            case 409:
+                return apiClient.failureMessage(response, "The website turned this proof down");
+            default:
+                return apiClient.failureMessage(response, "Sending failed");
+        }
     }
 
     private void offer(PluginBoardData board, PluginTileData tile, String reason) {
