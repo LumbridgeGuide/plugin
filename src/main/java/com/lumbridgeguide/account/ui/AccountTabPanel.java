@@ -97,7 +97,8 @@ public class AccountTabPanel extends JPanel {
         card.add(lastSyncedText);
 
         JComponent disclosure = Components.wrapped(
-                "Your name, account type, levels, XP and quests. The first sync links the account to you.",
+                "Your name, account type, levels, XP and quests. The first sync links the account to you. "
+                        + "Logging in also sends the account's ID to check whether it is linked.",
                 Components.CONTENT_WIDTH, 11f, Font.PLAIN, Theme.TEXT_MUTED);
         disclosure.setAlignmentX(LEFT_ALIGNMENT);
 
