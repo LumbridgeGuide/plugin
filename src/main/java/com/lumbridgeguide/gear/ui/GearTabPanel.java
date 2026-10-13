@@ -3,12 +3,10 @@ package com.lumbridgeguide.gear.ui;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
+import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.TabBar;
 
-import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -46,9 +44,9 @@ public class GearTabPanel extends JPanel {
 
         display.setOpaque(false);
         display.add(topAligned(bankTabSection), BANK_TAB);
-        display.add(scrolling(topAligned(myConfigsSection)), MY_CONFIGS);
+        display.add(Components.scrolling(topAligned(myConfigsSection)), MY_CONFIGS);
         display.add(topAligned(new CreateConfigSection(gearConfigExportService)), CREATE_CONFIG);
-        display.add(scrolling(topAligned(tripCheckPanel)), TRIP_CHECK);
+        display.add(Components.scrolling(topAligned(tripCheckPanel)), TRIP_CHECK);
 
         TabBar subtabs = new TabBar(Arrays.asList(BANK_TAB, MY_CONFIGS, CREATE_CONFIG), TabBar.Style.PILL, name -> {
             cards.show(display, name);
@@ -66,16 +64,6 @@ public class GearTabPanel extends JPanel {
         bankTabSection.setBankOpen(open);
         myConfigsSection.setBankOpen(open);
         tripCheckPanel.setBankOpen(open);
-    }
-
-    private static JScrollPane scrolling(JPanel content) {
-        JScrollPane scroll = new JScrollPane(content);
-        scroll.setOpaque(false);
-        scroll.getViewport().setOpaque(false);
-        scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-        return scroll;
     }
 
     /** CardLayout stretches each card to fill the space, so each section sits at the top of its own panel. */

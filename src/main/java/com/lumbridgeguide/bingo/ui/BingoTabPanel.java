@@ -14,13 +14,11 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.util.LinkBrowser;
 
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
@@ -97,12 +95,7 @@ public class BingoTabPanel extends JPanel {
         emptyHolder.add(emptyState, BorderLayout.NORTH);
         listContent.add(emptyHolder, BorderLayout.CENTER);
 
-        listScroll = new JScrollPane(listContent);
-        listScroll.setOpaque(false);
-        listScroll.getViewport().setOpaque(false);
-        listScroll.setBorder(BorderFactory.createEmptyBorder());
-        listScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        listScroll.getVerticalScrollBar().setUnitIncrement(16);
+        listScroll = Components.scrolling(listContent);
 
         openButton = Components.primaryButton("Open board");
         openButton.addActionListener(event -> openBoardInBrowser());
@@ -126,8 +119,8 @@ public class BingoTabPanel extends JPanel {
         JPanel views = new JPanel(viewCards);
         views.setOpaque(false);
         views.add(overview, TILES_VIEW);
-        views.add(scrolling(topAligned(standingsPanel)), STANDINGS_VIEW);
-        views.add(scrolling(topAligned(claimsPanel)), CLAIMS_VIEW);
+        views.add(Components.scrolling(topAligned(standingsPanel)), STANDINGS_VIEW);
+        views.add(Components.scrolling(topAligned(claimsPanel)), CLAIMS_VIEW);
         viewTabs = new TabBar(Arrays.asList(TILES_VIEW, STANDINGS_VIEW, CLAIMS_VIEW), TabBar.Style.PILL,
                 name -> viewCards.show(views, name));
         viewTabs.setBorder(new EmptyBorder(14, 0, 10, 0));
@@ -162,7 +155,7 @@ public class BingoTabPanel extends JPanel {
                 });
 
         add(overviewRoot, OVERVIEW_CARD);
-        add(scrolling(detailPanel), DETAIL_CARD);
+        add(Components.scrolling(detailPanel), DETAIL_CARD);
         cards.show(this, OVERVIEW_CARD);
     }
 
@@ -210,16 +203,6 @@ public class BingoTabPanel extends JPanel {
         listScroll.getVerticalScrollBar().setValue(0);
         revalidate();
         repaint();
-    }
-
-    private static JScrollPane scrolling(JComponent content) {
-        JScrollPane scroll = new JScrollPane(content);
-        scroll.setOpaque(false);
-        scroll.getViewport().setOpaque(false);
-        scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-        return scroll;
     }
 
     /** CardLayout stretches each view to fill the space, so each one sits at the top of its own panel. */
