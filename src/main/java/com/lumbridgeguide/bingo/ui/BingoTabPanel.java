@@ -77,47 +77,19 @@ public class BingoTabPanel extends JPanel {
 
         emptyRefreshButton = Components.secondaryButton("Refresh");
         emptyRefreshButton.addActionListener(event -> onRefreshClicked());
-        JButton openWebsiteButton = Components.primaryButton("Open website");
-        openWebsiteButton.addActionListener(event -> LinkBrowser.browse(LumbridgeGuideClient.websiteUrl()));
-        emptyState = new EmptyState("No active boards",
-                "Boards you join on the website show up here once they start.", emptyRefreshButton,
-                openWebsiteButton);
-
-        JPanel listContent = new JPanel(new BorderLayout());
-        listContent.setOpaque(false);
-        listContent.add(tileList, BorderLayout.NORTH);
-        JPanel emptyHolder = new JPanel(new BorderLayout());
-        emptyHolder.setOpaque(false);
-        emptyHolder.setBorder(new EmptyBorder(24, 0, 0, 0));
-        emptyHolder.add(emptyState, BorderLayout.NORTH);
-        listContent.add(emptyHolder, BorderLayout.CENTER);
-
-        listScroll = Components.scrolling(listContent);
+        emptyState = emptyState(emptyRefreshButton);
+        listScroll = Components.scrolling(listContent());
 
         openButton = Components.primaryButton("Open board");
         openButton.addActionListener(event -> openBoardInBrowser());
         refreshButton = Components.secondaryButton("Refresh");
         refreshButton.addActionListener(event -> onRefreshClicked());
-
-        buttonBar = new JPanel(new GridLayout(1, 2, 6, 0));
-        buttonBar.setOpaque(false);
-        buttonBar.setBorder(new EmptyBorder(10, 0, 0, 0));
-        buttonBar.add(refreshButton);
-        buttonBar.add(openButton);
-
-        JPanel overview = new JPanel(new BorderLayout());
-        overview.setOpaque(false);
-        overview.add(listScroll, BorderLayout.CENTER);
-        overview.add(buttonBar, BorderLayout.SOUTH);
+        buttonBar = buttonBar();
 
         standingsPanel = new StandingsPanel(StandingsPanel.Mode.STANDINGS);
         claimsPanel = new StandingsPanel(StandingsPanel.Mode.CLAIMS);
         CardLayout viewCards = new CardLayout();
-        JPanel views = new JPanel(viewCards);
-        views.setOpaque(false);
-        views.add(overview, TILES_VIEW);
-        views.add(Components.scrolling(topAligned(standingsPanel)), STANDINGS_VIEW);
-        views.add(Components.scrolling(topAligned(claimsPanel)), CLAIMS_VIEW);
+        JPanel views = views(viewCards);
         viewTabs = new TabBar(Arrays.asList(TILES_VIEW, STANDINGS_VIEW, CLAIMS_VIEW), TabBar.Style.PILL,
                 name -> viewCards.show(views, name));
         viewTabs.setBorder(new EmptyBorder(14, 0, 10, 0));
@@ -125,24 +97,9 @@ public class BingoTabPanel extends JPanel {
         JPanel overviewRoot = new JPanel(new BorderLayout());
         overviewRoot.setOpaque(false);
         ProofOfferPanel proofOffer = new ProofOfferPanel(proofService);
-        JPanel overviewTop = new JPanel();
-        overviewTop.setLayout(new BoxLayout(overviewTop, BoxLayout.Y_AXIS));
-        overviewTop.setOpaque(false);
-        proofOffer.setAlignmentX(LEFT_ALIGNMENT);
-        headerPanel.setAlignmentX(LEFT_ALIGNMENT);
-        viewTabs.setAlignmentX(LEFT_ALIGNMENT);
-        overviewTop.add(proofOffer);
-        overviewTop.add(headerPanel);
-        overviewTop.add(viewTabs);
-        overviewRoot.add(overviewTop, BorderLayout.NORTH);
-        proofService.setOnQueueChanged(queue -> SwingUtilities.invokeLater(() -> {
-            boolean grew = queue.size() > shownOffers;
-            shownOffers = queue.size();
-            proofOffer.showQueue(queue);
-            if (grew) {
-                cards.show(this, OVERVIEW_CARD);
-            }
-        }));
+        overviewRoot.add(overviewTop(proofOffer), BorderLayout.NORTH);
+        proofService.setOnQueueChanged(queue ->
+                SwingUtilities.invokeLater(() -> onProofQueueChanged(proofOffer, queue)));
         overviewRoot.add(views, BorderLayout.CENTER);
 
         detailPanel = new TileDetailPanel(icons, tileProgressTracker, this::closeDetail,
@@ -154,6 +111,70 @@ public class BingoTabPanel extends JPanel {
         add(overviewRoot, OVERVIEW_CARD);
         add(Components.scrolling(detailPanel), DETAIL_CARD);
         cards.show(this, OVERVIEW_CARD);
+    }
+
+    private static EmptyState emptyState(JButton refresh) {
+        JButton openWebsiteButton = Components.primaryButton("Open website");
+        openWebsiteButton.addActionListener(event -> LinkBrowser.browse(LumbridgeGuideClient.websiteUrl()));
+        return new EmptyState("No active boards",
+                "Boards you join on the website show up here once they start.", refresh, openWebsiteButton);
+    }
+
+    private JPanel listContent() {
+        JPanel listContent = new JPanel(new BorderLayout());
+        listContent.setOpaque(false);
+        listContent.add(tileList, BorderLayout.NORTH);
+        JPanel emptyHolder = new JPanel(new BorderLayout());
+        emptyHolder.setOpaque(false);
+        emptyHolder.setBorder(new EmptyBorder(24, 0, 0, 0));
+        emptyHolder.add(emptyState, BorderLayout.NORTH);
+        listContent.add(emptyHolder, BorderLayout.CENTER);
+        return listContent;
+    }
+
+    private JPanel buttonBar() {
+        JPanel bar = new JPanel(new GridLayout(1, 2, 6, 0));
+        bar.setOpaque(false);
+        bar.setBorder(new EmptyBorder(10, 0, 0, 0));
+        bar.add(refreshButton);
+        bar.add(openButton);
+        return bar;
+    }
+
+    private JPanel views(CardLayout viewCards) {
+        JPanel overview = new JPanel(new BorderLayout());
+        overview.setOpaque(false);
+        overview.add(listScroll, BorderLayout.CENTER);
+        overview.add(buttonBar, BorderLayout.SOUTH);
+
+        JPanel views = new JPanel(viewCards);
+        views.setOpaque(false);
+        views.add(overview, TILES_VIEW);
+        views.add(Components.scrolling(topAligned(standingsPanel)), STANDINGS_VIEW);
+        views.add(Components.scrolling(topAligned(claimsPanel)), CLAIMS_VIEW);
+        return views;
+    }
+
+    private JPanel overviewTop(ProofOfferPanel proofOffer) {
+        JPanel overviewTop = new JPanel();
+        overviewTop.setLayout(new BoxLayout(overviewTop, BoxLayout.Y_AXIS));
+        overviewTop.setOpaque(false);
+        proofOffer.setAlignmentX(LEFT_ALIGNMENT);
+        headerPanel.setAlignmentX(LEFT_ALIGNMENT);
+        viewTabs.setAlignmentX(LEFT_ALIGNMENT);
+        overviewTop.add(proofOffer);
+        overviewTop.add(headerPanel);
+        overviewTop.add(viewTabs);
+        return overviewTop;
+    }
+
+    private void onProofQueueChanged(ProofOfferPanel proofOffer, List<ProofService.Offer> queue) {
+        boolean grew = queue.size() > shownOffers;
+        shownOffers = queue.size();
+        proofOffer.showQueue(queue);
+        if (grew) {
+            cards.show(this, OVERVIEW_CARD);
+        }
     }
 
     public void refresh() {
