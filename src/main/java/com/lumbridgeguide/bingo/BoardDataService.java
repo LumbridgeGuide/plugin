@@ -87,6 +87,7 @@ public class BoardDataService {
     public void refresh(Runnable onComplete) {
         if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");
+            clearCache();
             if (onComplete != null) {
                 onComplete.run();
             }
@@ -127,10 +128,23 @@ public class BoardDataService {
     }
 
     private void handleSyncFailure(ApiResponse response) {
+        if (response.getStatusCode() == 401) {
+            log.warn("Board sync rejected the API key, clearing cached boards");
+            clearCache();
+            return;
+        }
         if (hasCachedData()) {
             log.warn("Board sync failed (status {}), using cached data", response.getStatusCode());
         } else {
             log.warn("Board sync failed (status {}), no cached data available", response.getStatusCode());
+        }
+    }
+
+    /** Boards fetched with a key that is now rejected or cleared must not stay on screen or in chat */
+    private synchronized void clearCache() {
+        cachedData = null;
+        if (CACHE_FILE.exists() && !CACHE_FILE.delete()) {
+            log.warn("Failed to delete the board cache");
         }
     }
 
