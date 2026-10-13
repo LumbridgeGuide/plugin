@@ -5,10 +5,7 @@ import net.runelite.api.GameState;
 import java.util.EnumSet;
 import java.util.Set;
 
-/**
- * Tells a real login or logout apart from a world hop, which passes through loading states without logging out. A
- * login is reported on the next tick, once skills and quests have loaded
- */
+/** Detects real logins and logouts, ignoring world hops */
 final class LoginTracker {
 
     private static final Set<GameState> LOGGED_OUT_STATES = EnumSet.of(
