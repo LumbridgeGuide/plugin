@@ -104,23 +104,27 @@ public class InboxPanel extends Section {
         row.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_SUBTLE), new EmptyBorder(9, 0, 9, 0)));
         boolean unread = !notification.isRead();
+        row.add(dot(unread), BorderLayout.WEST);
+        row.add(textColumn(notification, unread), BorderLayout.CENTER);
+        if (!hasAnswer(notification) && notification.getLink() != null && !notification.getLink().isEmpty()) {
+            openLinkOnClick(row, notification.getLink());
+        }
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+        return row;
+    }
+
+    private static JLabel dot(boolean unread) {
         JLabel dotLabel = new JLabel(new DotIcon(unread ? Theme.accent() : new Color(0, 0, 0, 0)));
         dotLabel.setVerticalAlignment(JLabel.TOP);
         dotLabel.setBorder(new EmptyBorder(4, 0, 0, 0));
+        return dotLabel;
+    }
 
+    private JPanel textColumn(NotificationData notification, boolean unread) {
         JPanel text = new JPanel();
         text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
         text.setOpaque(false);
-        JPanel titleRow = new JPanel(new BorderLayout(6, 0));
-        titleRow.setOpaque(false);
-        titleRow.setAlignmentX(LEFT_ALIGNMENT);
-        titleRow.add(Components.wrapped(notification.getTitle(), TEXT_WIDTH, 12f, unread ? Font.BOLD : Font.PLAIN,
-                unread ? Theme.TEXT_PRIMARY : Theme.TEXT_SECONDARY), BorderLayout.CENTER);
-        JLabel when = Components.label(TimeText.ago(notification.getCreatedAt()).replace(" ago", ""), 11f,
-                Font.PLAIN, Theme.TEXT_MUTED);
-        when.setVerticalAlignment(JLabel.TOP);
-        titleRow.add(when, BorderLayout.EAST);
-        text.add(titleRow);
+        text.add(titleRow(notification, unread));
         if (notification.getDescription() != null) {
             text.add(Box.createVerticalStrut(2));
             WrapText description = Components.wrapped(notification.getDescription(), TEXT_WIDTH + 24, 11f,
@@ -132,22 +136,31 @@ public class InboxPanel extends Section {
             text.add(Box.createVerticalStrut(7));
             text.add(answerButtons(notification));
         }
+        return text;
+    }
 
-        row.add(dotLabel, BorderLayout.WEST);
-        row.add(text, BorderLayout.CENTER);
-        if (!hasAnswer(notification) && notification.getLink() != null && !notification.getLink().isEmpty()) {
-            row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            row.setToolTipText("Open on the website");
-            row.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent mouseEvent) {
-                    String link = notification.getLink();
-                    LinkBrowser.browse(link.startsWith("http") ? link : LumbridgeGuideClient.websiteUrl() + link);
-                }
-            });
-        }
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
-        return row;
+    private static JPanel titleRow(NotificationData notification, boolean unread) {
+        JPanel titleRow = new JPanel(new BorderLayout(6, 0));
+        titleRow.setOpaque(false);
+        titleRow.setAlignmentX(LEFT_ALIGNMENT);
+        titleRow.add(Components.wrapped(notification.getTitle(), TEXT_WIDTH, 12f, unread ? Font.BOLD : Font.PLAIN,
+                unread ? Theme.TEXT_PRIMARY : Theme.TEXT_SECONDARY), BorderLayout.CENTER);
+        JLabel when = Components.label(TimeText.ago(notification.getCreatedAt()).replace(" ago", ""), 11f,
+                Font.PLAIN, Theme.TEXT_MUTED);
+        when.setVerticalAlignment(JLabel.TOP);
+        titleRow.add(when, BorderLayout.EAST);
+        return titleRow;
+    }
+
+    private static void openLinkOnClick(JPanel row, String link) {
+        row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        row.setToolTipText("Open on the website");
+        row.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                LinkBrowser.browse(link.startsWith("http") ? link : LumbridgeGuideClient.websiteUrl() + link);
+            }
+        });
     }
 
     private JPanel answerButtons(NotificationData notification) {
