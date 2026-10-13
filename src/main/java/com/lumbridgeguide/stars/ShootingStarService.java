@@ -128,8 +128,7 @@ public class ShootingStarService {
                 "plane", star.getPlane(), "level", star.getLevel());
         apiClient.post("/plugin/shooting-stars", body,
                 response -> onDone.accept("Reported. Thanks!"),
-                response -> onDone.accept(response.getStatusCode() == 401
-                        ? "Check your API key in the plugin settings" : "Couldn't report the star"));
+                response -> onDone.accept(apiClient.failureMessage(response, "Couldn't report the star")));
     }
 
     public void list(Consumer<List<ShootingStarData>> onSuccess, Consumer<String> onFailure) {

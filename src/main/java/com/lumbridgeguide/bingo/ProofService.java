@@ -2,8 +2,6 @@ package com.lumbridgeguide.bingo;
 
 import com.google.gson.Gson;
 import com.lumbridgeguide.LumbridgeGuideConfig;
-import com.lumbridgeguide.api.ApiErrorData;
-import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
@@ -299,33 +297,9 @@ public class ProofService {
                     remove(offer);
                     onDone.accept(result == null ? "Sent" : result.getMessage());
                 },
-                response -> onDone.accept(failureMessage(response)));
-    }
-
-    private String failureMessage(ApiResponse response) {
-        switch (response.getStatusCode()) {
-            case 400:
-            case 409:
-                ApiErrorData error = parseError(response);
-                return error != null && error.getMessage() != null
-                        ? error.getMessage() : "The website turned this proof down";
-            case 401:
-                return "Check your API key in the plugin settings";
-            case 403:
-                return "You need to be on a team on this board";
-            case -1:
-                return "Could not reach Lumbridge Guide";
-            default:
-                return "Sending failed (" + response.getStatusCode() + ")";
-        }
-    }
-
-    private ApiErrorData parseError(ApiResponse response) {
-        try {
-            return gson.fromJson(response.getBody(), ApiErrorData.class);
-        } catch (RuntimeException ignored) {
-            return null;
-        }
+                response -> onDone.accept(response.getStatusCode() == 403
+                        ? "You need to be on a team on this board"
+                        : apiClient.failureMessage(response, "Sending failed")));
     }
 
     private void offer(PluginBoardData board, PluginTileData tile, String reason) {

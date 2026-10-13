@@ -211,28 +211,12 @@ public class AccountSyncService {
 
     private void onFailure(ApiResponse response) {
         busy = false;
-        ApiErrorData error = parseError(response);
+        ApiErrorData error = apiClient.parseError(response);
         String impliedStatus = AccountStatusText.statusForError(error == null ? null : error.getError());
         if (impliedStatus != null) {
             linkStatus = impliedStatus;
         }
-        if (response.getStatusCode() == -1) {
-            setMessage("Could not reach Lumbridge Guide.", AccountStatusText.Tone.ERROR);
-        } else if (response.getStatusCode() == 401) {
-            setMessage("Check your API key in the plugin settings.", AccountStatusText.Tone.ERROR);
-        } else if (error != null && error.getMessage() != null) {
-            setMessage(error.getMessage(), AccountStatusText.Tone.ERROR);
-        } else {
-            setMessage("Sync failed (" + response.getStatusCode() + ").", AccountStatusText.Tone.ERROR);
-        }
-    }
-
-    private ApiErrorData parseError(ApiResponse response) {
-        try {
-            return apiClient.deserialize(response.getBody(), ApiErrorData.class);
-        } catch (RuntimeException exception) {
-            return null;
-        }
+        setMessage(apiClient.failureMessage(response, "Sync failed"), AccountStatusText.Tone.ERROR);
     }
 
     private void setMessage(String text, AccountStatusText.Tone tone) {

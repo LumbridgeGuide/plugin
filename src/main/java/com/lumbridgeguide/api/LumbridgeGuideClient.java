@@ -100,6 +100,29 @@ public class LumbridgeGuideClient {
         return gson.fromJson(json, clazz);
     }
 
+    /** What to tell the player about a failed request, with the fallback used when the backend gives no message */
+    public String failureMessage(ApiResponse response, String fallback) {
+        if (response.getStatusCode() == -1) {
+            return "Could not reach Lumbridge Guide";
+        }
+        if (response.getStatusCode() == 401) {
+            return "Check your API key in the plugin settings";
+        }
+        ApiErrorData error = parseError(response);
+        return error != null && error.getMessage() != null
+                ? error.getMessage()
+                : fallback + " (" + response.getStatusCode() + ")";
+    }
+
+    /** The backend's error body, or null when the body is not one */
+    public ApiErrorData parseError(ApiResponse response) {
+        try {
+            return deserialize(response.getBody(), ApiErrorData.class);
+        } catch (RuntimeException exception) {
+            return null;
+        }
+    }
+
     private <T> RequestBody jsonBody(T body) {
         return RequestBody.create(JSON_MEDIA_TYPE, gson.toJson(body));
     }

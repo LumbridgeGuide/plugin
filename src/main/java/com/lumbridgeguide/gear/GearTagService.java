@@ -121,13 +121,13 @@ public class GearTagService {
                     OwnedGearConfigPage page = gson.fromJson(response.getBody(), OwnedGearConfigPage.class);
                     onSuccess.accept(page == null || page.getConfigs() == null ? List.of() : page.getConfigs());
                 },
-                response -> onFailure.accept(failureMessage(response)));
+                response -> onFailure.accept(failureMessage(apiClient, response)));
     }
 
     public void generate(String code, boolean includeMissing, Consumer<Result> onComplete) {
         apiClient.get("/plugin/gear/" + code,
                 response -> build(response, includeMissing, onComplete),
-                response -> onComplete.accept(Result.failure(failureMessage(response))));
+                response -> onComplete.accept(Result.failure(failureMessage(apiClient, response))));
     }
 
     private void build(ApiResponse response, boolean includeMissing, Consumer<Result> onComplete) {
@@ -238,16 +238,9 @@ public class GearTagService {
                 : base + ". " + items + " not in your bank " + (missing == 1 ? "was" : "were") + " left out.";
     }
 
-    static String failureMessage(ApiResponse response) {
-        switch (response.getStatusCode()) {
-            case 404:
-                return "No gear set found for that code";
-            case 401:
-                return "Check your API key in the plugin settings";
-            case -1:
-                return "Could not reach Lumbridge Guide";
-            default:
-                return "Generate failed (" + response.getStatusCode() + ")";
-        }
+    static String failureMessage(LumbridgeGuideClient apiClient, ApiResponse response) {
+        return response.getStatusCode() == 404
+                ? "No gear set found for that code"
+                : apiClient.failureMessage(response, "Generate failed");
     }
 }

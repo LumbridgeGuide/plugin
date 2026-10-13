@@ -1,7 +1,5 @@
 package com.lumbridgeguide.gear;
 
-import com.lumbridgeguide.api.ApiErrorData;
-import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.gear.data.GearConfigCreatedData;
 import com.lumbridgeguide.gear.data.GearConfigPayload;
@@ -82,7 +80,8 @@ public class GearConfigExportService {
                                 apiClient.deserialize(response.getBody(), GearConfigCreatedData.class);
                         onComplete.accept(Result.success(created.getUrl()));
                     },
-                    response -> onComplete.accept(Result.failure(failureMessage(response))));
+                    response -> onComplete.accept(Result.failure(
+                            apiClient.failureMessage(response, "Could not create the gear config"))));
         });
     }
 
@@ -145,24 +144,6 @@ public class GearConfigExportService {
 
     private String itemName(int itemId) {
         return itemManager.getItemComposition(itemId).getName();
-    }
-
-    private String failureMessage(ApiResponse response) {
-        if (response.getStatusCode() == -1) {
-            return "Could not reach Lumbridge Guide.";
-        }
-        if (response.getStatusCode() == 401) {
-            return "Check your API key in the plugin settings.";
-        }
-        try {
-            ApiErrorData error = apiClient.deserialize(response.getBody(), ApiErrorData.class);
-            if (error != null && error.getMessage() != null) {
-                return error.getMessage();
-            }
-        } catch (RuntimeException exception) {
-            return "Could not create the gear config (" + response.getStatusCode() + ").";
-        }
-        return "Could not create the gear config (" + response.getStatusCode() + ").";
     }
 
     @Value

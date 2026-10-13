@@ -92,9 +92,7 @@ public class InboxService {
                     onSuccess.accept(page == null || page.getNotifications() == null
                             ? List.of() : page.getNotifications());
                 },
-                response -> onFailure.accept(response.getStatusCode() == 401
-                        ? "Check your API key in the plugin settings"
-                        : "Could not load notifications"));
+                response -> onFailure.accept(apiClient.failureMessage(response, "Could not load notifications")));
     }
 
     public void act(String notificationId, String action, Runnable onDone, Consumer<String> onFailure) {

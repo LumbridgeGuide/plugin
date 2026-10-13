@@ -95,7 +95,7 @@ public class TripCheckService {
                     }
                     clientThread.invoke(() -> onSuccess.accept(checkOnClientThread(gear)));
                 },
-                response -> onFailure.accept(GearTagService.failureMessage(response)));
+                response -> onFailure.accept(GearTagService.failureMessage(apiClient, response)));
     }
 
     private Check checkOnClientThread(PluginGearData gear) {
