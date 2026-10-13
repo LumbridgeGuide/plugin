@@ -84,6 +84,16 @@ public class AccountSyncService {
         loginTracker.start(client.getGameState() == GameState.LOGGED_IN);
     }
 
+    /** Called when the plugin stops, so a later start does not show the previous account */
+    public void reset() {
+        listener = null;
+        latest = null;
+        linkStatus = null;
+        message = null;
+        busy = false;
+        lastSynced = null;
+    }
+
     @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
         if (loginTracker.onGameState(event.getGameState())) {

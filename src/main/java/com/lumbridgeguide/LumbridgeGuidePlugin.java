@@ -63,6 +63,7 @@ public class LumbridgeGuidePlugin extends Plugin {
         log.info("Lumbridge Guide stopped");
         eventSubscribers().forEach(eventBus::unregister);
         sidebarController.shutDown();
+        accountSyncService.reset();
     }
 
     private List<Object> eventSubscribers() {
