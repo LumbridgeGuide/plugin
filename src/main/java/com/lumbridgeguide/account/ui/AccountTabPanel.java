@@ -48,18 +48,6 @@ public class AccountTabPanel extends JPanel {
         accountName = Components.label(" ", 14f, Font.BOLD, Theme.TEXT_PRIMARY);
         accountType = Components.label(" ", 11f, Font.PLAIN, Theme.TEXT_MUTED);
 
-        JPanel nameColumn = new JPanel();
-        nameColumn.setLayout(new BoxLayout(nameColumn, BoxLayout.Y_AXIS));
-        nameColumn.setOpaque(false);
-        nameColumn.add(accountName);
-        nameColumn.add(accountType);
-
-        JPanel who = new JPanel(new BorderLayout(8, 0));
-        who.setOpaque(false);
-        who.setAlignmentX(LEFT_ALIGNMENT);
-        who.add(avatar, BorderLayout.WEST);
-        who.add(nameColumn, BorderLayout.CENTER);
-
         badgeHolder = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         badgeHolder.setOpaque(false);
         badgeHolder.setAlignmentX(LEFT_ALIGNMENT);
@@ -73,39 +61,65 @@ public class AccountTabPanel extends JPanel {
         refreshButton.setToolTipText("Re-read your account and check its link status again");
         refreshButton.addActionListener(event -> accountSyncService.refresh());
 
+        resultText = Components.wrapped(" ", TEXT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_MUTED);
+        lastSyncedText = Components.label(" ", 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        lastSyncedText.setAlignmentX(LEFT_ALIGNMENT);
+
+        add(Components.sectionHeader("RuneScape account"));
+        add(Box.createVerticalStrut(8));
+        add(accountCard());
+        add(Box.createVerticalStrut(18));
+        addDisclosure();
+
+        accountSyncService.setListener(view -> SwingUtilities.invokeLater(() -> show(view)));
+    }
+
+    private JPanel identityRow() {
+        JPanel nameColumn = new JPanel();
+        nameColumn.setLayout(new BoxLayout(nameColumn, BoxLayout.Y_AXIS));
+        nameColumn.setOpaque(false);
+        nameColumn.add(accountName);
+        nameColumn.add(accountType);
+
+        JPanel who = new JPanel(new BorderLayout(8, 0));
+        who.setOpaque(false);
+        who.setAlignmentX(LEFT_ALIGNMENT);
+        who.add(avatar, BorderLayout.WEST);
+        who.add(nameColumn, BorderLayout.CENTER);
+        return who;
+    }
+
+    private JPanel buttonRow() {
         JPanel buttons = new JPanel(new BorderLayout(6, 0));
         buttons.setOpaque(false);
         buttons.setAlignmentX(LEFT_ALIGNMENT);
         buttons.add(syncButton, BorderLayout.CENTER);
         buttons.add(refreshButton, BorderLayout.EAST);
         buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, buttons.getPreferredSize().height));
+        return buttons;
+    }
 
-        resultText = Components.wrapped(" ", TEXT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_MUTED);
-        lastSyncedText = Components.label(" ", 11f, Font.PLAIN, Theme.TEXT_MUTED);
-        lastSyncedText.setAlignmentX(LEFT_ALIGNMENT);
-
+    private Card accountCard() {
         Card card = new Card(12);
-        card.add(who);
+        card.add(identityRow());
         card.add(Box.createVerticalStrut(10));
         card.add(badgeHolder);
         card.add(Box.createVerticalStrut(6));
         card.add(statusText);
         card.add(Box.createVerticalStrut(10));
-        card.add(buttons);
+        card.add(buttonRow());
         card.add(Box.createVerticalStrut(8));
         card.add(resultText);
         card.add(lastSyncedText);
+        return card;
+    }
 
+    private void addDisclosure() {
         JComponent disclosure = Components.wrapped(
                 "Your name, account type, levels, XP and quests. The first sync links the account to you. "
                         + "Logging in also sends the account's ID to check whether it is linked.",
                 Components.CONTENT_WIDTH, 11f, Font.PLAIN, Theme.TEXT_MUTED);
         disclosure.setAlignmentX(LEFT_ALIGNMENT);
-
-        add(Components.sectionHeader("RuneScape account"));
-        add(Box.createVerticalStrut(8));
-        add(card);
-        add(Box.createVerticalStrut(18));
         add(Components.sectionHeader("What gets sent"));
         add(Box.createVerticalStrut(8));
         add(disclosure);
@@ -114,8 +128,6 @@ public class AccountTabPanel extends JPanel {
         privacy.addActionListener(event -> LinkBrowser.browse(LumbridgeGuideClient.websiteUrl() + "/privacy"));
         add(Box.createVerticalStrut(6));
         add(privacy);
-
-        accountSyncService.setListener(view -> SwingUtilities.invokeLater(() -> show(view)));
     }
 
     private void show(AccountSyncService.AccountView view) {
