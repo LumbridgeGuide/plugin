@@ -8,9 +8,8 @@ import lombok.Data;
 public class ApiResponse {
     private final int statusCode;
     private final String body;
-    private final boolean success;
 
     public static ApiResponse error(int statusCode, String message) {
-        return new ApiResponse(statusCode, message, false);
+        return new ApiResponse(statusCode, message);
     }
 }

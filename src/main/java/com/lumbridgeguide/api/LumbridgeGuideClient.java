@@ -2,7 +2,6 @@ package com.lumbridgeguide.api;
 
 import com.google.gson.Gson;
 import com.lumbridgeguide.LumbridgeGuideConfig;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -39,7 +38,6 @@ public class LumbridgeGuideClient {
     private final OkHttpClient httpClient;
     private final Gson gson;
     private final LumbridgeGuideConfig config;
-    @Getter
     private final HttpUrl apiBaseUrl;
 
     @Inject
@@ -55,7 +53,7 @@ public class LumbridgeGuideClient {
         return System.getProperty(WEB_BASE_PROPERTY, DEFAULT_WEB_BASE_URL);
     }
 
-    public HttpUrl resolveUrl(String path) {
+    private HttpUrl resolveUrl(String path) {
         String cleanPath = path.startsWith("/") ? path.substring(1) : path;
         HttpUrl.Builder urlBuilder = apiBaseUrl.newBuilder();
         for (String segment : cleanPath.split("/")) {
@@ -137,8 +135,7 @@ public class LumbridgeGuideClient {
             public void onResponse(@Nonnull Call call, @Nonnull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
                     String bodyContent = responseBody != null ? responseBody.string() : "";
-                    ApiResponse apiResponse = new ApiResponse(
-                            response.code(), bodyContent, response.isSuccessful());
+                    ApiResponse apiResponse = new ApiResponse(response.code(), bodyContent);
 
                     if (response.isSuccessful()) {
                         if (onSuccess != null) {

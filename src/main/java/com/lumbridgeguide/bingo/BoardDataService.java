@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /** Board data is cached on disk so the panel has boards to show before the first refresh finishes. */
@@ -65,12 +64,6 @@ public class BoardDataService {
         } catch (RuntimeException ignored) {
             return false;
         }
-    }
-
-    public Optional<PluginBoardData> getBoardById(String boardId) {
-        return getBoards().stream()
-                .filter(board -> board.getId().equals(boardId))
-                .findFirst();
     }
 
     public boolean hasCachedData() {
