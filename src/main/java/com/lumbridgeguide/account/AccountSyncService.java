@@ -112,19 +112,20 @@ public class AccountSyncService {
 
     /** Must run on the client thread. Syncs afterwards only when asked to and the account is already linked. */
     private void loadAccount(boolean syncIfLinked) {
-        latest = capture();
+        AccountSyncPayload snapshot = capture();
+        latest = snapshot;
         linkStatus = null;
         publish();
-        if (latest == null || !apiClient.hasApiKey()) {
+        if (snapshot == null || !apiClient.hasApiKey()) {
             return;
         }
-        apiClient.post("/plugin/accounts/status", new AccountStatusRequest(latest.getAccountHash()),
+        apiClient.post("/plugin/accounts/status", new AccountStatusRequest(snapshot.getAccountHash()),
                 response -> {
                     AccountStatusData status = apiClient.deserialize(response.getBody(), AccountStatusData.class);
                     linkStatus = status.getStatus();
                     publish();
                     if (syncIfLinked && "LINKED".equals(linkStatus)) {
-                        send(latest, false);
+                        send(snapshot, false);
                     }
                 },
                 this::onFailure);
