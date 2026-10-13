@@ -76,7 +76,7 @@ public class LumbridgeGuideClient {
         executeAsync(request, onSuccess, onFailure);
     }
 
-    public <T> void post(String path, T body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
+    public void post(String path, Object body, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         Request request = newRequestBuilder(resolveUrl(path))
                 .post(jsonBody(body))
                 .build();
@@ -90,7 +90,6 @@ public class LumbridgeGuideClient {
         fields.forEach(body::addFormDataPart);
         body.addFormDataPart(imagePart, imagePart + ".png", RequestBody.create(PNG_MEDIA_TYPE, png));
         Request request = newRequestBuilder(resolveUrl(path))
-                .removeHeader("Content-Type")
                 .post(body.build())
                 .build();
         executeAsync(request, onSuccess, onFailure);
@@ -123,7 +122,7 @@ public class LumbridgeGuideClient {
         }
     }
 
-    private <T> RequestBody jsonBody(T body) {
+    private RequestBody jsonBody(Object body) {
         return RequestBody.create(JSON_MEDIA_TYPE, gson.toJson(body));
     }
 
@@ -135,7 +134,6 @@ public class LumbridgeGuideClient {
     private Request.Builder newRequestBuilder(HttpUrl url) {
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
-                .header("Content-Type", "application/json")
                 .header("Accept", "application/json");
 
         String apiKey = config.apiKey();
