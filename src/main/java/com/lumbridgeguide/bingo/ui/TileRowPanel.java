@@ -38,6 +38,18 @@ class TileRowPanel extends JPanel {
         boolean takenByOther = tile.isClaimed() && !mine;
         Color teamColor = mine ? Theme.parseTeamColor(board.getMyTeam().getColor()) : null;
 
+        add(iconHolder(tile, icons, takenByOther), BorderLayout.WEST);
+        add(textColumn(tile, board, tracked, mine, takenByOther, teamColor), BorderLayout.CENTER);
+        add(trailing(tile, mine, teamColor), BorderLayout.EAST);
+        installHover(onClick);
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+        return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+    }
+
+    private static JPanel iconHolder(PluginTileData tile, TileIcons icons, boolean takenByOther) {
         IconWell icon = new IconWell(28);
         icon.setImage(icons.imageFor(tile));
         if (takenByOther) {
@@ -46,7 +58,11 @@ class TileRowPanel extends JPanel {
         JPanel iconHolder = new JPanel(new BorderLayout());
         iconHolder.setOpaque(false);
         iconHolder.add(icon, BorderLayout.CENTER);
+        return iconHolder;
+    }
 
+    private static JPanel textColumn(PluginTileData tile, PluginBoardData board, OptionalLong tracked, boolean mine,
+                                     boolean takenByOther, Color teamColor) {
         JPanel textColumn = new JPanel();
         textColumn.setLayout(new BoxLayout(textColumn, BoxLayout.Y_AXIS));
         textColumn.setOpaque(false);
@@ -58,11 +74,10 @@ class TileRowPanel extends JPanel {
                 mine ? teamColor : Theme.TEXT_MUTED);
         meta.setBorder(new EmptyBorder(1, 0, 0, 0));
         textColumn.add(meta);
+        return textColumn;
+    }
 
-        add(iconHolder, BorderLayout.WEST);
-        add(textColumn, BorderLayout.CENTER);
-        add(trailing(tile, mine, teamColor), BorderLayout.EAST);
-
+    private void installHover(Runnable onClick) {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent mouseEvent) {
@@ -81,11 +96,6 @@ class TileRowPanel extends JPanel {
                 onClick.run();
             }
         });
-    }
-
-    @Override
-    public Dimension getMaximumSize() {
-        return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
     }
 
     private static JComponent trailing(PluginTileData tile, boolean mine, Color teamColor) {
