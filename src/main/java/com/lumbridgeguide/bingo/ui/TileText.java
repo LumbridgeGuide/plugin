@@ -2,6 +2,8 @@ package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.bingo.data.PluginTileData;
 
+import java.util.Locale;
+
 /**
  * Wording shared by the tile list and the expanded tile view.
  */
@@ -43,7 +45,7 @@ final class TileText {
         if (text == null || text.isEmpty()) {
             return "";
         }
-        return Character.toUpperCase(text.charAt(0)) + text.substring(1).toLowerCase();
+        return Character.toUpperCase(text.charAt(0)) + text.substring(1).toLowerCase(Locale.ROOT);
     }
 
     private TileText() {
