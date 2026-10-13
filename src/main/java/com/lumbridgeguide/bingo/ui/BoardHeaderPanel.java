@@ -30,14 +30,6 @@ public class BoardHeaderPanel extends JPanel {
         setOpaque(false);
 
         titleLabel = Components.wrapped("", Components.CONTENT_WIDTH - 40, 14f, Font.BOLD, Theme.TEXT_PRIMARY);
-        JPanel titleRow = new JPanel(new BorderLayout(6, 0));
-        titleRow.setOpaque(false);
-        titleRow.setAlignmentX(LEFT_ALIGNMENT);
-        titleRow.add(titleLabel, BorderLayout.CENTER);
-        JPanel navigatorHolder = new JPanel(new BorderLayout());
-        navigatorHolder.setOpaque(false);
-        navigatorHolder.add(navigator, BorderLayout.NORTH);
-        titleRow.add(navigatorHolder, BorderLayout.EAST);
 
         metaLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
         metaLabel.setIconTextGap(6);
@@ -50,13 +42,25 @@ public class BoardHeaderPanel extends JPanel {
         copy.addActionListener(event -> codePanel.copy());
         codeHeader = Components.sectionHeader("Board code", copy);
 
-        add(titleRow);
+        add(titleRow(navigator));
         add(Box.createVerticalStrut(4));
         add(metaLabel);
         add(Box.createVerticalStrut(14));
         add(codeHeader);
         add(Box.createVerticalStrut(8));
         add(codePanel);
+    }
+
+    private JPanel titleRow(BoardNavigatorPanel navigator) {
+        JPanel titleRow = new JPanel(new BorderLayout(6, 0));
+        titleRow.setOpaque(false);
+        titleRow.setAlignmentX(LEFT_ALIGNMENT);
+        titleRow.add(titleLabel, BorderLayout.CENTER);
+        JPanel navigatorHolder = new JPanel(new BorderLayout());
+        navigatorHolder.setOpaque(false);
+        navigatorHolder.add(navigator, BorderLayout.NORTH);
+        titleRow.add(navigatorHolder, BorderLayout.EAST);
+        return titleRow;
     }
 
     public void update(PluginBoardData board) {
