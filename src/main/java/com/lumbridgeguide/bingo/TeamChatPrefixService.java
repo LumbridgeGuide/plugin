@@ -79,7 +79,6 @@ public class TeamChatPrefixService {
         }
     }
 
-    /** Chat names carry account-type icons and non-breaking spaces that the local player's name does not */
     static boolean isOwnName(String localName, String chatName) {
         return localName != null && chatName != null && Text.sanitize(localName).equals(Text.sanitize(chatName));
     }

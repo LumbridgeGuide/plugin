@@ -125,7 +125,6 @@ public class BoardDataService {
         }
     }
 
-    /** Boards fetched with a key that is now rejected or cleared must not stay on screen or in chat */
     private synchronized void clearCache() {
         cachedData = null;
         if (CACHE_FILE.exists() && !CACHE_FILE.delete()) {
