@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
+/** Sidebar root showing the tabs, or an API key prompt when no key is set */
 public class SidebarPanel extends PluginPanel {
 
     private static final String NO_KEY_CARD = "noKey";

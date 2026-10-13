@@ -6,10 +6,7 @@ import lombok.Value;
 import java.util.List;
 import java.util.Set;
 
-/**
- * One account sync. {@code manual} is true only when the player pressed Sync now, which is the only way a new
- * account gets linked.
- */
+/** Skills, quests and account details the plugin sends when syncing */
 @Value
 @Builder(toBuilder = true)
 public class AccountSyncPayload {

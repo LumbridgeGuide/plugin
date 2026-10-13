@@ -16,11 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * A row of tabs. {@link Style#UNDERLINE} spreads the tabs across the panel and underlines the open one in the accent,
- * like the website's header, for the main tabs; {@link Style#PILL} is a row of pills, the open one on a wash of the
- * accent, for views inside a tab such as the gear pages.
- */
+/** Row of tabs that switches sidebar pages, underlined or as pills */
 public class TabBar extends JPanel {
 
     public enum Style {

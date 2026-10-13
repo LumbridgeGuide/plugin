@@ -14,7 +14,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.util.function.IntConsumer;
 
-/** Steps between the viewer's active boards, shown as "‹ 1/2 ›" beside the board's name. Hidden when there is one. */
+/** Previous and next controls for moving between active boards */
 class BoardNavigatorPanel extends JPanel {
 
     private final JLabel positionLabel;

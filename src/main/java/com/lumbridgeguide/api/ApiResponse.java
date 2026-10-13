@@ -3,6 +3,7 @@ package com.lumbridgeguide.api;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+/** Status code and raw body of one finished backend request */
 @Data
 @AllArgsConstructor
 public class ApiResponse {

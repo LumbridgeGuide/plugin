@@ -17,10 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-/**
- * The top of the Bingo tab: the board's name with the board switcher, the viewer's team and the time left, then the
- * code players show in every proof screenshot.
- */
+/** Board summary with its title, switcher, team, time left and verification code */
 public class BoardHeaderPanel extends JPanel {
 
     private final WrapText titleLabel;

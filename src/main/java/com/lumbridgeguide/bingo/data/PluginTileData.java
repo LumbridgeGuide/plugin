@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.util.List;
 
+/** One bingo tile with its goal and claim state */
 @Data
 public class PluginTileData {
     private String id;

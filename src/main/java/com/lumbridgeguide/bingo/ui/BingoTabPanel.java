@@ -27,10 +27,7 @@ import java.awt.GridLayout;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * The Bingo tab. The overview shows the active board with its tiles as a list, its standings or its recent claims, and
- * clicking a tile swaps the whole tab for that tile's details.
- */
+/** Sidebar page with the active board's overview and a detail view per tile */
 public class BingoTabPanel extends JPanel {
 
     private static final String OVERVIEW_CARD = "overview";

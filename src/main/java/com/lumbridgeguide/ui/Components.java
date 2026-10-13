@@ -24,10 +24,7 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.util.Locale;
 
-/**
- * Small factory for themed Swing components. Every component gets an explicit
- * font because RuneLite's global pixel font would otherwise leak in.
- */
+/** Themed labels, wrapped text, buttons and fields for the sidebar */
 public final class Components {
 
     public static final int CONTENT_WIDTH = 188;

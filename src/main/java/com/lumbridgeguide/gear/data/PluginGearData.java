@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Map;
 
+/** Gear set name, slots and item ids used for bank tags and trip checks */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

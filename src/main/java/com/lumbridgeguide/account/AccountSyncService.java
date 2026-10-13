@@ -36,13 +36,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/**
- * Links and syncs the logged-in OSRS account. Game state is only read on the client thread; requests are sent from
- * there and answered on OkHttp threads, so the listener must hand UI work to Swing itself.
- *
- * A snapshot of the account is taken on login and kept current (skills on every stat change, quests when one is
- * completed), because by the time the client reports a logout its data may already be gone.
- */
+/** Links the logged-in game account and syncs its skills and quests to Lumbridge Guide */
 @Slf4j
 @Singleton
 public class AccountSyncService {

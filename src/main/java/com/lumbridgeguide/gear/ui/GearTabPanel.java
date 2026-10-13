@@ -12,10 +12,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.util.Arrays;
 
-/**
- * The Gear tab: "Bank tab" makes a tag tab from any config's code, "My configs" lists the player's own configs, each
- * with a button for its tab and a trip check behind it, and "Create" exports what they wear and carry.
- */
+/** Sidebar page for gear bank tags, the player's own configs and new configs */
 public class GearTabPanel extends JPanel {
 
     private static final String BANK_TAB = "Bank tab";

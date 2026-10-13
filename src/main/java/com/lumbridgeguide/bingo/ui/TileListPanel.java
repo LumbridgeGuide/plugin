@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+/** A board's tiles in order, optionally with unclaimed tiles first */
 public class TileListPanel extends JPanel {
 
     private final TileIcons icons;

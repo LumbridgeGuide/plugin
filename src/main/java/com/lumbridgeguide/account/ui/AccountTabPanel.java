@@ -25,7 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import net.runelite.client.util.LinkBrowser;
 
-/** The RuneScape account that is logged in, whether it is linked, and the button that syncs it. */
+/** Sidebar page for linking and syncing the logged-in game account */
 public class AccountTabPanel extends JPanel {
 
     private static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 24;

@@ -19,6 +19,7 @@ import net.runelite.client.plugins.banktags.BankTagsPlugin;
 import javax.inject.Inject;
 import java.util.List;
 
+/** Entry point that starts the sidebar and registers the services that listen to game events */
 @Slf4j
 @PluginDescriptor(
         name = "Lumbridge Guide"

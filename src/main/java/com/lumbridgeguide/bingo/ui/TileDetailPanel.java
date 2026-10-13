@@ -30,10 +30,7 @@ import java.util.List;
 import java.util.OptionalLong;
 import java.util.function.BiConsumer;
 
-/**
- * One tile, as the website's tile view shows it: the tile's icon, title and badges, the player's progress on kill
- * count and XP tiles, what it asks for, who claimed it and the player's proof, then what can be done about it.
- */
+/** Full view of one tile's requirements, progress, claim status and proof */
 public class TileDetailPanel extends JPanel {
 
     private static final int TEXT_WIDTH = Components.CONTENT_WIDTH;

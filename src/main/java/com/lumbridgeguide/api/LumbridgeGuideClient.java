@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/** Sends the plugin's requests to the Lumbridge Guide API with the user's API key */
 @Slf4j
 @Singleton
 public class LumbridgeGuideClient {

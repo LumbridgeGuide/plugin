@@ -4,10 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 
-/**
- * Maps the backend's link statuses and error codes to what the sidebar shows. Kept free of game and Swing types so
- * it can be unit tested.
- */
+/** Sidebar wording and tone for account link statuses, error codes and account types */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AccountStatusText {
 

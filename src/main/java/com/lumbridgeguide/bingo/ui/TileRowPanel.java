@@ -23,11 +23,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.OptionalLong;
 
-/**
- * One tile in the list: the tile's icon, its title, one short detail (progress, points or who claimed it) and at the
- * end its state. A tile the viewer's team claimed is in the team's colour with a tick; a tile another team claimed
- * fades.
- */
+/** Clickable one-tile summary in the board overview */
 class TileRowPanel extends JPanel {
 
     TileRowPanel(PluginTileData tile, PluginBoardData board, TileIcons icons, OptionalLong tracked, Runnable onClick) {

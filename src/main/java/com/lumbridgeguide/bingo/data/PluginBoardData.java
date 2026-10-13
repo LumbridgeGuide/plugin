@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.util.List;
 
+/** One active bingo board with the player's team and its tiles */
 @Data
 public class PluginBoardData {
     private String id;

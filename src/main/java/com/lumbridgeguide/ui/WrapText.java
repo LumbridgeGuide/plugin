@@ -10,10 +10,7 @@ import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Word wrapped text measured with the real font metrics. Swing's HTML labels
- * measure and paint differently, which clipped lines, so this draws its own.
- */
+/** Multi-line label that wraps words using the real font metrics */
 public class WrapText extends JComponent {
 
     private final int wrapWidth;

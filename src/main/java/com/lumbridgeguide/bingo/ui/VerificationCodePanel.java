@@ -16,10 +16,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * Shows a bingo verification code as large characters in outlined boxes, like the website. Clicking anywhere on it,
- * or on the Copy link above it, copies the code.
- */
+/** Click-to-copy display of a board's code, one boxed character at a time */
 class VerificationCodePanel extends JPanel {
 
     private static final int GAP = 3;

@@ -9,10 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Colours and fonts copied from the Lumbridge Guide website's dark theme so the
- * plugin panel looks like part of the same product.
- */
+/** Website dark-mode colours and fonts for the sidebar */
 public final class Theme {
 
     public static final Color PANEL_BACKGROUND = new Color(0x1A1A1E);

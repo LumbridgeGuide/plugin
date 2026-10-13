@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** Board data is cached on disk so the panel has boards to show before the first refresh finishes. */
+/** Active bingo boards from the backend, cached on disk between sessions */
 @Slf4j
 @Singleton
 public class BoardDataService {

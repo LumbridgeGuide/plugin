@@ -38,12 +38,7 @@ import java.util.function.IntUnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Builds a bank tag tab from a Lumbridge Guide gear config while the bank is open. Items the player has are tagged
- * with the config's name and laid out in the config's shape ({@link GearBankLayout}). Missing items can be included
- * too: RuneLite draws a layout item that is not in the bank as a faded placeholder. Generating the same config again
- * replaces the tag and its layout.
- */
+/** Turns a gear set from the website into an lg- prefixed bank tag tab */
 @Slf4j
 @Singleton
 public class GearTagService {

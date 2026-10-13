@@ -11,7 +11,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** A small label in a tone, as on the website: a tile type such as "Kill count", or a status such as "Linked". */
+/** Small rounded label for a tile type, points or a status */
 public class Badge extends JComponent {
 
     private final String text;
