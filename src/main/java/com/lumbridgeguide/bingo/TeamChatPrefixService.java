@@ -11,6 +11,7 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -46,8 +47,7 @@ public class TeamChatPrefixService {
                 || client.getLocalPlayer() == null) {
             return;
         }
-        String localName = client.getLocalPlayer().getName();
-        if (localName == null || !localName.equals(chatMessage.getName())) {
+        if (!isOwnName(client.getLocalPlayer().getName(), chatMessage.getName())) {
             return;
         }
         PluginTeamData team = activeTeam();
@@ -78,6 +78,11 @@ public class TeamChatPrefixService {
         if (currentText != null && currentText.contains(playerName) && !currentText.contains(prefix)) {
             chatboxInput.setText(currentText.replace(playerName + ":", prefix + playerName + ":"));
         }
+    }
+
+    /** Chat names carry account-type icons and non-breaking spaces that the local player's name does not */
+    static boolean isOwnName(String localName, String chatName) {
+        return localName != null && chatName != null && Text.sanitize(localName).equals(Text.sanitize(chatName));
     }
 
     private PluginTeamData activeTeam() {
