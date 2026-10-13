@@ -123,7 +123,7 @@ public class BoardDataService {
                 log.info("Board data synced: {} active board(s)", boardCount);
             }
         } catch (Exception exception) {
-            log.warn("Failed to parse board sync response");
+            log.warn("Failed to parse board sync response", exception);
         }
     }
 
@@ -160,12 +160,12 @@ public class BoardDataService {
             }
             return loaded;
         } catch (Exception exception) {
-            log.warn("Failed to load board cache from disk");
+            log.warn("Failed to load board cache from disk", exception);
             return null;
         }
     }
 
-    private void saveToDisk(PluginSyncResponse data) {
+    private synchronized void saveToDisk(PluginSyncResponse data) {
         try {
             if (!CACHE_DIR.exists() && !CACHE_DIR.mkdirs()) {
                 log.warn("Failed to create cache directory");
@@ -176,7 +176,7 @@ public class BoardDataService {
                 gson.toJson(data, writer);
             }
         } catch (IOException exception) {
-            log.warn("Failed to save board cache to disk");
+            log.warn("Failed to save board cache to disk", exception);
         }
     }
 }
