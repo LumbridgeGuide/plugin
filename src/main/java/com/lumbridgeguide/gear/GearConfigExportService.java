@@ -14,6 +14,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
@@ -22,13 +23,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 @Singleton
 public class GearConfigExportService {
 
-    private static final int RUNE_POUCH_ID = 12791;
-    private static final int DIVINE_RUNE_POUCH_ID = 27281;
+    private static final Set<Integer> RUNE_POUCHES = Set.of(ItemID.BH_RUNE_POUCH, ItemID.BH_RUNE_POUCH_TROUVER,
+            ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_TROUVER);
 
     private static final int[] POUCH_RUNE_VARBITS = {
             VarbitID.RUNE_POUCH_TYPE_1, VarbitID.RUNE_POUCH_TYPE_2,
@@ -62,8 +64,7 @@ public class GearConfigExportService {
                 return;
             }
             List<GearConfigPayload.InventoryEntry> inventory = includeInventory ? readInventory() : new ArrayList<>();
-            boolean hasRunePouch = inventory.stream()
-                    .anyMatch(entry -> entry.getItemId() == RUNE_POUCH_ID || entry.getItemId() == DIVINE_RUNE_POUCH_ID);
+            boolean hasRunePouch = inventory.stream().anyMatch(entry -> RUNE_POUCHES.contains(entry.getItemId()));
             String configName = name == null || name.trim().isEmpty()
                     ? defaultName()
                     : name.trim();
