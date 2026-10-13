@@ -1,5 +1,6 @@
 package com.lumbridgeguide.gear;
 
+import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.gear.data.GearConfigCreatedData;
 import com.lumbridgeguide.gear.data.GearConfigPayload;
@@ -65,28 +66,30 @@ public class GearConfigExportService {
                 onSwing.accept(Result.failure("Log in to the game first."));
                 return;
             }
-            List<GearConfigPayload.InventoryEntry> inventory = includeInventory ? readInventory() : new ArrayList<>();
-            boolean hasRunePouch = inventory.stream().anyMatch(entry -> RUNE_POUCHES.contains(entry.getItemId()));
-            String configName = name == null || name.trim().isEmpty()
-                    ? defaultName()
-                    : name.trim();
-            GearConfigPayload payload = new GearConfigPayload(
-                    configName,
-                    includeEquipment,
-                    includeInventory,
-                    includeEquipment ? readEquipment() : new ArrayList<>(),
-                    inventory,
-                    hasRunePouch ? readRunePouch() : new ArrayList<>());
-
-            apiClient.post("/plugin/gear-configs", payload,
-                    response -> {
-                        GearConfigCreatedData created =
-                                apiClient.deserialize(response.getBody(), GearConfigCreatedData.class);
-                        onSwing.accept(Result.success(created.getUrl()));
-                    },
+            apiClient.post("/plugin/gear-configs", payload(name, includeEquipment, includeInventory),
+                    response -> onSwing.accept(Result.success(createdUrl(response))),
                     response -> onSwing.accept(Result.failure(
                             apiClient.failureMessage(response, "Could not create the gear config"))));
         });
+    }
+
+    private GearConfigPayload payload(String name, boolean includeEquipment, boolean includeInventory) {
+        List<GearConfigPayload.InventoryEntry> inventory = includeInventory ? readInventory() : new ArrayList<>();
+        boolean hasRunePouch = inventory.stream().anyMatch(entry -> RUNE_POUCHES.contains(entry.getItemId()));
+        String configName = name == null || name.trim().isEmpty()
+                ? defaultName()
+                : name.trim();
+        return new GearConfigPayload(
+                configName,
+                includeEquipment,
+                includeInventory,
+                includeEquipment ? readEquipment() : new ArrayList<>(),
+                inventory,
+                hasRunePouch ? readRunePouch() : new ArrayList<>());
+    }
+
+    private String createdUrl(ApiResponse response) {
+        return apiClient.deserialize(response.getBody(), GearConfigCreatedData.class).getUrl();
     }
 
     List<GearConfigPayload.EquipmentEntry> readEquipment() {
