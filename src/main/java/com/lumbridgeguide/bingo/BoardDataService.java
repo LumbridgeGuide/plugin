@@ -25,18 +25,21 @@ import java.util.stream.Collectors;
 @Singleton
 public class BoardDataService {
 
-    private static final File CACHE_DIR = new File(RuneLite.RUNELITE_DIR, "lumbridge-guide");
-    private static final File CACHE_FILE = new File(CACHE_DIR, "board-cache.json");
-
     private final LumbridgeGuideClient apiClient;
     private final Gson gson;
+    private final File cacheFile;
 
     private volatile PluginSyncResponse cachedData;
 
     @Inject
     public BoardDataService(LumbridgeGuideClient apiClient, Gson gson) {
+        this(apiClient, gson, new File(new File(RuneLite.RUNELITE_DIR, "lumbridge-guide"), "board-cache.json"));
+    }
+
+    BoardDataService(LumbridgeGuideClient apiClient, Gson gson, File cacheFile) {
         this.apiClient = apiClient;
         this.gson = gson;
+        this.cacheFile = cacheFile;
         this.cachedData = loadFromDisk();
     }
 
@@ -127,17 +130,17 @@ public class BoardDataService {
 
     private synchronized void clearCache() {
         cachedData = null;
-        if (CACHE_FILE.exists() && !CACHE_FILE.delete()) {
+        if (cacheFile.exists() && !cacheFile.delete()) {
             log.warn("Failed to delete the board cache");
         }
     }
 
     private PluginSyncResponse loadFromDisk() {
-        if (!CACHE_FILE.exists()) {
+        if (!cacheFile.exists()) {
             return null;
         }
 
-        try (FileReader reader = new FileReader(CACHE_FILE, StandardCharsets.UTF_8)) {
+        try (FileReader reader = new FileReader(cacheFile, StandardCharsets.UTF_8)) {
             PluginSyncResponse loaded = gson.fromJson(reader, PluginSyncResponse.class);
             if (loaded != null && loaded.getBoards() != null) {
                 log.info("Loaded {} cached board(s) from disk", loaded.getBoards().size());
@@ -151,12 +154,12 @@ public class BoardDataService {
 
     private synchronized void saveToDisk(PluginSyncResponse data) {
         try {
-            if (!CACHE_DIR.exists() && !CACHE_DIR.mkdirs()) {
+            if (!cacheFile.getParentFile().exists() && !cacheFile.getParentFile().mkdirs()) {
                 log.warn("Failed to create cache directory");
                 return;
             }
 
-            try (FileWriter writer = new FileWriter(CACHE_FILE, StandardCharsets.UTF_8)) {
+            try (FileWriter writer = new FileWriter(cacheFile, StandardCharsets.UTF_8)) {
                 gson.toJson(data, writer);
             }
         } catch (IOException exception) {
