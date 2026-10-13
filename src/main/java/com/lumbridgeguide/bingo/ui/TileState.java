@@ -39,6 +39,14 @@ final class TileState {
         return "another team";
     }
 
+    /** "3 points" when the board scores by points and the tile has any, otherwise null */
+    static String pointsLabel(PluginTileData tile, PluginBoardData board) {
+        if (!board.isTilePointsEnabled() || tile.getPoints() <= 0) {
+            return null;
+        }
+        return tile.getPoints() + (tile.getPoints() == 1 ? " point" : " points");
+    }
+
     static long target(PluginTileData tile) {
         if ("kill_count".equals(tile.getType())) {
             return tile.getKillCount() == null ? 0 : tile.getKillCount();

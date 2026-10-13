@@ -102,8 +102,9 @@ public class TileDetailPanel extends JPanel {
         badges.setBorder(new EmptyBorder(0, -4, 0, 0));
         badges.setAlignmentX(LEFT_ALIGNMENT);
         badges.add(Badge.neutral(TileText.typeName(tile)));
-        if (board.isTilePointsEnabled() && tile.getPoints() > 0) {
-            badges.add(Badge.accent(tile.getPoints() + (tile.getPoints() == 1 ? " point" : " points")));
+        String points = TileState.pointsLabel(tile, board);
+        if (points != null) {
+            badges.add(Badge.accent(points));
         }
         text.add(badges);
 

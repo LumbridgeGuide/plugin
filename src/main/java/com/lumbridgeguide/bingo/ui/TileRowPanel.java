@@ -123,9 +123,7 @@ class TileRowPanel extends JPanel {
         if (!progress.isEmpty()) {
             return progress;
         }
-        if (board.isTilePointsEnabled() && tile.getPoints() > 0) {
-            return tile.getPoints() + (tile.getPoints() == 1 ? " point" : " points");
-        }
-        return TileText.typeName(tile);
+        String points = TileState.pointsLabel(tile, board);
+        return points != null ? points : TileText.typeName(tile);
     }
 }
