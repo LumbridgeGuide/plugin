@@ -136,9 +136,8 @@ public class LumbridgeGuideClient {
                 .url(url)
                 .header("Accept", "application/json");
 
-        String apiKey = config.apiKey();
-        if (apiKey != null && !apiKey.trim().isEmpty()) {
-            requestBuilder.header(API_KEY_HEADER, apiKey.trim());
+        if (hasApiKey()) {
+            requestBuilder.header(API_KEY_HEADER, config.apiKey().trim());
         }
         return requestBuilder;
     }

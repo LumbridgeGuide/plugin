@@ -36,6 +36,7 @@ import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 public class SidebarPanel extends PluginPanel {
 
@@ -47,7 +48,7 @@ public class SidebarPanel extends PluginPanel {
     private static final String ACCOUNT_TAB = "Account";
     private static final String STARS_TAB = "Stars";
 
-    private final LumbridgeGuideConfig config;
+    private final BooleanSupplier hasApiKey;
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
     private final GearTabPanel gearTab;
@@ -66,9 +67,10 @@ public class SidebarPanel extends PluginPanel {
             ShootingStarService starService,
             ItemManager itemManager,
             SkillIconManager skillIconManager,
-            LumbridgeGuideConfig config) {
+            LumbridgeGuideConfig config,
+            BooleanSupplier hasApiKey) {
         super(false);
-        this.config = config;
+        this.hasApiKey = hasApiKey;
 
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(8, 8, 8, 8));
@@ -121,7 +123,7 @@ public class SidebarPanel extends PluginPanel {
     public void refresh() {
         SwingUtilities.invokeLater(() ->
         {
-            boolean hasKey = config.apiKey() != null && !config.apiKey().trim().isEmpty();
+            boolean hasKey = hasApiKey.getAsBoolean();
 
             ((CardLayout) centerPanel.getLayout()).show(centerPanel, hasKey ? TABS_CARD : NO_KEY_CARD);
             inboxButton.setVisible(hasKey);

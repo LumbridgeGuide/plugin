@@ -3,6 +3,7 @@ package com.lumbridgeguide.ui;
 import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.LumbridgeGuidePlugin;
 import com.lumbridgeguide.account.AccountSyncService;
+import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.BoardDataService;
 import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
@@ -51,6 +52,7 @@ public class SidebarController {
     private final ShootingStarService starService;
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
+    private final LumbridgeGuideClient apiClient;
 
     private SidebarPanel panel;
     private NavigationButton navigationButton;
@@ -63,7 +65,7 @@ public class SidebarController {
                              GearConfigExportService gearConfigExportService, TripCheckService tripCheckService,
                              AccountSyncService accountSyncService, InboxService inboxService,
                              ShootingStarService starService, ItemManager itemManager,
-                             SkillIconManager skillIconManager) {
+                             SkillIconManager skillIconManager, LumbridgeGuideClient apiClient) {
         this.config = config;
         this.clientToolbar = clientToolbar;
         this.boardDataService = boardDataService;
@@ -77,6 +79,7 @@ public class SidebarController {
         this.starService = starService;
         this.itemManager = itemManager;
         this.skillIconManager = skillIconManager;
+        this.apiClient = apiClient;
     }
 
     public void startUp() {
@@ -155,7 +158,7 @@ public class SidebarController {
     private void addPanel() {
         panel = new SidebarPanel(boardDataService, tileProgressTracker, proofService, gearTagService,
                 gearConfigExportService, tripCheckService, accountSyncService, inboxService, starService,
-                itemManager, skillIconManager, config);
+                itemManager, skillIconManager, config, apiClient::hasApiKey);
         navigationButton = NavigationButton.builder()
                 .tooltip("Lumbridge Guide")
                 .icon(ImageUtil.loadImageResource(LumbridgeGuidePlugin.class, "icon.png"))
