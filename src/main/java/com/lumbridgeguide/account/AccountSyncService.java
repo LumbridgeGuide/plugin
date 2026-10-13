@@ -112,17 +112,15 @@ public class AccountSyncService {
     private void onLoggedIn() {
         message = null;
         lastSynced = null;
-        loadAccount(config.syncOnLoginLogout());
+        loadAccountOnClientThread(config.syncOnLoginLogout());
     }
 
-    /** The Refresh button: re-reads the logged-in account and its link status, in case the tab has gone stale. */
     public void refresh() {
         message = null;
-        clientThread.invoke(() -> loadAccount(false));
+        clientThread.invoke(() -> loadAccountOnClientThread(false));
     }
 
-    /** Must run on the client thread. Syncs afterwards only when asked to and the account is already linked. */
-    private void loadAccount(boolean syncIfLinked) {
+    private void loadAccountOnClientThread(boolean syncIfLinked) {
         AccountSyncPayload snapshot = capture();
         latest = snapshot;
         linkStatus = null;
@@ -174,7 +172,6 @@ public class AccountSyncService {
         }
     }
 
-    /** The Sync now button. Takes a fresh snapshot and may link a new account. */
     public void syncNow() {
         if (!apiClient.hasApiKey()) {
             setMessage("Set your API key in the plugin settings first.", AccountStatusText.Tone.ERROR);
@@ -213,7 +210,7 @@ public class AccountSyncService {
     private void onFailure(ApiResponse response) {
         busy = false;
         ApiErrorData error = apiClient.parseError(response);
-        String impliedStatus = AccountStatusText.statusForError(error == null ? null : error.getError());
+        String impliedStatus = AccountStatusText.impliedLinkStatus(error == null ? null : error.getError());
         if (impliedStatus != null) {
             linkStatus = impliedStatus;
         }
@@ -239,7 +236,7 @@ public class AccountSyncService {
         return AccountSyncPayload.builder()
                 .accountHash(accountHash)
                 .displayName(Text.sanitize(displayName))
-                .accountType(AccountStatusText.accountType(client.getVarbitValue(VarbitID.IRONMAN)))
+                .accountType(AccountStatusText.accountTypeForIronmanVarbit(client.getVarbitValue(VarbitID.IRONMAN)))
                 .worldTypes(worldTypes)
                 .skills(readSkills())
                 .questPoints(readQuestPoints())

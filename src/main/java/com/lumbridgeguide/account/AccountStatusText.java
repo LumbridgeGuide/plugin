@@ -44,8 +44,7 @@ public final class AccountStatusText {
         }
     }
 
-    /** The status an error code implies, or null when the error says nothing about the link. */
-    static String statusForError(String errorCode) {
+    static String impliedLinkStatus(String errorCode) {
         if (errorCode == null) {
             return null;
         }
@@ -91,8 +90,7 @@ public final class AccountStatusText {
         return status == null ? "" : status.replace('_', ' ');
     }
 
-    /** RuneLite's IRONMAN varbit value to the backend's account type. */
-    static String accountType(int ironmanVarbit) {
+    static String accountTypeForIronmanVarbit(int ironmanVarbit) {
         switch (ironmanVarbit) {
             case 1:
                 return "IRONMAN";

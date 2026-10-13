@@ -96,14 +96,11 @@ public class GearTagService {
         }
     }
 
-    /**
-     * Accepts either a bare gear code or a full gear page link.
-     */
-    public static Optional<String> extractCode(String input) {
-        if (input == null) {
+    public static Optional<String> extractCode(String codeOrLink) {
+        if (codeOrLink == null) {
             return Optional.empty();
         }
-        Matcher matcher = GEAR_CODE.matcher(input.trim());
+        Matcher matcher = GEAR_CODE.matcher(codeOrLink.trim());
         return matcher.find() ? Optional.of(matcher.group().toLowerCase(Locale.ROOT)) : Optional.empty();
     }
 

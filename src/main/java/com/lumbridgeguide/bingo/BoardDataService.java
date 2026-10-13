@@ -76,9 +76,8 @@ public class BoardDataService {
         refresh(null);
     }
 
-    /** {@code onComplete} runs whether or not the request succeeds. */
-    public void refresh(Runnable onComplete) {
-        Runnable done = onComplete == null ? () -> { } : onComplete;
+    public void refresh(Runnable onFinished) {
+        Runnable done = onFinished == null ? () -> { } : onFinished;
         if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");
             clearCache();
