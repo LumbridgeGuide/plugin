@@ -154,29 +154,37 @@ public class LumbridgeGuideClient {
 
             @Override
             public void onResponse(@Nonnull Call call, @Nonnull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    String bodyContent = responseBody != null ? responseBody.string() : "";
-                    ApiResponse apiResponse = new ApiResponse(response.code(), bodyContent);
-
-                    if (response.isSuccessful()) {
-                        if (onSuccess != null) {
-                            try {
-                                onSuccess.accept(apiResponse);
-                            } catch (RuntimeException exception) {
-                                log.warn("Could not handle the response from {}", request.url().encodedPath(),
-                                        exception);
-                                if (onFailure != null) {
-                                    onFailure.accept(ApiResponse.error(response.code(), ""));
-                                }
-                            }
-                        }
-                    } else {
-                        if (onFailure != null) {
-                            onFailure.accept(apiResponse);
-                        }
-                    }
-                }
+                deliver(read(response), response.isSuccessful(), request.url().encodedPath(), onSuccess, onFailure);
             }
         });
+    }
+
+    private static ApiResponse read(Response response) throws IOException {
+        try (ResponseBody responseBody = response.body()) {
+            String bodyContent = responseBody != null ? responseBody.string() : "";
+            return new ApiResponse(response.code(), bodyContent);
+        }
+    }
+
+    /** Passes the response to its callback; a success callback that throws ends in the failure callback */
+    private static void deliver(ApiResponse response, boolean successful, String path,
+                                Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
+        if (!successful) {
+            if (onFailure != null) {
+                onFailure.accept(response);
+            }
+            return;
+        }
+        if (onSuccess == null) {
+            return;
+        }
+        try {
+            onSuccess.accept(response);
+        } catch (RuntimeException exception) {
+            log.warn("Could not handle the response from {}", path, exception);
+            if (onFailure != null) {
+                onFailure.accept(ApiResponse.error(response.getStatusCode(), ""));
+            }
+        }
     }
 }
