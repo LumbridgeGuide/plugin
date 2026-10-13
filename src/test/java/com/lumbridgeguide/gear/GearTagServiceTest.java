@@ -3,10 +3,12 @@ package com.lumbridgeguide.gear;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntUnaryOperator;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class GearTagServiceTest {
 
@@ -34,5 +36,16 @@ public class GearTagServiceTest {
     @Test
     public void isMissingWhenNoVariationIsInTheBank() {
         assertEquals(-1, GearTagService.bankItemFor(SANFEW_4, Set.of(), Map.of(), VARIATION));
+    }
+
+    @Test
+    public void extractsTheCodeFromALinkWithSurroundingText() {
+        assertEquals(Optional.of("0f8e7d6c-1a2b-3c4d-5e6f-a1b2c3d4e5f6"), GearTagService.extractCode(
+                "see https://lumbridge.guide/gear/0F8E7D6C-1A2B-3C4D-5E6F-A1B2C3D4E5F6 for it"));
+    }
+
+    @Test
+    public void extractsNothingFromGarbage() {
+        assertFalse(GearTagService.extractCode("not a gear code").isPresent());
     }
 }
