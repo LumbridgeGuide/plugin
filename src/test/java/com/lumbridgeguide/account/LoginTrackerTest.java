@@ -40,4 +40,15 @@ public class LoginTrackerTest {
         assertTrue(tracker.onGameState(GameState.LOGIN_SCREEN));
         assertFalse(tracker.onGameState(GameState.LOGIN_SCREEN));
     }
+
+    @Test
+    public void tracksAPlayerAlreadyLoggedInWhenThePluginStarts() {
+        tracker.start(true);
+        assertTrue(tracker.onTick());
+
+        assertFalse(tracker.onGameState(GameState.LOADING));
+        assertFalse(tracker.onGameState(GameState.LOGGED_IN));
+        assertFalse(tracker.onTick());
+        assertTrue(tracker.onGameState(GameState.LOGIN_SCREEN));
+    }
 }

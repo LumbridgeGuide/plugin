@@ -23,8 +23,8 @@ final class LoginTracker {
 
     /** Called when the plugin starts, which may be while the player is already logged in */
     void start(boolean loggedIn) {
-        awaitingLogin = true;
         loginPending = loggedIn;
+        awaitingLogin = !loginPending;
     }
 
     /** Returns true when the state change is a logout */
