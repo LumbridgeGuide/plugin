@@ -109,7 +109,7 @@ public final class AccountStatusText {
             case 6:
                 return "UNRANKED_GROUP_IRONMAN";
             default:
-                return "REGULAR";
+                return "MAIN";
         }
     }
 }
