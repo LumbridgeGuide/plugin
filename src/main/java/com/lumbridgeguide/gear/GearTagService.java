@@ -111,7 +111,7 @@ public class GearTagService {
         String slug = gearName == null ? "" : gearName.toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-+|-+$", "");
-        return slug.isEmpty() ? FALLBACK_TAG : slug;
+        return "lg-" + (slug.isEmpty() ? FALLBACK_TAG : slug);
     }
 
     /** Fetches the player's own gear configs, most recently updated first, for one-click tag tabs. */

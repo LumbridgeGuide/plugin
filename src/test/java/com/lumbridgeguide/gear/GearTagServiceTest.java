@@ -39,6 +39,12 @@ public class GearTagServiceTest {
     }
 
     @Test
+    public void namesTagsOutsideTheUsersOwnTags() {
+        assertEquals("lg-zulrah-mage", GearTagService.tagName("Zulrah mage"));
+        assertEquals("lg-gear", GearTagService.tagName("  "));
+    }
+
+    @Test
     public void extractsTheCodeFromALinkWithSurroundingText() {
         assertEquals(Optional.of("0f8e7d6c-1a2b-3c4d-5e6f-a1b2c3d4e5f6"), GearTagService.extractCode(
                 "see https://lumbridge.guide/gear/0F8E7D6C-1A2B-3C4D-5E6F-A1B2C3D4E5F6 for it"));
