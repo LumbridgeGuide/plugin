@@ -193,21 +193,7 @@ public final class Components {
 
     /** A text field that shows its tooltip as faded placeholder text while it is empty. */
     public static JTextField textField(String tooltip) {
-        JTextField field = new JTextField() {
-            @Override
-            protected void paintComponent(Graphics graphics) {
-                graphics.setColor(Theme.SURFACE_OVERLAY);
-                graphics.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.ARC, Theme.ARC);
-                super.paintComponent(graphics);
-                if (getText().isEmpty() && !isFocusOwner()) {
-                    Insets insets = getInsets();
-                    graphics.setFont(getFont());
-                    graphics.setColor(Theme.TEXT_MUTED);
-                    graphics.drawString(tooltip, insets.left,
-                            insets.top + graphics.getFontMetrics().getAscent());
-                }
-            }
-        };
+        JTextField field = new PlaceholderField(tooltip);
         field.setToolTipText(tooltip);
         field.setFont(FontManager.getRunescapeFont());
         field.setOpaque(false);
@@ -236,5 +222,27 @@ public final class Components {
     }
 
     private Components() {
+    }
+
+    private static final class PlaceholderField extends JTextField {
+
+        private final String placeholder;
+
+        PlaceholderField(String placeholder) {
+            this.placeholder = placeholder;
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            graphics.setColor(Theme.SURFACE_OVERLAY);
+            graphics.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.ARC, Theme.ARC);
+            super.paintComponent(graphics);
+            if (getText().isEmpty() && !isFocusOwner()) {
+                Insets insets = getInsets();
+                graphics.setFont(getFont());
+                graphics.setColor(Theme.TEXT_MUTED);
+                graphics.drawString(placeholder, insets.left, insets.top + graphics.getFontMetrics().getAscent());
+            }
+        }
     }
 }
