@@ -44,7 +44,7 @@ public class LumbridgeGuideClient {
 
     @Inject
     public LumbridgeGuideClient(OkHttpClient httpClient, Gson gson, LumbridgeGuideConfig config) {
-        this.httpClient = httpClient;
+        this.httpClient = httpClient.newBuilder().followRedirects(false).build();
         this.gson = gson;
         this.config = config;
         this.apiBaseUrl = buildApiBaseUrl();

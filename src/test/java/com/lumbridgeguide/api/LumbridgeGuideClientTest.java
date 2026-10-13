@@ -79,6 +79,14 @@ public class LumbridgeGuideClientTest {
         assertEquals(-1, response.getStatusCode());
     }
 
+    @Test
+    public void doesNotFollowRedirects() throws InterruptedException {
+        ApiResponse response = get(client("key-123"), "/moved");
+
+        assertEquals(302, response.getStatusCode());
+        assertFalse(apiKeyHeaders.containsKey("/elsewhere"));
+    }
+
     private LumbridgeGuideClient client(String apiKey) {
         LumbridgeGuideConfig config = new LumbridgeGuideConfig() {
             @Override
