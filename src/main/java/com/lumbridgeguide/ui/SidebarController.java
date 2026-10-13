@@ -80,10 +80,10 @@ public class SidebarController {
     }
 
     public void startUp() {
-        boardDataService.refresh();
-        lastBoardRefresh = Instant.now();
         Theme.setAccent(config.accentColour());
         addPanel();
+        boardDataService.refresh(this::refreshPanel);
+        lastBoardRefresh = Instant.now();
     }
 
     public void shutDown() {
@@ -107,8 +107,10 @@ public class SidebarController {
             });
             return;
         }
-        boardDataService.refresh();
         panel.refresh();
+        if (LumbridgeGuideConfig.API_KEY_KEY.equals(event.getKey())) {
+            boardDataService.refresh(this::refreshPanel);
+        }
     }
 
     @Subscribe
@@ -119,11 +121,14 @@ public class SidebarController {
             return;
         }
         lastBoardRefresh = Instant.now();
-        boardDataService.refresh(() -> {
-            if (panel != null) {
-                panel.refresh();
-            }
-        });
+        boardDataService.refresh(this::refreshPanel);
+    }
+
+    private void refreshPanel() {
+        SidebarPanel current = panel;
+        if (current != null) {
+            current.refresh();
+        }
     }
 
     @Subscribe

@@ -15,6 +15,7 @@ public interface LumbridgeGuideConfig extends Config {
     String CONFIG_GROUP = "lumbridge_guide";
     String ACCENT_COLOUR_KEY = "accentColour";
     String SHOW_STARS_TAB_KEY = "showStarsTab";
+    String API_KEY_KEY = "apiKey";
 
     @ConfigSection(
             name = "Appearance",
@@ -191,7 +192,7 @@ public interface LumbridgeGuideConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "apiKey",
+            keyName = API_KEY_KEY,
             name = "API Key",
             description = "Your API key from the Lumbridge Guide website. Keep this private!",
             secret = true,
