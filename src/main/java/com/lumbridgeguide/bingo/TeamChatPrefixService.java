@@ -8,7 +8,7 @@ import net.runelite.api.Client;
 import net.runelite.api.MessageNode;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.widgets.ComponentID;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.util.Text;
@@ -64,7 +64,7 @@ public class TeamChatPrefixService {
         if (!config.showTeamPrefix()) {
             return;
         }
-        Widget chatboxInput = client.getWidget(ComponentID.CHATBOX_INPUT);
+        Widget chatboxInput = client.getWidget(InterfaceID.Chatbox.INPUT);
         if (chatboxInput == null || client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null) {
             return;
         }

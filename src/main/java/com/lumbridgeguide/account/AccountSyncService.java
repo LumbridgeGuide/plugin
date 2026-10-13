@@ -265,9 +265,6 @@ public class AccountSyncService {
     private List<AccountSyncPayload.SkillEntry> readSkills() {
         List<AccountSyncPayload.SkillEntry> skills = new ArrayList<>();
         for (Skill skill : Skill.values()) {
-            if (skill == Skill.OVERALL) {
-                continue;
-            }
             int level = Math.max(1, Math.min(99, client.getRealSkillLevel(skill)));
             skills.add(new AccountSyncPayload.SkillEntry(skill.getName(), level, client.getSkillExperience(skill)));
         }

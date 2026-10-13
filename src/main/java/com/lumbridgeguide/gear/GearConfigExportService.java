@@ -11,9 +11,9 @@ import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.GameState;
-import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
@@ -88,7 +88,7 @@ public class GearConfigExportService {
 
     List<GearConfigPayload.EquipmentEntry> readEquipment() {
         List<GearConfigPayload.EquipmentEntry> entries = new ArrayList<>();
-        ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+        ItemContainer equipment = client.getItemContainer(InventoryID.WORN);
         if (equipment == null) {
             return entries;
         }
@@ -107,7 +107,7 @@ public class GearConfigExportService {
 
     List<GearConfigPayload.InventoryEntry> readInventory() {
         List<GearConfigPayload.InventoryEntry> entries = new ArrayList<>();
-        ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
+        ItemContainer inventory = client.getItemContainer(InventoryID.INV);
         if (inventory == null) {
             return entries;
         }
