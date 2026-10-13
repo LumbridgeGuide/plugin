@@ -122,6 +122,7 @@ public class AccountSyncService {
         if (snapshot == null || !apiClient.hasApiKey()) {
             return;
         }
+
         apiClient.post("/plugin/accounts/status", new AccountStatusRequest(snapshot.getAccountHash()),
                 response -> {
                     AccountStatusData status = apiClient.deserialize(response.getBody(), AccountStatusData.class);
@@ -171,6 +172,7 @@ public class AccountSyncService {
             setMessage("Set your API key in the plugin settings first.", AccountStatusText.Tone.ERROR);
             return;
         }
+
         busy = true;
         publish();
         clientThread.invoke(() -> {
@@ -226,6 +228,7 @@ public class AccountSyncService {
         if (accountHash == UNKNOWN_ACCOUNT_HASH || displayName == null) {
             return null;
         }
+
         Set<String> worldTypes = client.getWorldType().stream().map(WorldType::name).collect(Collectors.toSet());
         return AccountSyncPayload.builder()
                 .accountHash(accountHash)
@@ -264,11 +267,13 @@ public class AccountSyncService {
         if (current == null) {
             return;
         }
+
         AccountSyncPayload snapshot = latest;
         AccountStatusText.Line status = snapshot == null
                 ? new AccountStatusText.Line("Log in to the game to link or sync this account.",
                 AccountStatusText.Tone.MUTED)
                 : AccountStatusText.forStatus(linkStatus);
+
         current.accept(new AccountView(
                 snapshot == null ? null : snapshot.getDisplayName(),
                 snapshot == null ? "" : AccountStatusText.accountTypeLabel(snapshot.getAccountType()),
