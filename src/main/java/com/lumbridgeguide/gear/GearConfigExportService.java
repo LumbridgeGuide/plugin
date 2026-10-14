@@ -1,6 +1,5 @@
 package com.lumbridgeguide.gear;
 
-import com.lumbridgeguide.api.ApiErrorData;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.gear.data.GearConfigCreatedData;
@@ -11,28 +10,30 @@ import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.GameState;
-import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
-/**
- * Builds a gear config on the website from what the player is wearing and carrying. Nothing is stored against the
- * player's account: the items only become an ordinary gear config.
- */
+/** Builds a website gear setup from the player's worn and carried items */
 @Singleton
 public class GearConfigExportService {
 
-    private static final int RUNE_POUCH_ID = 12791;
-    private static final int DIVINE_RUNE_POUCH_ID = 27281;
+    private static final Set<Integer> RUNE_POUCHES = Set.of(ItemID.BH_RUNE_POUCH, ItemID.BH_RUNE_POUCH_TROUVER,
+            ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_TROUVER);
+
     private static final int[] POUCH_RUNE_VARBITS = {
             VarbitID.RUNE_POUCH_TYPE_1, VarbitID.RUNE_POUCH_TYPE_2,
             VarbitID.RUNE_POUCH_TYPE_3, VarbitID.RUNE_POUCH_TYPE_4
@@ -48,48 +49,52 @@ public class GearConfigExportService {
     private final LumbridgeGuideClient apiClient;
 
     @Inject
-    public GearConfigExportService(
-            Client client, ClientThread clientThread, ItemManager itemManager, LumbridgeGuideClient apiClient) {
+    public GearConfigExportService(Client client,
+                                   ClientThread clientThread,
+                                   ItemManager itemManager,
+                                   LumbridgeGuideClient apiClient) {
         this.client = client;
         this.clientThread = clientThread;
         this.itemManager = itemManager;
         this.apiClient = apiClient;
     }
 
-    /** Reads the player's items on the client thread, then creates the config. The callback runs off the Swing thread. */
     public void create(String name, boolean includeEquipment, boolean includeInventory, Consumer<Result> onComplete) {
+        Consumer<Result> onSwing = result -> SwingUtilities.invokeLater(() -> onComplete.accept(result));
         clientThread.invoke(() -> {
             if (client.getGameState() != GameState.LOGGED_IN) {
-                onComplete.accept(Result.failure("Log in to the game first."));
+                onSwing.accept(Result.failure("Log in to the game first."));
                 return;
             }
-            List<GearConfigPayload.InventoryEntry> inventory = includeInventory ? readInventory() : new ArrayList<>();
-            boolean hasRunePouch = inventory.stream()
-                    .anyMatch(entry -> entry.getItemId() == RUNE_POUCH_ID || entry.getItemId() == DIVINE_RUNE_POUCH_ID);
-            String configName = name == null || name.trim().isEmpty()
-                    ? defaultName()
-                    : name.trim();
-            GearConfigPayload payload = new GearConfigPayload(
-                    configName,
-                    includeEquipment,
-                    includeInventory,
-                    includeEquipment ? readEquipment() : new ArrayList<>(),
-                    inventory,
-                    hasRunePouch ? readRunePouch() : new ArrayList<>());
-
-            apiClient.post("/plugin/gear-configs", payload,
-                    response -> {
-                        GearConfigCreatedData created =
-                                apiClient.deserialize(response.getBody(), GearConfigCreatedData.class);
-                        onComplete.accept(Result.success(created.getUrl()));
-                    },
-                    response -> onComplete.accept(Result.failure(failureMessage(response))));
+            apiClient.post("/plugin/gear-configs", payload(name, includeEquipment, includeInventory),
+                    response -> onSwing.accept(Result.success(createdUrl(response))),
+                    response -> onSwing.accept(Result.failure(
+                            apiClient.failureMessage(response, "Could not create the gear config"))));
         });
     }
 
-    private List<GearConfigPayload.EquipmentEntry> readEquipment() {
+    private GearConfigPayload payload(String name, boolean includeEquipment, boolean includeInventory) {
+        List<GearConfigPayload.InventoryEntry> inventory = includeInventory ? readInventory() : new ArrayList<>();
+        boolean hasRunePouch = inventory.stream().anyMatch(entry -> RUNE_POUCHES.contains(entry.getItemId()));
+        String configName = name == null || name.trim().isEmpty()
+                ? defaultName()
+                : name.trim();
+        return new GearConfigPayload(
+                configName,
+                includeEquipment,
+                includeInventory,
+                includeEquipment ? readEquipment() : new ArrayList<>(),
+                inventory,
+                hasRunePouch ? readRunePouch() : new ArrayList<>());
+    }
+
+    private String createdUrl(ApiResponse response) {
+        return apiClient.deserialize(response.getBody(), GearConfigCreatedData.class).getUrl();
+    }
+
+    List<GearConfigPayload.EquipmentEntry> readEquipment() {
         List<GearConfigPayload.EquipmentEntry> entries = new ArrayList<>();
-        ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+        ItemContainer equipment = client.getItemContainer(InventoryID.WORN);
         if (equipment == null) {
             return entries;
         }
@@ -106,9 +111,9 @@ public class GearConfigExportService {
         return entries;
     }
 
-    private List<GearConfigPayload.InventoryEntry> readInventory() {
+    List<GearConfigPayload.InventoryEntry> readInventory() {
         List<GearConfigPayload.InventoryEntry> entries = new ArrayList<>();
-        ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
+        ItemContainer inventory = client.getItemContainer(InventoryID.INV);
         if (inventory == null) {
             return entries;
         }
@@ -124,7 +129,7 @@ public class GearConfigExportService {
         return entries;
     }
 
-    private List<GearConfigPayload.RunePouchEntry> readRunePouch() {
+    List<GearConfigPayload.RunePouchEntry> readRunePouch() {
         List<GearConfigPayload.RunePouchEntry> entries = new ArrayList<>();
         EnumComposition runes = client.getEnum(EnumID.RUNEPOUCH_RUNE);
         for (int index = 0; index < POUCH_RUNE_VARBITS.length; index++) {
@@ -141,29 +146,11 @@ public class GearConfigExportService {
 
     private String defaultName() {
         String playerName = client.getLocalPlayer() == null ? null : client.getLocalPlayer().getName();
-        return playerName == null ? "Gear setup" : playerName.replace('\u00A0', ' ') + " setup";
+        return playerName == null ? "Gear setup" : Text.sanitize(playerName) + " setup";
     }
 
     private String itemName(int itemId) {
         return itemManager.getItemComposition(itemId).getName();
-    }
-
-    private String failureMessage(ApiResponse response) {
-        if (response.getStatusCode() == -1) {
-            return "Could not reach Lumbridge Guide.";
-        }
-        if (response.getStatusCode() == 401) {
-            return "Check your API key in the plugin settings.";
-        }
-        try {
-            ApiErrorData error = apiClient.deserialize(response.getBody(), ApiErrorData.class);
-            if (error != null && error.getMessage() != null) {
-                return error.getMessage();
-            }
-        } catch (RuntimeException exception) {
-            return "Could not create the gear config (" + response.getStatusCode() + ").";
-        }
-        return "Could not create the gear config (" + response.getStatusCode() + ").";
     }
 
     @Value

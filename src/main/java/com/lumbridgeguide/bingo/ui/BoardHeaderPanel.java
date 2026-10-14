@@ -2,101 +2,95 @@ package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
-import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.SwatchIcon;
 import com.lumbridgeguide.ui.Theme;
 import com.lumbridgeguide.ui.WrapText;
-import java.awt.Color;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.time.Duration;
 import java.time.Instant;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 
+/** Board summary with its title, switcher, team, time left and verification code */
 public class BoardHeaderPanel extends JPanel {
 
-    private final JLabel codeCaption;
-    private final VerificationCodePanel codePanel;
     private final WrapText titleLabel;
-    private final JLabel teamLabel;
-    private final JLabel statsLabel;
-    private final JLabel timingLabel;
+    private final JLabel metaLabel;
+    private final JPanel codeHeader;
+    private final VerificationCodePanel codePanel;
 
-    public BoardHeaderPanel() {
+    BoardHeaderPanel(BoardNavigatorPanel navigator) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(false);
-        setBorder(new EmptyBorder(0, 0, 8, 0));
 
-        codeCaption = Components.label("Verification code", 11f, Font.PLAIN, Theme.TEXT_MUTED);
-        codeCaption.setAlignmentX(LEFT_ALIGNMENT);
-        codeCaption.setBorder(new EmptyBorder(0, 0, 4, 0));
+        titleLabel = Components.wrapped("", Components.CONTENT_WIDTH - 40, 14f, Font.BOLD, Theme.TEXT_PRIMARY);
+
+        metaLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        metaLabel.setIconTextGap(6);
+        metaLabel.setAlignmentX(LEFT_ALIGNMENT);
 
         codePanel = new VerificationCodePanel();
         codePanel.setAlignmentX(LEFT_ALIGNMENT);
+        codePanel.setToolTipText("Show this code in every proof screenshot. Click to copy.");
+        JButton copy = Components.textLink("Copy");
+        copy.addActionListener(event -> codePanel.copy());
+        codeHeader = Components.sectionHeader("Board code", copy);
 
-        titleLabel = Components.wrapped("", Components.CONTENT_WIDTH, 15f, Font.BOLD, Theme.TEXT_PRIMARY);
-
-        teamLabel = Components.label("", 12f, Font.BOLD, Theme.TEXT_SECONDARY);
-        teamLabel.setAlignmentX(LEFT_ALIGNMENT);
-        teamLabel.setBorder(new EmptyBorder(4, 0, 0, 0));
-
-        statsLabel = Components.label("", 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
-        statsLabel.setAlignmentX(LEFT_ALIGNMENT);
-        statsLabel.setBorder(new EmptyBorder(4, 0, 0, 0));
-
-        timingLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_MUTED);
-        timingLabel.setAlignmentX(LEFT_ALIGNMENT);
-        timingLabel.setBorder(new EmptyBorder(2, 0, 0, 0));
-
-        add(codeCaption);
+        add(titleRow(navigator));
+        add(Box.createVerticalStrut(4));
+        add(metaLabel);
+        add(Box.createVerticalStrut(14));
+        add(codeHeader);
+        add(Box.createVerticalStrut(8));
         add(codePanel);
-        add(Box.createVerticalStrut(10));
-        add(titleLabel);
-        add(teamLabel);
-        add(statsLabel);
-        add(timingLabel);
+    }
+
+    private JPanel titleRow(BoardNavigatorPanel navigator) {
+        JPanel titleRow = new JPanel(new BorderLayout(6, 0));
+        titleRow.setOpaque(false);
+        titleRow.setAlignmentX(LEFT_ALIGNMENT);
+        titleRow.add(titleLabel, BorderLayout.CENTER);
+        JPanel navigatorHolder = new JPanel(new BorderLayout());
+        navigatorHolder.setOpaque(false);
+        navigatorHolder.add(navigator, BorderLayout.NORTH);
+        titleRow.add(navigatorHolder, BorderLayout.EAST);
+        return titleRow;
     }
 
     public void update(PluginBoardData board) {
         if (board == null) {
             titleLabel.setText("");
-            teamLabel.setText("");
-            statsLabel.setText("");
-            timingLabel.setText("");
+            metaLabel.setText("");
             codePanel.setCode(null);
-            codeCaption.setVisible(false);
+            codeHeader.setVisible(false);
             return;
         }
 
-        boolean hasCode = board.getVerificationCode() != null && !board.getVerificationCode().isEmpty();
-        codeCaption.setVisible(hasCode);
-        codePanel.setCode(board.getVerificationCode());
-
         titleLabel.setText(board.getTitle());
-
         PluginTeamData team = board.getMyTeam();
-        if (team != null && team.getName() != null) {
-            Color teamColor = Theme.parseTeamColor(team.getColor());
-            teamLabel.setText("Team: " + team.getName());
-            teamLabel.setForeground(teamColor);
-            teamLabel.setVisible(true);
-        } else {
-            teamLabel.setVisible(false);
-        }
+        boolean hasTeam = team != null && team.getName() != null;
+        String timing = formatTiming(board.getEndsAt());
+        String teamName = hasTeam ? team.getName() : "No team yet";
+        metaLabel.setText(timing.isEmpty() ? teamName : teamName + "  ·  " + timing);
+        metaLabel.setIcon(hasTeam ? new SwatchIcon(Theme.parseTeamColor(team.getColor())) : null);
 
-        int totalTiles = board.getTiles() != null ? board.getTiles().size() : 0;
-        long claimedTiles = board.getTiles() != null
-                ? board.getTiles().stream().filter(PluginTileData::isClaimed).count()
-                : 0;
-        statsLabel.setText(claimedTiles + " of " + totalTiles + " tiles claimed");
-
-        timingLabel.setText(formatTiming(board.getEndsAt()));
+        boolean hasCode = board.getVerificationCode() != null && !board.getVerificationCode().isEmpty();
+        codeHeader.setVisible(hasCode);
+        codePanel.setCode(board.getVerificationCode());
 
         revalidate();
         repaint();
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+        return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
     }
 
     private static String formatTiming(String endsAt) {
@@ -116,13 +110,13 @@ public class BoardHeaderPanel extends JPanel {
             long minutes = remaining.toMinutes() % 60;
 
             if (days > 0) {
-                return "Ends in " + days + "d " + hours + "h";
+                return "ends in " + days + "d " + hours + "h";
             } else if (hours > 0) {
-                return "Ends in " + hours + "h " + minutes + "m";
+                return "ends in " + hours + "h " + minutes + "m";
             }
-            return "Ends in " + minutes + "m";
+            return "ends in " + minutes + "m";
         } catch (Exception ignored) {
-            return endsAt;
+            return "";
         }
     }
 }

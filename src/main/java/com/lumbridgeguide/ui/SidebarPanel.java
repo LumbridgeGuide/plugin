@@ -4,79 +4,128 @@ import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.account.AccountSyncService;
 import com.lumbridgeguide.account.ui.AccountTabPanel;
 import com.lumbridgeguide.bingo.BoardDataService;
+import com.lumbridgeguide.bingo.ProofService;
+import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.ui.BingoTabPanel;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
+import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.gear.ui.GearTabPanel;
+import com.lumbridgeguide.notifications.InboxService;
+import com.lumbridgeguide.notifications.ui.InboxPanel;
+import com.lumbridgeguide.stars.ShootingStarService;
+import com.lumbridgeguide.stars.ui.StarsTabPanel;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
+import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Font;
-import java.util.Arrays;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BooleanSupplier;
 
+/** Sidebar root showing the tabs, or an API key prompt when no key is set */
 public class SidebarPanel extends PluginPanel {
 
     private static final String NO_KEY_CARD = "noKey";
     private static final String TABS_CARD = "tabs";
+    private static final String INBOX_CARD = "inbox";
     private static final String BINGO_TAB = "Bingo";
     private static final String GEAR_TAB = "Gear";
     private static final String ACCOUNT_TAB = "Account";
+    private static final String STARS_TAB = "Stars";
 
-    private final LumbridgeGuideConfig config;
+    private final BooleanSupplier hasApiKey;
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
+    private final GearTabPanel gearTab;
+    private final JButton inboxButton;
+    private final StarsTabPanel starsTab;
 
     public SidebarPanel(
             BoardDataService boardDataService,
+            TileProgressTracker tileProgressTracker,
+            ProofService proofService,
             GearTagService gearTagService,
             GearConfigExportService gearConfigExportService,
+            TripCheckService tripCheckService,
             AccountSyncService accountSyncService,
+            InboxService inboxService,
+            ShootingStarService starService,
             ItemManager itemManager,
             SkillIconManager skillIconManager,
-            LumbridgeGuideConfig config) {
+            LumbridgeGuideConfig config,
+            BooleanSupplier hasApiKey) {
         super(false);
-        this.config = config;
+        this.hasApiKey = hasApiKey;
 
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(8, 8, 8, 8));
         setBackground(Theme.PANEL_BACKGROUND);
 
         JLabel pluginTitle = Components.label("Lumbridge Guide", 16f, Font.BOLD, Theme.TEXT_PRIMARY);
-        pluginTitle.setHorizontalAlignment(SwingConstants.CENTER);
-        pluginTitle.setBorder(new EmptyBorder(0, 0, 8, 0));
-        add(pluginTitle, BorderLayout.NORTH);
+        inboxButton = Components.linkButton("");
+        inboxButton.setIcon(new BellIcon());
+        inboxButton.setIconTextGap(3);
+        inboxButton.setFont(FontManager.getRunescapeSmallFont());
+        inboxButton.setToolTipText("Your Lumbridge Guide notifications");
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.setBorder(new EmptyBorder(2, 0, 10, 0));
+        header.add(pluginTitle, BorderLayout.WEST);
+        header.add(inboxButton, BorderLayout.EAST);
+        add(header, BorderLayout.NORTH);
 
-        bingoTab = new BingoTabPanel(boardDataService, config, itemManager, skillIconManager);
+        bingoTab = new BingoTabPanel(boardDataService, tileProgressTracker, proofService, config, itemManager,
+                skillIconManager);
+        gearTab = new GearTabPanel(gearTagService, gearConfigExportService, tripCheckService,
+                config.includeMissingItems());
+        starsTab = config.showStarsTab() ? new StarsTabPanel(starService) : null;
 
         centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);
         centerPanel.add(buildNoKeyCard(), NO_KEY_CARD);
-        centerPanel.add(buildTabsCard(
-                bingoTab,
-                new GearTabPanel(gearTagService, gearConfigExportService),
-                new AccountTabPanel(accountSyncService)), TABS_CARD);
+        centerPanel.add(buildTabsCard(new AccountTabPanel(accountSyncService)), TABS_CARD);
+        InboxPanel inboxPanel = new InboxPanel(inboxService,
+                () -> ((CardLayout) centerPanel.getLayout()).show(centerPanel, TABS_CARD));
+        centerPanel.add(scrolling(inboxPanel), INBOX_CARD);
         add(centerPanel, BorderLayout.CENTER);
 
+        inboxButton.addActionListener(event -> {
+            ((CardLayout) centerPanel.getLayout()).show(centerPanel, INBOX_CARD);
+            inboxPanel.load();
+        });
+        inboxService.setOnUnreadCount(count -> SwingUtilities.invokeLater(() -> {
+            inboxButton.setText(count > 0 ? String.valueOf(count) : "");
+            inboxButton.revalidate();
+        }));
+
         refresh();
+    }
+
+    public void setBankOpen(boolean open) {
+        SwingUtilities.invokeLater(() -> gearTab.setBankOpen(open));
     }
 
     public void refresh() {
         SwingUtilities.invokeLater(() ->
         {
-            boolean hasKey = config.apiKey() != null && !config.apiKey().trim().isEmpty();
+            boolean hasKey = hasApiKey.getAsBoolean();
 
             ((CardLayout) centerPanel.getLayout()).show(centerPanel, hasKey ? TABS_CARD : NO_KEY_CARD);
+            inboxButton.setVisible(hasKey);
 
             if (hasKey) {
                 bingoTab.refresh();
@@ -87,7 +136,14 @@ public class SidebarPanel extends PluginPanel {
         });
     }
 
-    private static JPanel buildTabsCard(BingoTabPanel bingoTab, GearTabPanel gearTab, AccountTabPanel accountTab) {
+    private static JScrollPane scrolling(JPanel content) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.add(content, BorderLayout.NORTH);
+        return Components.scrolling(wrapper);
+    }
+
+    private JPanel buildTabsCard(AccountTabPanel accountTab) {
         CardLayout tabCards = new CardLayout();
         JPanel display = new JPanel(tabCards);
         display.setOpaque(false);
@@ -95,9 +151,19 @@ public class SidebarPanel extends PluginPanel {
         display.add(gearTab, GEAR_TAB);
         display.add(accountTab, ACCOUNT_TAB);
 
-        TabBar tabBar = new TabBar(Arrays.asList(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB),
-                name -> tabCards.show(display, name));
-        tabBar.setBorder(new EmptyBorder(0, 0, 8, 0));
+        List<String> tabs = new ArrayList<>(List.of(BINGO_TAB, GEAR_TAB));
+        if (starsTab != null) {
+            display.add(scrolling(starsTab), STARS_TAB);
+            tabs.add(STARS_TAB);
+        }
+        tabs.add(ACCOUNT_TAB);
+        TabBar tabBar = new TabBar(tabs, TabBar.Style.UNDERLINE, name -> {
+            tabCards.show(display, name);
+            if (STARS_TAB.equals(name) && starsTab != null) {
+                starsTab.loadIfNeeded();
+            }
+        });
+        tabBar.setBorder(new EmptyBorder(0, 0, 10, 0));
 
         JPanel card = new JPanel(new BorderLayout());
         card.setOpaque(false);
@@ -107,20 +173,35 @@ public class SidebarPanel extends PluginPanel {
     }
 
     private static JPanel buildNoKeyCard() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setOpaque(false);
+        Section card = new Section(0);
 
-        JLabel title = Components.label("API key needed", 14f, Font.BOLD, Theme.TEXT_PRIMARY);
+        JLabel title = Components.label("API key needed", 15f, Font.BOLD, Theme.TEXT_PRIMARY);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        title.setBorder(new EmptyBorder(30, 0, 8, 0));
-
-        JComponent message = Components.wrapped("Set your API key in the plugin settings to get started.",
-                Components.CONTENT_WIDTH - 20, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        card.add(title);
+        card.add(Box.createVerticalStrut(6));
+        WrapText message = Components.wrapped("Set your API key in the plugin settings to get started.",
+                Components.CONTENT_WIDTH - 12, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        message.setCentred(true);
         message.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(message);
+        card.add(Box.createVerticalStrut(10));
 
-        panel.add(title);
-        panel.add(message);
-        return panel;
+        String[] steps = {
+            "Sign in on the Lumbridge Guide website",
+            "Settings, then Account: copy your plugin key",
+            "Paste it into this plugin's settings",
+        };
+        for (int index = 0; index < steps.length; index++) {
+            WrapText step = Components.wrapped((index + 1) + ".  " + steps[index], Components.CONTENT_WIDTH - 12,
+                    11f, Font.PLAIN, Theme.TEXT_MUTED);
+            step.setAlignmentX(Component.CENTER_ALIGNMENT);
+            card.add(step);
+            card.add(Box.createVerticalStrut(3));
+        }
+
+        JPanel wrapper = new JPanel(new GridBagLayout());
+        wrapper.setOpaque(false);
+        wrapper.add(card);
+        return wrapper;
     }
 }

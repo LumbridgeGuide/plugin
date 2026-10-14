@@ -1,7 +1,6 @@
 package com.lumbridgeguide.bingo;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
@@ -10,10 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
+/** Active bingo boards from the backend, cached on disk between sessions */
 @Slf4j
 @Singleton
 public class BoardDataService {
@@ -24,9 +25,9 @@ public class BoardDataService {
     private volatile PluginSyncResponse cachedData;
 
     @Inject
-    public BoardDataService(LumbridgeGuideClient apiClient) {
+    public BoardDataService(LumbridgeGuideClient apiClient, Gson gson) {
         this.apiClient = apiClient;
-        this.gson = new GsonBuilder().create();
+        this.gson = gson;
     }
 
     public List<PluginBoardData> getBoards() {
@@ -36,10 +37,23 @@ public class BoardDataService {
         return Collections.unmodifiableList(cachedData.getBoards());
     }
 
-    public Optional<PluginBoardData> getBoardById(String boardId) {
+    /** Boards that have started and not yet ended, the only ones progress and proof can count towards. */
+    public List<PluginBoardData> getRunningBoards() {
+        Instant now = Instant.now();
         return getBoards().stream()
-                .filter(board -> board.getId().equals(boardId))
-                .findFirst();
+                .filter(board -> reached(now, board.getStartsAt()) && !reached(now, board.getEndsAt()))
+                .collect(Collectors.toList());
+    }
+
+    private static boolean reached(Instant now, String isoInstant) {
+        if (isoInstant == null || isoInstant.isEmpty()) {
+            return false;
+        }
+        try {
+            return !now.isBefore(Instant.parse(isoInstant));
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     public boolean hasCachedData() {
@@ -52,32 +66,25 @@ public class BoardDataService {
         refresh(null);
     }
 
-    /** {@code onComplete} runs whether or not the request succeeds. */
-    public void refresh(Runnable onComplete) {
+    public void refresh(Runnable onFinished) {
+        Runnable done = onFinished == null ? () -> { } : onFinished;
         if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");
-            if (onComplete != null) {
-                onComplete.run();
-            }
+            cachedData = null;
+            done.run();
             return;
         }
 
         apiClient.get("/plugin/sync",
                 response ->
                 {
-                    log.info("[LUMBY GUIDE] Sync successful, status code: {}", response.getStatusCode());
                     handleSyncSuccess(response);
-                    if (onComplete != null) {
-                        onComplete.run();
-                    }
+                    done.run();
                 },
                 response ->
                 {
-                    log.warn("[LUMBY GUIDE] Sync failed, status code: {}", response.getStatusCode());
                     handleSyncFailure(response);
-                    if (onComplete != null) {
-                        onComplete.run();
-                    }
+                    done.run();
                 });
     }
 
@@ -90,16 +97,17 @@ public class BoardDataService {
                 log.info("Board data synced: {} active board(s)", boardCount);
             }
         } catch (Exception exception) {
-            log.warn("Failed to parse board sync response");
+            log.warn("Failed to parse board sync response", exception);
         }
     }
 
     private void handleSyncFailure(ApiResponse response) {
-        if (hasCachedData()) {
-            log.warn("Board sync failed (status {}), using cached data", response.getStatusCode());
-        } else {
-            log.warn("Board sync failed (status {}), no cached data available", response.getStatusCode());
+        if (response.getStatusCode() == 401) {
+            log.warn("Board sync rejected the API key, clearing boards");
+            cachedData = null;
+            return;
         }
+        log.warn("Board sync failed (status {})", response.getStatusCode());
     }
 }
 

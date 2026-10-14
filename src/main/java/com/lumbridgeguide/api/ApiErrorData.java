@@ -2,7 +2,7 @@ package com.lumbridgeguide.api;
 
 import lombok.Data;
 
-/** The backend's error body. {@code error} is a stable code such as ACCOUNT_LIMIT_REACHED. */
+/** Error body the backend returns with a failed request */
 @Data
 public class ApiErrorData {
     private String error;

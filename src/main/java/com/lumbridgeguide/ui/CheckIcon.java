@@ -8,9 +8,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/**
- * A check mark drawn as lines, because the panel fonts have no glyph for one.
- */
+/** Claimed-tile tick drawn with lines */
 public class CheckIcon implements Icon {
 
     private static final int SIZE = 14;
