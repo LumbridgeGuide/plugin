@@ -11,12 +11,13 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
+/** Small rounded label for a tile type, points or a status */
 public class Badge extends JComponent {
 
     private final String text;
     private final Color background;
     private final Color foreground;
-    private final Font font = FontManager.getRunescapeFont();
+    private final Font font = FontManager.getRunescapeSmallFont();
 
     public Badge(String text, Color background, Color foreground) {
         this.text = text;
@@ -24,10 +25,25 @@ public class Badge extends JComponent {
         this.foreground = foreground;
     }
 
+    /** A plain label, such as a tile's type. */
+    public static Badge neutral(String text) {
+        return new Badge(text, Theme.SURFACE_OVERLAY, Theme.TEXT_SECONDARY);
+    }
+
+    /** A label in the player's accent, such as a tile's points. */
+    public static Badge accent(String text) {
+        return new Badge(text, Theme.accentWash(), Theme.accentText());
+    }
+
+    /** A status in its tone's colour on a faint wash of the same colour. */
+    public static Badge status(String text, Color tone) {
+        return new Badge(text, Theme.wash(tone), tone);
+    }
+
     @Override
     public Dimension getPreferredSize() {
         FontMetrics metrics = getFontMetrics(font);
-        return new Dimension(metrics.stringWidth(text) + 14, metrics.getHeight() + 4);
+        return new Dimension(metrics.stringWidth(text) + 10, metrics.getHeight() + 2);
     }
 
     @Override
@@ -39,9 +55,8 @@ public class Badge extends JComponent {
     protected void paintComponent(Graphics graphics) {
         Graphics2D canvas = (Graphics2D) graphics.create();
         canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        canvas.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         canvas.setColor(background);
-        canvas.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+        canvas.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.ARC, Theme.ARC);
         canvas.setFont(font);
         canvas.setColor(foreground);
         FontMetrics metrics = canvas.getFontMetrics();

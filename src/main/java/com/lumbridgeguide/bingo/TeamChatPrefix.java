@@ -6,10 +6,7 @@ import net.runelite.client.util.Text;
 
 import java.util.regex.Pattern;
 
-/**
- * Builds the "[Team] " chat prefix. Team names are chosen by board hosts, so they are escaped before going into chat
- * markup, and a colour that is not plain hex is dropped rather than written into a {@code <col>} tag.
- */
+/** Escaped, colour-safe bingo team tag placed before the player's name in chat */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TeamChatPrefix {
 

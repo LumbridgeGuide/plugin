@@ -1,7 +1,6 @@
 package com.lumbridgeguide.bingo;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
@@ -16,27 +15,31 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
-/** Board data is cached on disk so the panel has boards to show before the first refresh finishes. */
+/** Active bingo boards from the backend, cached on disk between sessions */
 @Slf4j
 @Singleton
 public class BoardDataService {
 
-    private static final File CACHE_DIR = new File(RuneLite.RUNELITE_DIR, "lumbridge-guide");
-    private static final File CACHE_FILE = new File(CACHE_DIR, "board-cache.json");
-
     private final LumbridgeGuideClient apiClient;
     private final Gson gson;
+    private final File cacheFile;
 
     private volatile PluginSyncResponse cachedData;
 
     @Inject
-    public BoardDataService(LumbridgeGuideClient apiClient) {
+    public BoardDataService(LumbridgeGuideClient apiClient, Gson gson) {
+        this(apiClient, gson, new File(new File(RuneLite.RUNELITE_DIR, "lumbridge-guide"), "board-cache.json"));
+    }
+
+    BoardDataService(LumbridgeGuideClient apiClient, Gson gson, File cacheFile) {
         this.apiClient = apiClient;
-        this.gson = new GsonBuilder().create();
+        this.gson = gson;
+        this.cacheFile = cacheFile;
         this.cachedData = loadFromDisk();
     }
 
@@ -47,10 +50,23 @@ public class BoardDataService {
         return Collections.unmodifiableList(cachedData.getBoards());
     }
 
-    public Optional<PluginBoardData> getBoardById(String boardId) {
+    /** Boards that have started and not yet ended, the only ones progress and proof can count towards. */
+    public List<PluginBoardData> getRunningBoards() {
+        Instant now = Instant.now();
         return getBoards().stream()
-                .filter(board -> board.getId().equals(boardId))
-                .findFirst();
+                .filter(board -> reached(now, board.getStartsAt()) && !reached(now, board.getEndsAt()))
+                .collect(Collectors.toList());
+    }
+
+    private static boolean reached(Instant now, String isoInstant) {
+        if (isoInstant == null || isoInstant.isEmpty()) {
+            return false;
+        }
+        try {
+            return !now.isBefore(Instant.parse(isoInstant));
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     public boolean hasCachedData() {
@@ -63,32 +79,25 @@ public class BoardDataService {
         refresh(null);
     }
 
-    /** {@code onComplete} runs whether or not the request succeeds. */
-    public void refresh(Runnable onComplete) {
+    public void refresh(Runnable onFinished) {
+        Runnable done = onFinished == null ? () -> { } : onFinished;
         if (!apiClient.hasApiKey()) {
             log.debug("Skipping board sync, no API key configured");
-            if (onComplete != null) {
-                onComplete.run();
-            }
+            clearCache();
+            done.run();
             return;
         }
 
         apiClient.get("/plugin/sync",
                 response ->
                 {
-                    log.info("[LUMBY GUIDE] Sync successful, status code: {}", response.getStatusCode());
                     handleSyncSuccess(response);
-                    if (onComplete != null) {
-                        onComplete.run();
-                    }
+                    done.run();
                 },
                 response ->
                 {
-                    log.warn("[LUMBY GUIDE] Sync failed, status code: {}", response.getStatusCode());
                     handleSyncFailure(response);
-                    if (onComplete != null) {
-                        onComplete.run();
-                    }
+                    done.run();
                 });
     }
 
@@ -102,11 +111,16 @@ public class BoardDataService {
                 log.info("Board data synced: {} active board(s)", boardCount);
             }
         } catch (Exception exception) {
-            log.warn("Failed to parse board sync response");
+            log.warn("Failed to parse board sync response", exception);
         }
     }
 
     private void handleSyncFailure(ApiResponse response) {
+        if (response.getStatusCode() == 401) {
+            log.warn("Board sync rejected the API key, clearing cached boards");
+            clearCache();
+            return;
+        }
         if (hasCachedData()) {
             log.warn("Board sync failed (status {}), using cached data", response.getStatusCode());
         } else {
@@ -114,35 +128,42 @@ public class BoardDataService {
         }
     }
 
+    private synchronized void clearCache() {
+        cachedData = null;
+        if (cacheFile.exists() && !cacheFile.delete()) {
+            log.warn("Failed to delete the board cache");
+        }
+    }
+
     private PluginSyncResponse loadFromDisk() {
-        if (!CACHE_FILE.exists()) {
+        if (!cacheFile.exists()) {
             return null;
         }
 
-        try (FileReader reader = new FileReader(CACHE_FILE, StandardCharsets.UTF_8)) {
+        try (FileReader reader = new FileReader(cacheFile, StandardCharsets.UTF_8)) {
             PluginSyncResponse loaded = gson.fromJson(reader, PluginSyncResponse.class);
             if (loaded != null && loaded.getBoards() != null) {
                 log.info("Loaded {} cached board(s) from disk", loaded.getBoards().size());
             }
             return loaded;
         } catch (Exception exception) {
-            log.warn("Failed to load board cache from disk");
+            log.warn("Failed to load board cache from disk", exception);
             return null;
         }
     }
 
-    private void saveToDisk(PluginSyncResponse data) {
+    private synchronized void saveToDisk(PluginSyncResponse data) {
         try {
-            if (!CACHE_DIR.exists() && !CACHE_DIR.mkdirs()) {
+            if (!cacheFile.getParentFile().exists() && !cacheFile.getParentFile().mkdirs()) {
                 log.warn("Failed to create cache directory");
                 return;
             }
 
-            try (FileWriter writer = new FileWriter(CACHE_FILE, StandardCharsets.UTF_8)) {
+            try (FileWriter writer = new FileWriter(cacheFile, StandardCharsets.UTF_8)) {
                 gson.toJson(data, writer);
             }
         } catch (IOException exception) {
-            log.warn("Failed to save board cache to disk");
+            log.warn("Failed to save board cache to disk", exception);
         }
     }
 }

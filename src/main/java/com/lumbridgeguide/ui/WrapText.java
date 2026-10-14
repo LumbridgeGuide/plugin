@@ -10,19 +10,23 @@ import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Word wrapped text measured with the real font metrics. Swing's HTML labels
- * measure and paint differently, which clipped lines, so this draws its own.
- */
+/** Multi-line label that wraps words using the real font metrics */
 public class WrapText extends JComponent {
 
     private final int wrapWidth;
     private List<String> lines = new ArrayList<>();
+    private boolean centred;
     private String text = "";
 
     public WrapText(int wrapWidth) {
         this.wrapWidth = wrapWidth;
         setAlignmentX(LEFT_ALIGNMENT);
+    }
+
+    /** Centres each line in the wrap width, for short messages in an empty state. */
+    public void setCentred(boolean newCentred) {
+        centred = newCentred;
+        repaint();
     }
 
     public void setText(String newText) {
@@ -58,7 +62,8 @@ public class WrapText extends JComponent {
         FontMetrics metrics = canvas.getFontMetrics();
         int baseline = metrics.getAscent();
         for (String line : lines) {
-            canvas.drawString(line, 0, baseline);
+            int lineX = centred ? (wrapWidth - metrics.stringWidth(line)) / 2 : 0;
+            canvas.drawString(line, lineX, baseline);
             baseline += metrics.getHeight();
         }
         canvas.dispose();

@@ -4,49 +4,58 @@ import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.Theme;
 import net.runelite.client.ui.FontManager;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.util.function.IntConsumer;
 
+/** Previous and next controls for moving between active boards */
 class BoardNavigatorPanel extends JPanel {
 
     private final JLabel positionLabel;
-    private final JButton previousButton;
-    private final JButton nextButton;
 
     BoardNavigatorPanel(IntConsumer onStep) {
-        super(new BorderLayout(6, 0));
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         setOpaque(false);
-        setBorder(new EmptyBorder(0, 0, 8, 0));
 
-        previousButton = arrowButton("‹");
-        nextButton = arrowButton("›");
+        JButton previousButton = arrowButton("‹");
+        JButton nextButton = arrowButton("›");
+        previousButton.setToolTipText("Previous board");
+        nextButton.setToolTipText("Next board");
         previousButton.addActionListener(event -> onStep.accept(-1));
         nextButton.addActionListener(event -> onStep.accept(1));
 
-        positionLabel = new JLabel("", SwingConstants.CENTER);
-        positionLabel.setFont(FontManager.getRunescapeFont());
-        positionLabel.setForeground(Theme.TEXT_SECONDARY);
+        positionLabel = Components.monoLabel("", 10f, Font.PLAIN, Theme.TEXT_MUTED);
+        positionLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
 
-        add(previousButton, BorderLayout.WEST);
-        add(positionLabel, BorderLayout.CENTER);
-        add(nextButton, BorderLayout.EAST);
+        add(previousButton);
+        add(positionLabel);
+        add(nextButton);
     }
 
     void update(int currentIndex, int total) {
-        positionLabel.setText("Board " + (currentIndex + 1) + " of " + total);
+        positionLabel.setText((currentIndex + 1) + "/" + total);
         setVisible(total > 1);
     }
 
+    @Override
+    public Dimension getMaximumSize() {
+        return getPreferredSize();
+    }
+
     private static JButton arrowButton(String text) {
-        JButton button = Components.secondaryButton(text);
-        button.setFont(FontManager.getRunescapeFont());
-        button.setBorder(new EmptyBorder(2, 12, 4, 12));
+        JButton button = new JButton(text);
+        button.setFont(FontManager.getRunescapeBoldFont());
+        button.setForeground(Theme.TEXT_SECONDARY);
+        button.setBorder(new EmptyBorder(0, 2, 0, 2));
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return button;
     }
 }

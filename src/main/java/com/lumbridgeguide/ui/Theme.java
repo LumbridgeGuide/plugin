@@ -3,14 +3,13 @@ package com.lumbridgeguide.ui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
+import java.awt.font.TextAttribute;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-/**
- * Colours and fonts copied from the Lumbridge Guide website's dark theme so the
- * plugin panel looks like part of the same product.
- */
+/** Website dark-mode colours and fonts for the sidebar */
 public final class Theme {
 
     public static final Color PANEL_BACKGROUND = new Color(0x1A1A1E);
@@ -23,15 +22,21 @@ public final class Theme {
 
     public static final Color TEXT_PRIMARY = new Color(0xE4E4E7);
     public static final Color TEXT_SECONDARY = new Color(0xA1A1A6);
-    public static final Color TEXT_MUTED = new Color(0x6E6E76);
+    public static final Color TEXT_MUTED = new Color(0x97979E);
     public static final Color TEXT_INVERSE = new Color(0x1A1A1E);
 
-    public static final Color ACCENT = new Color(0xE07A3A);
-    public static final Color ACCENT_HOVER = new Color(0xC96A2E);
+    public static final Color DEFAULT_ACCENT = new Color(0xE07A3A);
 
-    public static final Color SUCCESS = new Color(0x4A9E6E);
+    private static Color accent = DEFAULT_ACCENT;
+    private static Color accentHover = hoverOf(DEFAULT_ACCENT);
+    private static Color accentText = textOf(DEFAULT_ACCENT);
+
+    public static final Color SUCCESS = new Color(0x5AA77B);
     public static final Color WARNING = new Color(0xD4A32A);
-    public static final Color ERROR = new Color(0xC4573A);
+    public static final Color ERROR = new Color(0xD3836D);
+
+    /** Corner diameter for cards, buttons, inputs and chips: a slight softening of square corners. */
+    public static final int ARC = 4;
 
     private static final String[] MONO_FAMILIES = {
             "JetBrains Mono", "Cascadia Mono", "Consolas", "Menlo", "Monospaced"
@@ -42,8 +47,57 @@ public final class Theme {
 
     private static final String MONO = firstInstalled(MONO_FAMILIES, Font.MONOSPACED);
 
+    /** The highlight colour for selected tabs, primary buttons and codes, set from the plugin's settings. */
+    public static Color accent() {
+        return accent;
+    }
+
+    public static Color accentHover() {
+        return accentHover;
+    }
+
+    public static void setAccent(Color newAccent) {
+        accent = newAccent == null ? DEFAULT_ACCENT : newAccent;
+        accentHover = hoverOf(accent);
+        accentText = textOf(accent);
+    }
+
+    /** The accent for text, such as links and the open pill tab: a little lighter so it reads on dark surfaces. */
+    public static Color accentText() {
+        return accentText;
+    }
+
+    /** A faint wash of the accent, behind the open pill tab and accent badges. */
+    public static Color accentWash() {
+        return wash(accent);
+    }
+
+    /** A colour at 15% strength, for a badge or highlight behind text in that colour. */
+    public static Color wash(Color colour) {
+        return new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), 38);
+    }
+
+    private static Color textOf(Color colour) {
+        return new Color(colour.getRed() + Math.round((255 - colour.getRed()) * 0.18f),
+                colour.getGreen() + Math.round((255 - colour.getGreen()) * 0.18f),
+                colour.getBlue() + Math.round((255 - colour.getBlue()) * 0.18f));
+    }
+
+    private static Color hoverOf(Color colour) {
+        return new Color(Math.round(colour.getRed() * 0.88f), Math.round(colour.getGreen() * 0.88f),
+                Math.round(colour.getBlue() * 0.88f));
+    }
+
     public static Font monoFont(int style, float size) {
         return new Font(MONO, style, 1).deriveFont(size);
+    }
+
+    public static final float LABEL_SIZE = 9f;
+    public static final float LABEL_TRACKING = 0.08f;
+
+    /** The small spaced-out uppercase mono type used for section labels, such as "TILES". */
+    public static Font labelFont() {
+        return monoFont(Font.PLAIN, LABEL_SIZE).deriveFont(Map.of(TextAttribute.TRACKING, LABEL_TRACKING));
     }
 
     public static Color parseTeamColor(String hex) {

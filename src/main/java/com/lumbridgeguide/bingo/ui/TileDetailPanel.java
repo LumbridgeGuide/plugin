@@ -1,54 +1,59 @@
 package com.lumbridgeguide.bingo.ui;
 
+import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
+import com.lumbridgeguide.bingo.data.PluginProgressData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.bingo.data.TileItemEntry;
 import com.lumbridgeguide.ui.Badge;
 import com.lumbridgeguide.ui.Components;
+import com.lumbridgeguide.ui.IconWell;
+import com.lumbridgeguide.ui.ProgressBar;
+import com.lumbridgeguide.ui.Section;
+import com.lumbridgeguide.ui.SwatchIcon;
 import com.lumbridgeguide.ui.Theme;
-import net.runelite.api.Skill;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.SkillIconManager;
-import net.runelite.client.util.AsyncBufferedImage;
+import net.runelite.client.util.LinkBrowser;
 
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.util.List;
-import java.util.Locale;
+import java.util.OptionalLong;
+import java.util.function.BiConsumer;
 
+/** Full view of one tile's requirements, progress, claim status and proof */
 public class TileDetailPanel extends JPanel {
 
-    private static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 16;
+    private static final int TEXT_WIDTH = Components.CONTENT_WIDTH;
 
-    private final ItemManager itemManager;
-    private final SkillIconManager skillIconManager;
-    private final JPanel content;
+    private final TileIcons icons;
+    private final TileProgressTracker progressTracker;
+    private final BiConsumer<PluginTileData, PluginBoardData> onSendProof;
+    private final Section content;
 
-    public TileDetailPanel(ItemManager itemManager, SkillIconManager skillIconManager, Runnable onClose) {
-        super(new BorderLayout(0, 8));
-        this.itemManager = itemManager;
-        this.skillIconManager = skillIconManager;
+    TileDetailPanel(TileIcons icons, TileProgressTracker progressTracker, Runnable onClose,
+                    BiConsumer<PluginTileData, PluginBoardData> onSendProof) {
+        super(new BorderLayout(0, 10));
+        this.icons = icons;
+        this.progressTracker = progressTracker;
+        this.onSendProof = onSendProof;
         setOpaque(false);
 
-        JButton closeButton = Components.secondaryButton("‹  Back to tiles");
+        JButton closeButton = Components.linkButton("‹  Tiles");
+        closeButton.setForeground(Theme.TEXT_SECONDARY);
+        closeButton.setFont(Components.font(12f, Font.PLAIN));
         closeButton.addActionListener(event -> onClose.run());
-        closeButton.setHorizontalAlignment(JButton.LEFT);
 
-        content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setOpaque(false);
+        content = new Section(0);
 
         JPanel contentWrapper = new JPanel(new BorderLayout());
         contentWrapper.setOpaque(false);
@@ -61,136 +66,207 @@ public class TileDetailPanel extends JPanel {
     public void show(PluginTileData tile, PluginBoardData board) {
         content.removeAll();
 
-        JPanel badges = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        badges.setOpaque(false);
-        badges.setAlignmentX(LEFT_ALIGNMENT);
-        badges.add(new Badge(TileText.typeName(tile).toUpperCase(Locale.ROOT),
-                Theme.SURFACE_OVERLAY, Theme.ACCENT));
-        if (board.isTilePointsEnabled() && tile.getPoints() > 0) {
-            badges.add(new Badge(tile.getPoints() + (tile.getPoints() == 1 ? " POINT" : " POINTS"),
-                    Theme.SURFACE_OVERLAY, Theme.TEXT_SECONDARY));
-        }
-        addRow(badges, 6);
-
-        addRow(Components.wrapped(tile.getTitle(), Components.CONTENT_WIDTH, 16f, Font.BOLD, Theme.TEXT_PRIMARY), 8);
-
+        addHeader(tile, board);
         if (tile.getDescription() != null && !tile.getDescription().isEmpty()) {
-            addRow(Components.wrapped(tile.getDescription(), Components.CONTENT_WIDTH, 12f, Font.PLAIN,
-                    Theme.TEXT_SECONDARY), 8);
+            addRow(Components.wrapped(tile.getDescription(), TEXT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_SECONDARY), 10);
         }
-
-        addRequirements(tile);
-        addClaimStatus(tile, board);
+        addProgress(tile);
+        addGoal(tile);
+        addClaimedBy(tile, board);
+        addProof(tile, board);
+        addActions(tile, board);
 
         revalidate();
         repaint();
     }
 
-    private void addRequirements(PluginTileData tile) {
-        boolean hasItems = tile.getItems() != null && !tile.getItems().isEmpty();
-        boolean hasSkill = tile.getSkill() != null;
-        boolean hasMonster = tile.getMonsterName() != null;
-        if (!hasItems && !hasSkill && !hasMonster) {
+    private void addHeader(PluginTileData tile, PluginBoardData board) {
+        IconWell icon = new IconWell(40);
+        icon.setImage(icons.imageFor(tile));
+        JPanel iconHolder = new JPanel(new BorderLayout());
+        iconHolder.setOpaque(false);
+        iconHolder.add(icon, BorderLayout.NORTH);
+
+        JPanel text = new JPanel();
+        text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
+        text.setOpaque(false);
+        JComponent title = Components.wrapped(tile.getTitle(), TEXT_WIDTH - 50, 14f, Font.BOLD, Theme.TEXT_PRIMARY);
+        title.setAlignmentX(LEFT_ALIGNMENT);
+        text.add(title);
+        text.add(Box.createVerticalStrut(5));
+        JPanel badges = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        badges.setOpaque(false);
+        badges.setBorder(new EmptyBorder(0, -4, 0, 0));
+        badges.setAlignmentX(LEFT_ALIGNMENT);
+        badges.add(Badge.neutral(TileText.typeName(tile)));
+        String points = TileState.pointsLabel(tile, board);
+        if (points != null) {
+            badges.add(Badge.accent(points));
+        }
+        text.add(badges);
+
+        JPanel header = new JPanel(new BorderLayout(10, 0));
+        header.setOpaque(false);
+        header.add(iconHolder, BorderLayout.WEST);
+        header.add(text, BorderLayout.CENTER);
+        addRow(header, 0);
+    }
+
+    /**
+     * Kill count and XP tiles show the player's own count, from this session's tracking when there is one or from
+     * the last sync otherwise, and their team's split.
+     */
+    private void addProgress(PluginTileData tile) {
+        long target = TileState.target(tile);
+        if (target <= 0) {
             return;
         }
+        boolean killCount = "kill_count".equals(tile.getType());
+        List<PluginProgressData> team = tile.getProgress() == null ? List.of() : tile.getProgress();
+        OptionalLong tracked = progressTracker == null ? OptionalLong.empty() : progressTracker.progressFor(tile.getId());
+        long mine = TileState.myProgress(tile, tracked);
+        boolean tracking = progressTracker != null && progressTracker.isTracking();
 
-        addRow(sectionHeading("Requirements"), 14);
+        addRow(Components.sectionHeader("Your progress"), 16);
 
-        if (hasSkill) {
-            addRow(skillRow(tile), 6);
+        JPanel count = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        ((FlowLayout) count.getLayout()).setAlignOnBaseline(true);
+        count.setOpaque(false);
+        count.setBorder(new EmptyBorder(0, -6, 0, 0));
+        count.add(Components.monoLabel(String.format("%,d", mine), 22f, Font.BOLD, Theme.TEXT_PRIMARY));
+        count.add(Components.label("of " + String.format("%,d", target) + (killCount ? " kills" : " XP"), 12f,
+                Font.PLAIN, Theme.TEXT_SECONDARY));
+        addRow(count, 8);
+
+        ProgressBar bar = new ProgressBar();
+        bar.setProgress((double) mine / target, Theme.accent());
+        addRow(bar, 6);
+        if (!tracking) {
+            addRow(Components.wrapped("Turn on Track tile progress in the plugin settings to count this.",
+                    TEXT_WIDTH, 11f, Font.PLAIN, Theme.TEXT_MUTED), 6);
         }
-        if (hasMonster) {
-            String kills = tile.getKillCount() != null && tile.getKillCount() > 0
-                    ? "Kill " + tile.getMonsterName() + " x" + tile.getKillCount()
-                    : "Kill " + tile.getMonsterName();
-            addRow(card(Components.wrapped(kills, TEXT_WIDTH, 12f, Font.BOLD, Theme.TEXT_PRIMARY)), 6);
-        }
-        if (hasItems) {
-            List<TileItemEntry> items = tile.getItems();
-            for (TileItemEntry item : items) {
-                addRow(itemRow(item), 6);
+
+        if (team.size() > 1) {
+            addRow(Components.sectionHeader("Team progress"), 16);
+            for (PluginProgressData teammate : team) {
+                JPanel row = new JPanel(new BorderLayout());
+                row.setOpaque(false);
+                row.add(Components.label(teammate.isMine() ? "You" : teammate.getName(), 12f,
+                        teammate.isMine() ? Font.BOLD : Font.PLAIN,
+                        teammate.isMine() ? Theme.TEXT_PRIMARY : Theme.TEXT_SECONDARY), BorderLayout.WEST);
+                row.add(Components.monoLabel(String.format("%,d", teammate.isMine() ? mine : teammate.getProgress()),
+                        11f, Font.PLAIN, Theme.TEXT_SECONDARY), BorderLayout.EAST);
+                addRow(row, 6);
             }
         }
     }
 
-    private JPanel skillRow(PluginTileData tile) {
-        JPanel row = new JPanel(new BorderLayout(8, 0));
-        row.setOpaque(false);
-
-        Skill skill = parseSkill(tile.getSkill());
-        if (skill != null) {
-            JLabel icon = new JLabel(new ImageIcon(skillIconManager.getSkillImage(skill, true)));
-            row.add(icon, BorderLayout.WEST);
-        }
-
-        String xp = tile.getXpTarget() > 0 ? String.format("%,d XP", tile.getXpTarget()) : "";
-        String text = (xp.isEmpty() ? "" : xp + " in ") + TileText.capitalise(tile.getSkill());
-        row.add(Components.wrapped(text, TEXT_WIDTH - 30, 12f, Font.BOLD, Theme.TEXT_PRIMARY),
-                BorderLayout.CENTER);
-        return card(row);
-    }
-
-    private JPanel itemRow(TileItemEntry item) {
-        JPanel row = new JPanel(new BorderLayout(8, 0));
-        row.setOpaque(false);
-
-        JLabel icon = new JLabel();
-        icon.setPreferredSize(new Dimension(36, 32));
-        AsyncBufferedImage image = itemManager.getImage(item.getId());
-        image.addTo(icon);
-
-        row.add(icon, BorderLayout.WEST);
-        row.add(Components.wrapped(item.getName(), TEXT_WIDTH - 46, 12f, Font.BOLD, Theme.TEXT_PRIMARY),
-                BorderLayout.CENTER);
-        return card(row);
-    }
-
-    private void addClaimStatus(PluginTileData tile, PluginBoardData board) {
-        addRow(sectionHeading("Status"), 14);
-
-        if (!tile.isClaimed()) {
-            addRow(card(Components.label("Not claimed yet", 12f, Font.BOLD, Theme.TEXT_MUTED)), 6);
+    /**
+     * The items a drop tile accepts, with their icons. Kill count and XP tiles already say what they need in their
+     * title and progress, so they have no item list.
+     */
+    private void addGoal(PluginTileData tile) {
+        if (tile.getItems() == null || tile.getItems().isEmpty()) {
             return;
         }
-
-        PluginTeamData team = board.getMyTeam();
-        boolean mine = team != null && team.getId() != null && team.getId().equals(tile.getClaimedByTeamId());
-        if (mine) {
-            Color teamColor = Theme.parseTeamColor(team.getColor());
-            addRow(card(Components.label("Claimed by " + team.getName(), 12f, Font.BOLD, teamColor)), 6);
-        } else {
-            addRow(card(Components.label("Claimed by another team", 12f, Font.BOLD, Theme.SUCCESS)), 6);
+        addRow(Components.sectionHeader(tile.getItems().size() == 1 ? "Item" : "Any of these"), 16);
+        for (TileItemEntry item : tile.getItems()) {
+            addRow(iconRow(icons.itemImage(item.getId()), item.getName()), 8);
         }
     }
 
-    private static JLabel sectionHeading(String text) {
-        return Components.label(text.toUpperCase(Locale.ROOT), 10f, Font.BOLD, Theme.TEXT_MUTED);
+    private static JPanel iconRow(java.awt.image.BufferedImage image, String text) {
+        IconWell icon = new IconWell(24);
+        icon.setImage(image);
+        JPanel holder = new JPanel(new BorderLayout());
+        holder.setOpaque(false);
+        holder.add(icon, BorderLayout.NORTH);
+        JPanel row = new JPanel(new BorderLayout(8, 0));
+        row.setOpaque(false);
+        row.add(holder, BorderLayout.WEST);
+        JPanel textHolder = new JPanel(new BorderLayout());
+        textHolder.setOpaque(false);
+        textHolder.setBorder(new EmptyBorder(4, 0, 0, 0));
+        textHolder.add(Components.wrapped(text, TEXT_WIDTH - 34, 12f, Font.PLAIN, Theme.TEXT_PRIMARY),
+                BorderLayout.NORTH);
+        row.add(textHolder, BorderLayout.CENTER);
+        return row;
     }
 
-    private static JPanel card(java.awt.Component child) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(Theme.SURFACE_RAISED);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.BORDER),
-                new EmptyBorder(8, 8, 8, 8)));
-        card.add(child, BorderLayout.CENTER);
-        return card;
+    private void addClaimedBy(PluginTileData tile, PluginBoardData board) {
+        if (!tile.isClaimed()) {
+            return;
+        }
+        addRow(Components.sectionHeader("Claimed by"), 16);
+        boolean mine = TileState.isMine(tile, board);
+        PluginTeamData team = board.getMyTeam();
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        row.setOpaque(false);
+        row.setBorder(new EmptyBorder(0, -6, 0, 0));
+        JLabel name = Components.label(mine ? team.getName() : TileState.claimingTeamName(tile, board), 12f,
+                Font.PLAIN, Theme.TEXT_PRIMARY);
+        if (mine) {
+            name.setIcon(new SwatchIcon(Theme.parseTeamColor(team.getColor())));
+            name.setIconTextGap(6);
+        }
+        row.add(name);
+        if (mine) {
+            row.add(Badge.status("Your team", Theme.SUCCESS));
+        }
+        addRow(row, 8);
     }
 
-    private void addRow(javax.swing.JComponent component, int spaceAbove) {
+    /** The player's team's latest proof for the tile, when there is any. */
+    private void addProof(PluginTileData tile, PluginBoardData board) {
+        String status = tile.getProofStatus();
+        if (status == null) {
+            return;
+        }
+        Badge badge;
+        switch (status) {
+            case "PENDING":
+                badge = Badge.status("Waiting for review", Theme.WARNING);
+                break;
+            case "REJECTED":
+                badge = Badge.status("Not accepted", Theme.ERROR);
+                break;
+            default:
+                badge = Badge.status("Approved", Theme.SUCCESS);
+                break;
+        }
+        addRow(Components.sectionHeader("Your proof"), 16);
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        row.setOpaque(false);
+        row.add(badge);
+        addRow(row, 8);
+    }
+
+    /**
+     * Any tile the viewer's team has not claimed can have proof sent by hand, from a screenshot taken now. Every tile
+     * links to the board on the website, where its proof is.
+     */
+    private void addActions(PluginTileData tile, PluginBoardData board) {
+        PluginTeamData team = board.getMyTeam();
+        boolean mine = TileState.isMine(tile, board);
+        if (team != null && !mine && board.getVerificationCode() != null) {
+            JButton sendProof = Components.fullWidthButton("Send proof");
+            sendProof.addActionListener(event -> onSendProof.accept(tile, board));
+            addRow(sendProof, 18);
+        }
+        if (board.getWebUrl() != null && !board.getWebUrl().isEmpty()) {
+            JButton open = Components.secondaryButton(mine ? "Open proof on the website" : "Open on the website");
+            open.setMaximumSize(new Dimension(Integer.MAX_VALUE, open.getPreferredSize().height));
+            open.addActionListener(event -> LinkBrowser.browse(board.getWebUrl() + "?tile=" + tile.getId()));
+            addRow(open, mine ? 18 : 6);
+        }
+    }
+
+    private void addRow(JComponent component, int spaceAbove) {
         content.add(Box.createVerticalStrut(spaceAbove));
         component.setAlignmentX(LEFT_ALIGNMENT);
         if (component instanceof JPanel) {
             component.setMaximumSize(new Dimension(Integer.MAX_VALUE, component.getPreferredSize().height));
         }
         content.add(component);
-    }
-
-    private static Skill parseSkill(String skillName) {
-        try {
-            return Skill.valueOf(skillName.toUpperCase(Locale.ROOT).replace(' ', '_'));
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
     }
 }

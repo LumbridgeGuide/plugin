@@ -1,14 +1,11 @@
 package com.lumbridgeguide.bingo.data;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/** Active bingo boards returned by the plugin sync endpoint */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class PluginSyncResponse {
     private List<PluginBoardData> boards;
 }

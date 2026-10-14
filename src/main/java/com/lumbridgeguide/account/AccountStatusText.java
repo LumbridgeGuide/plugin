@@ -1,14 +1,10 @@
 package com.lumbridgeguide.account;
 
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Value;
 
-/**
- * Maps the backend's link statuses and error codes to what the sidebar shows. Kept free of game and Swing types so
- * it can be unit tested.
- */
+/** Sidebar wording and tone for account link statuses, error codes and account types */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AccountStatusText {
 
@@ -19,11 +15,10 @@ public final class AccountStatusText {
         MUTED
     }
 
-    @Getter
-    @AllArgsConstructor
-    static final class Line {
-        private final String text;
-        private final Tone tone;
+    @Value
+    static class Line {
+        String text;
+        Tone tone;
     }
 
     static Line forStatus(String status) {
@@ -46,8 +41,7 @@ public final class AccountStatusText {
         }
     }
 
-    /** The status an error code implies, or null when the error says nothing about the link. */
-    static String statusForError(String errorCode) {
+    static String impliedLinkStatus(String errorCode) {
         if (errorCode == null) {
             return null;
         }
@@ -65,8 +59,35 @@ public final class AccountStatusText {
         }
     }
 
-    /** RuneLite's IRONMAN varbit value to the backend's account type. */
-    static String accountType(int ironmanVarbit) {
+    /** The account type as the website words it, such as "Hardcore ironman". Regular accounts are "Main". */
+    static String accountTypeLabel(String accountType) {
+        if (accountType == null) {
+            return "";
+        }
+        switch (accountType) {
+            case "IRONMAN":
+                return "Ironman";
+            case "ULTIMATE_IRONMAN":
+                return "Ultimate ironman";
+            case "HARDCORE_IRONMAN":
+                return "Hardcore ironman";
+            case "GROUP_IRONMAN":
+                return "Group ironman";
+            case "HARDCORE_GROUP_IRONMAN":
+                return "Hardcore group ironman";
+            case "UNRANKED_GROUP_IRONMAN":
+                return "Unranked group ironman";
+            default:
+                return "Main";
+        }
+    }
+
+    /** A short badge for the link status, such as LINKED, or an empty string while it is unknown. */
+    static String statusBadge(String status) {
+        return status == null ? "" : status.replace('_', ' ');
+    }
+
+    static String accountTypeForIronmanVarbit(int ironmanVarbit) {
         switch (ironmanVarbit) {
             case 1:
                 return "IRONMAN";
@@ -81,7 +102,7 @@ public final class AccountStatusText {
             case 6:
                 return "UNRANKED_GROUP_IRONMAN";
             default:
-                return "REGULAR";
+                return "MAIN";
         }
     }
 }
