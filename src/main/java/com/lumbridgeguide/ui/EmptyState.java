@@ -13,7 +13,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** A centred block for when there is nothing to show yet: an empty bingo grid, a title, a line of help and actions. */
 public class EmptyState extends Section {
 
     public EmptyState(String title, String message, JButton... actions) {
@@ -48,7 +47,6 @@ public class EmptyState extends Section {
         }
     }
 
-    /** A 3 by 3 grid of empty squares, the board before any tiles exist. */
     private static final class EmptyGrid extends JComponent {
 
         private static final int CELL = 16;

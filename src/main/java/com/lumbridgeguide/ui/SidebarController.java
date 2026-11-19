@@ -32,10 +32,6 @@ import javax.swing.SwingUtilities;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * Owns the sidebar panel and its toolbar button: builds it, rebuilds it when a setting changes how it looks, keeps
- * boards fresh on the refresh interval, and tells it when the bank opens or closes.
- */
 @Singleton
 public class SidebarController {
 

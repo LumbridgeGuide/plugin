@@ -7,7 +7,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** A small filled circle, for status lines and lists. */
 public class DotIcon implements Icon {
 
     private static final int SIZE = 7;

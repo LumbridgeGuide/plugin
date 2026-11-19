@@ -6,7 +6,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** The box of a checkbox: an empty inset square, or an accent square with a check mark when selected. */
 public class CheckBoxIcon implements Icon {
 
     private static final int SIZE = 15;

@@ -8,7 +8,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 
-/** The notification bell for the Inbox button, drawn as an outline in the secondary text colour. */
 public class BellIcon implements Icon {
 
     private static final int SIZE = 14;

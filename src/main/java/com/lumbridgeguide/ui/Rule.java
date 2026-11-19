@@ -4,7 +4,6 @@ import javax.swing.JComponent;
 import java.awt.Dimension;
 import java.awt.Graphics;
 
-/** The hairline in a section heading, filling whatever width the heading leaves it. */
 class Rule extends JComponent {
 
     @Override

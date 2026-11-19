@@ -5,7 +5,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** A {@link Section} on a raised surface with a hairline border, for a form or a block of details. */
 public class Card extends Section {
 
     public Card(int padding) {

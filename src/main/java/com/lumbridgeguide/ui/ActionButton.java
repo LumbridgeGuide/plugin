@@ -12,10 +12,6 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * A themed button with softly rounded corners, painted by hand because Swing's look and feel draws square ones. A
- * primary button is filled with the accent; a secondary one is a quiet outline.
- */
 public class ActionButton extends JButton {
 
     public enum Kind {

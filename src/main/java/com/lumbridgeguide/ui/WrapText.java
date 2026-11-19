@@ -10,7 +10,6 @@ import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Multi-line label that wraps words using the real font metrics */
 public class WrapText extends JComponent {
 
     private final int wrapWidth;
@@ -23,7 +22,6 @@ public class WrapText extends JComponent {
         setAlignmentX(LEFT_ALIGNMENT);
     }
 
-    /** Centres each line in the wrap width, for short messages in an empty state. */
     public void setCentred(boolean newCentred) {
         centred = newCentred;
         repaint();

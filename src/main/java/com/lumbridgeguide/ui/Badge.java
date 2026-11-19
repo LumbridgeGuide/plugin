@@ -11,7 +11,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** Small rounded label for a tile type, points or a status */
 public class Badge extends JComponent {
 
     private final String text;
@@ -25,17 +24,14 @@ public class Badge extends JComponent {
         this.foreground = foreground;
     }
 
-    /** A plain label, such as a tile's type. */
     public static Badge neutral(String text) {
         return new Badge(text, Theme.SURFACE_OVERLAY, Theme.TEXT_SECONDARY);
     }
 
-    /** A label in the player's accent, such as a tile's points. */
     public static Badge accent(String text) {
         return new Badge(text, Theme.accentWash(), Theme.accentText());
     }
 
-    /** A status in its tone's colour on a faint wash of the same colour. */
     public static Badge status(String text, Color tone) {
         return new Badge(text, Theme.wash(tone), tone);
     }
