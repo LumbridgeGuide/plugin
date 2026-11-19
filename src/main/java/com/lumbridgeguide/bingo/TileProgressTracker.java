@@ -35,20 +35,14 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-/**
- * Feeds game events to a {@link TileProgressCounter} and reports the progress so teammates can see it. Baselines are
- * kept in the RuneScape profile config, so each account has its own and switching accounts is safe.
- */
 @Slf4j
 @Singleton
 public class TileProgressTracker {
 
-    /** Baselines are kept in the RuneScape profile config under this prefix, one entry per board. */
     public static final String BASELINE_KEY_PREFIX = "tileProgressBaseline.";
     private static final Duration REPORT_INTERVAL = Duration.ofMinutes(1);
     private static final Type BASELINE_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
 
-    /** A skill's XP for XP proof: what tracking counted since its baseline, and the skill's total XP now. */
     @Value
     public static class XpReading {
         Skill skill;
@@ -89,17 +83,16 @@ public class TileProgressTracker {
         });
     }
 
-    /** Called on the client thread when tracked progress first reaches a tile's target. */
+    /** Called on the client thread when tracked progress first reaches a tile's target */
     public void setOnTargetReached(BiConsumer<PluginBoardData, PluginTileData> listener) {
         counter.setOnTargetReached(listener);
     }
 
-    /** The player's tracked progress on a tile this session, fresher than what the last sync carried. */
     public OptionalLong progressFor(String tileId) {
         return counter.progressFor(tileId);
     }
 
-    /** The player's XP on an XP tile right now. Gained is missing when tracking never took a baseline for the tile. */
+    /** Gained is null when tracking never took a baseline for the tile */
     public Optional<XpReading> xpReading(PluginBoardData board, PluginTileData tile) {
         return TileProgressCounter.skillOf(tile).map(skill -> {
             long total = client.getSkillExperience(skill);
@@ -107,7 +100,7 @@ public class TileProgressTracker {
         });
     }
 
-    /** Forgets that a tile's target was reached, so the next reading at or past it counts as a completion again. */
+    /** Forgets that a tile's target was reached, so the next reading at or past it completes it again */
     public void rearm(String tileId) {
         counter.rearm(tileId);
     }
@@ -116,11 +109,6 @@ public class TileProgressTracker {
         return config.trackTileProgress();
     }
 
-    /**
-     * Every skill reports a change as the player logs in, so this also takes the first reading after login. Readings
-     * from before the first game tick only seed progress: a target already reached in an earlier session is not a new
-     * completion, and offering it again would screenshot the welcome screen.
-     */
     @Subscribe
     public void onStatChanged(StatChanged event) {
         if (config.trackTileProgress()) {
@@ -128,7 +116,6 @@ public class TileProgressTracker {
         }
     }
 
-    /** Kill count messages arrive as game messages, or as spam when the player filters those. */
     @Subscribe
     public void onChatMessage(ChatMessage event) {
         if ((event.getType() != ChatMessageType.GAMEMESSAGE && event.getType() != ChatMessageType.SPAM)
@@ -139,7 +126,6 @@ public class TileProgressTracker {
                 .ifPresent(killCount -> counter.killCountSeen(boardDataService.getRunningBoards(), killCount));
     }
 
-    /** Monsters without a kill count message are counted from their loot. */
     @Subscribe
     public void onNpcLootReceived(NpcLootReceived event) {
         NPC npc = event.getNpc();
@@ -148,7 +134,6 @@ public class TileProgressTracker {
         }
     }
 
-    /** Sends changed progress at most once a minute. */
     @Subscribe
     public void onGameTick(GameTick tick) {
         seedingAfterLogin = false;
@@ -178,7 +163,6 @@ public class TileProgressTracker {
         }
     }
 
-    /** Forgets session progress on logout, so switching accounts starts clean. */
     @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.LOGIN_SCREEN) {

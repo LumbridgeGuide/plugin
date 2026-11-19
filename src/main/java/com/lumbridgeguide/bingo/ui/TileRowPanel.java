@@ -23,7 +23,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.OptionalLong;
 
-/** Clickable one-tile summary in the board overview */
 class TileRowPanel extends JPanel {
 
     TileRowPanel(PluginTileData tile, PluginBoardData board, TileIcons icons, OptionalLong tracked, Runnable onClick) {

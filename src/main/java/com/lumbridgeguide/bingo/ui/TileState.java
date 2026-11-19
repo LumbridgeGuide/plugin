@@ -10,7 +10,6 @@ import com.lumbridgeguide.bingo.data.PluginTileData;
 import java.util.Locale;
 import java.util.OptionalLong;
 
-/** What the tile list and the tile view both need to know about a tile: who claimed it and how far along it is. */
 final class TileState {
 
     static boolean isMine(PluginTileData tile, PluginBoardData board) {
@@ -19,7 +18,7 @@ final class TileState {
                 && team.getId().equals(tile.getClaimedByTeamId());
     }
 
-    /** The name of the team that claimed a tile, from the standings or the recent claims, whichever has it. */
+    /** From the standings or the recent claims, or "another team" when neither has it */
     static String claimingTeamName(PluginTileData tile, PluginBoardData board) {
         String teamId = tile.getClaimedByTeamId();
         if (teamId != null && board.getStandings() != null) {
@@ -39,7 +38,7 @@ final class TileState {
         return "another team";
     }
 
-    /** "3 points" when the board scores by points and the tile has any, otherwise null */
+    /** Null when the board does not score by points or the tile has none */
     static String pointsLabel(PluginTileData tile, PluginBoardData board) {
         if (!board.isTilePointsEnabled() || tile.getPoints() <= 0) {
             return null;
@@ -54,7 +53,7 @@ final class TileState {
         return "skill_xp".equals(tile.getType()) ? tile.getXpTarget() : 0;
     }
 
-    /** The viewer's own count: this session's tracking when there is any, otherwise what the last sync carried. */
+    /** This session's tracking when there is any, otherwise what the last sync carried */
     static long myProgress(PluginTileData tile, OptionalLong tracked) {
         if (tracked.isPresent()) {
             return tracked.getAsLong();
@@ -66,7 +65,7 @@ final class TileState {
                 .mapToLong(PluginProgressData::getProgress).findFirst().orElse(0);
     }
 
-    /** "11 / 25" for a kill count tile or "412k / 1m" for an XP tile, or nothing for any other tile. */
+    /** An empty string for tiles that are not kill count or XP tiles */
     static String progressText(PluginTileData tile, OptionalLong tracked) {
         long target = target(tile);
         if (target <= 0) {

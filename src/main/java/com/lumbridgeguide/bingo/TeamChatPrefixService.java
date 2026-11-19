@@ -19,7 +19,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-/** Puts the player's bingo team name, in the team colour, in front of their name in chat and in the chat input. */
 @Singleton
 public class TeamChatPrefixService {
 
@@ -58,7 +57,6 @@ public class TeamChatPrefixService {
         messageNode.setName(prefix + messageNode.getName());
     }
 
-    /** The chat input is redrawn by the game, so the prefix is put back every tick. */
     @Subscribe
     public void onGameTick(GameTick tick) {
         if (!config.showTeamPrefix()) {

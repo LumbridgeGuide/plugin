@@ -14,7 +14,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.util.function.IntConsumer;
 
-/** Previous and next controls for moving between active boards */
 class BoardNavigatorPanel extends JPanel {
 
     private final JLabel positionLabel;

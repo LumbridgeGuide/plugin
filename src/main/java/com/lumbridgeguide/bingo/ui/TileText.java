@@ -4,7 +4,6 @@ import com.lumbridgeguide.bingo.data.PluginTileData;
 
 import java.util.Locale;
 
-/** Tile wording shared by the tile list and the tile detail view */
 final class TileText {
 
     static String badgeLabel(PluginTileData tile) {

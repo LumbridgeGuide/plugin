@@ -4,7 +4,6 @@ import lombok.Data;
 
 import java.util.List;
 
-/** One bingo tile with its goal and claim state */
 @Data
 public class PluginTileData {
     private String id;
@@ -21,9 +20,9 @@ public class PluginTileData {
     private Integer killCount;
     private boolean claimed;
     private String claimedByTeamId;
-    /** Your team's progress on a kill count or XP tile, most first. Never another team's. */
+    /** The viewer's team only, most first */
     private List<PluginProgressData> progress;
-    /** Your team's latest proof for the tile: PENDING, APPROVED, REJECTED or AUTO_CLAIMED, or null if none. */
+    /** PENDING, APPROVED, REJECTED or AUTO_CLAIMED, or null when the team has sent none */
     private String proofStatus;
 
     public boolean isProofPending() {

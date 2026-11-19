@@ -17,25 +17,14 @@ import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Counts the player's progress on kill count and XP tiles from a baseline per tile, kept per board in a
- * {@link BaselineStore} so it survives restarts.
- * <p>
- * Kills are counted two ways. Bosses and activities write a kill count message ("Your Vorkath kill count is: 32."),
- * which is exact, so a tile that has seen one counts from those messages only. Ordinary monsters write no such
- * message, so their kills are counted one at a time from the loot they drop. A boss kill gives both a loot event and
- * a message, in either order, and still counts once.
- */
 public class TileProgressCounter {
 
-    /** The game's kill count messages, in every wording RuneLite's own chat commands recognise. */
     private static final Pattern KILL_COUNT_MESSAGE = Pattern.compile(
             "Your (?:completion count for |subdued |completed )?(.+?) "
                     + "(?:(?:kill|harvest|lap|completion|success|Total Ticket) )?(?:count )?is: ?([\\d,]+)");
-    /** Loot-counted kills are stored beside the baselines under this prefix. */
     private static final String LOOT_KEY_PREFIX = "loot:";
 
-    /** Where baselines live between sessions, one map per board of tile id to baseline (or loot-counted kills). */
+    /** One map per board of tile id to baseline, or to loot-counted kills under the loot prefix */
     public interface BaselineStore {
         Map<String, Long> load(String boardId);
 
@@ -61,10 +50,7 @@ public class TileProgressCounter {
         onTargetReached = listener;
     }
 
-    /**
-     * Parses a kill count message such as "Your Vorkath kill count is: 32." or "Your completed Chambers of Xeric count
-     * is: 5." into the monster and its count. Colour tags are ignored. Returns empty for any other message.
-     */
+    /** Parses "Your Vorkath kill count is: 32." and its variants, ignoring colour tags, otherwise empty */
     public static Optional<KillCount> parseKillCount(String message) {
         if (message == null) {
             return Optional.empty();
@@ -76,7 +62,7 @@ public class TileProgressCounter {
         return Optional.of(new KillCount(matcher.group(1).trim(), Long.parseLong(matcher.group(2).replace(",", ""))));
     }
 
-    /** A kill count message: sets the matching tiles' progress exactly, and from now on they ignore loot. */
+    /** Sets the matching tiles' progress exactly, and from then on they ignore loot */
     public void killCountSeen(List<PluginBoardData> boards, KillCount killCount) {
         for (PluginBoardData board : boards) {
             Map<String, Long> baselines = store.load(board.getId());
@@ -100,7 +86,7 @@ public class TileProgressCounter {
         }
     }
 
-    /** Loot from a kill: counts one kill on matching tiles that have never seen a kill count message. */
+    /** Counts one kill on matching tiles that have never seen a kill count message */
     public void lootReceived(List<PluginBoardData> boards, String npcName, int npcId) {
         for (PluginBoardData board : boards) {
             Map<String, Long> baselines = store.load(board.getId());
@@ -120,10 +106,7 @@ public class TileProgressCounter {
         }
     }
 
-    /**
-     * A skill's total XP. The first reading on a board sets the baseline. Readings that may not complete a tile still
-     * record progress: the burst of readings at login only catches up, it is never a new completion.
-     */
+    /** The first reading on a board sets the baseline. A reading that may not complete still records progress */
     public void xpSeen(List<PluginBoardData> boards, Skill skill, long totalXp, boolean mayComplete) {
         for (PluginBoardData board : boards) {
             Map<String, Long> baselines = store.load(board.getId());
@@ -146,7 +129,7 @@ public class TileProgressCounter {
         }
     }
 
-    /** XP gained on a tile since its baseline, or null when no baseline has been taken. */
+    /** XP gained since the tile's baseline, or null when no baseline has been taken */
     public Long xpGained(String boardId, String tileId, long totalXp) {
         Long baseline = store.load(boardId).get(tileId);
         return baseline == null ? null : Math.max(0, totalXp - baseline);
@@ -157,19 +140,18 @@ public class TileProgressCounter {
         return value == null ? OptionalLong.empty() : OptionalLong.of(value);
     }
 
-    /** Forgets that a tile's target was reached, so the next reading at or past it counts as a completion again. */
+    /** Forgets that a tile's target was reached, so the next reading at or past it completes it again */
     public void rearm(String tileId) {
         progress.remove(tileId);
     }
 
-    /** Tiles whose progress changed since the last call, by board, for reporting. */
+    /** Tiles whose progress changed since the last call, by board */
     public Map<String, Set<String>> takeChanged() {
         Map<String, Set<String>> taken = new HashMap<>(changedTilesByBoard);
         changedTilesByBoard.keySet().removeAll(taken.keySet());
         return taken;
     }
 
-    /** Puts tiles back to be reported again, after a report failed. */
     public void markChanged(String boardId, Set<String> tileIds) {
         changedTilesByBoard.computeIfAbsent(boardId, id -> ConcurrentHashMap.newKeySet()).addAll(tileIds);
     }
@@ -178,7 +160,7 @@ public class TileProgressCounter {
         return !changedTilesByBoard.isEmpty();
     }
 
-    /** Forgets this session's progress, so switching accounts starts clean. Baselines stay in the store. */
+    /** Forgets this session's progress, baselines stay in the store */
     public void clearSession() {
         progress.clear();
         changedTilesByBoard.clear();
@@ -208,7 +190,7 @@ public class TileProgressCounter {
         return namesMatch(tile.getMonsterName(), npcName);
     }
 
-    /** Hosts type the monster's name, so case, apostrophes, spacing and a plural "s" are forgiven. */
+    /** Ignores case, apostrophes, spacing and a plural "s" */
     static boolean namesMatch(String tileMonster, String gameName) {
         if (tileMonster == null || gameName == null) {
             return false;

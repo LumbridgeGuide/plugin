@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.OptionalLong;
 import java.util.function.BiConsumer;
 
-/** Full view of one tile's requirements, progress, claim status and proof */
 public class TileDetailPanel extends JPanel {
 
     private static final int TEXT_WIDTH = Components.CONTENT_WIDTH;
@@ -112,10 +111,6 @@ public class TileDetailPanel extends JPanel {
         addRow(header, 0);
     }
 
-    /**
-     * Kill count and XP tiles show the player's own count, from this session's tracking when there is one or from
-     * the last sync otherwise, and their team's split.
-     */
     private void addProgress(PluginTileData tile) {
         long target = TileState.target(tile);
         if (target <= 0) {
@@ -161,10 +156,6 @@ public class TileDetailPanel extends JPanel {
         }
     }
 
-    /**
-     * The items a drop tile accepts, with their icons. Kill count and XP tiles already say what they need in their
-     * title and progress, so they have no item list.
-     */
     private void addGoal(PluginTileData tile) {
         if (tile.getItems() == null || tile.getItems().isEmpty()) {
             return;
@@ -216,7 +207,6 @@ public class TileDetailPanel extends JPanel {
         addRow(row, 8);
     }
 
-    /** The player's team's latest proof for the tile, when there is any. */
     private void addProof(PluginTileData tile, PluginBoardData board) {
         String status = tile.getProofStatus();
         if (status == null) {
@@ -241,10 +231,6 @@ public class TileDetailPanel extends JPanel {
         addRow(row, 8);
     }
 
-    /**
-     * Any tile the viewer's team has not claimed can have proof sent by hand, from a screenshot taken now. Every tile
-     * links to the board on the website, where its proof is.
-     */
     private void addActions(PluginTileData tile, PluginBoardData board) {
         PluginTeamData team = board.getMyTeam();
         boolean mine = TileState.isMine(tile, board);

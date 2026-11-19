@@ -23,10 +23,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.util.List;
 
-/**
- * The board's standings or its latest claims, depending on {@link Mode}, laid out like the website's board page.
- * Hidden boards send neither while their claims are secret, so this says so instead.
- */
 class StandingsPanel extends Section {
 
     enum Mode {
@@ -120,7 +116,6 @@ class StandingsPanel extends Section {
         }
     }
 
-    /** A claim as the website lists it: when, the team's colour, the tile, then the team. */
     private JPanel claimRow(PluginClaimData claim) {
         JPanel row = new JPanel(new BorderLayout(8, 0));
         row.setOpaque(false);

@@ -8,10 +8,6 @@ import net.runelite.client.game.SkillIconManager;
 import java.awt.image.BufferedImage;
 import java.util.Locale;
 
-/**
- * The game icon that stands for a tile: the first item of a drop tile, the skill of an XP tile, and the Slayer icon
- * for a kill count tile, since there are no monster images to hand. Custom tiles have none.
- */
 class TileIcons {
 
     private final ItemManager itemManager;

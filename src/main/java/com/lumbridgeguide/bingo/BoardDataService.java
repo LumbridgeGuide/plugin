@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** Active bingo boards from the backend, cached on disk between sessions */
 @Slf4j
 @Singleton
 public class BoardDataService {
@@ -37,7 +36,7 @@ public class BoardDataService {
         return Collections.unmodifiableList(cachedData.getBoards());
     }
 
-    /** Boards that have started and not yet ended, the only ones progress and proof can count towards. */
+    /** Boards that have started and not yet ended */
     public List<PluginBoardData> getRunningBoards() {
         Instant now = Instant.now();
         return getBoards().stream()
