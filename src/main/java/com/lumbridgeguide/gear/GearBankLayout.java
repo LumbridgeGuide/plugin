@@ -6,12 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Lays a gear config out in an 8-column bank tab in its in-game shape: the equipment slots on the left (columns 1 to
- * 3) as they sit on the equipment screen, the rune pouch runes under them, and the 28 inventory slots as a 4 by 7 grid
- * on the right (columns 5 to 8). Column 4 stays empty to separate the two, and an empty row above and below pads the
- * setup. The 8 columns are all in use, so there is no room to pad the sides.
- */
 public final class GearBankLayout {
 
     public static final int COLUMNS = 8;
@@ -40,10 +34,7 @@ public final class GearBankLayout {
     private GearBankLayout() {
     }
 
-    /**
-     * The item id at each bank position, row by row, with -1 where the position is empty. Unknown equipment slots and
-     * anything past the grid are left out.
-     */
+    /** Item ids by bank position, row by row, -1 where empty, leaving out unknown slots and overflow */
     public static int[] positions(PluginGearData gear) {
         int[] layout = new int[COLUMNS * ROWS];
         Arrays.fill(layout, -1);
@@ -80,7 +71,7 @@ public final class GearBankLayout {
         return layout;
     }
 
-    /** Rows are counted within the setup; the padding row above it is added here. */
+    /** The row is counted within the setup, below the padding row */
     private static void place(int[] layout, int row, int column, int itemId) {
         layout[(row + PADDING_ROWS) * COLUMNS + column] = itemId;
     }

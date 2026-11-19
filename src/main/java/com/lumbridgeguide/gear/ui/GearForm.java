@@ -16,7 +16,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 
-/** The building blocks both gear subtabs share, so their forms look and line up the same. */
 final class GearForm {
 
     static final int TEXT_WIDTH = Components.CONTENT_WIDTH;
@@ -30,7 +29,6 @@ final class GearForm {
         return help;
     }
 
-    /** A small label above a field, such as "Name". */
     static JLabel fieldLabel(String text) {
         JLabel label = Components.label(text, 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);

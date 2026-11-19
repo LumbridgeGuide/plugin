@@ -29,11 +29,9 @@ import java.util.function.IntFunction;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 
-/** Compares what the player wears and carries with one of their gear configs, before they leave the bank. */
 @Singleton
 public class TripCheckService {
 
-    /** Where a missing item is: in the bank, not owned, or unknown because the bank has not been opened yet. */
     public enum Whereabouts {
         IN_BANK,
         NOT_OWNED,
@@ -119,10 +117,7 @@ public class TripCheckService {
                 itemId -> itemManager.getItemComposition(itemId).getName());
     }
 
-    /**
-     * Counts each required item once per slot it fills, matching item variations (such as charged and uncharged
-     * versions) as the same item. The bank is null when it has not been opened this session.
-     */
+    /** Treats item variations as the same item. The bank is null when it has not been opened this session */
     static Check compare(PluginGearData gear, List<Integer> worn, List<Integer> inventory, List<Integer> pouch,
                          Set<Integer> bank, IntUnaryOperator variation, IntFunction<String> names) {
         Map<Integer, Integer> missingCounts = new LinkedHashMap<>();

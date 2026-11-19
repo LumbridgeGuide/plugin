@@ -30,11 +30,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-/**
- * The player's own gear configs from the website, listed like the bingo tiles. Each row's button makes the config's bank
- * tag tab while the bank is open, and clicking the row opens its trip check. Importing someone else's config by its
- * code stays on the Bank tab page.
- */
 class MyConfigsSection extends Section {
 
     private final GearTagService gearTagService;
@@ -102,7 +97,7 @@ class MyConfigsSection extends Section {
         add(messageText);
     }
 
-    /** Called on the Swing thread when the bank opens or closes: tabs can only be made with the bank open. */
+    /** Called on the Swing thread when the bank opens or closes */
     void setBankOpen(boolean open) {
         bankOpen = open;
         bankNote.setVisible(!open);
@@ -113,7 +108,6 @@ class MyConfigsSection extends Section {
         repaint();
     }
 
-    /** Loads the list the first time the subtab is opened, so players who never use it cost no request. */
     void loadIfNeeded() {
         if (!loaded) {
             load();
@@ -176,10 +170,6 @@ class MyConfigsSection extends Section {
         }));
     }
 
-    /**
-     * One config, drawn like a bingo tile row: its name, item count and last change, and a button that makes its bank
-     * tab, over a hairline rule.
-     */
     private final class ConfigRow extends JPanel {
 
         private final OwnedGearConfig config;

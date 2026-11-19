@@ -38,7 +38,6 @@ import java.util.function.IntUnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Turns a gear set from the website into an lg- prefixed bank tag tab */
 @Slf4j
 @Singleton
 public class GearTagService {
@@ -83,7 +82,7 @@ public class GearTagService {
     public static class Result {
         boolean success;
         String message;
-        /** Names of the config's items that were not in the bank, in layout order. */
+        /** In layout order */
         List<String> missingItems;
 
         static Result failure(String message) {
@@ -106,7 +105,6 @@ public class GearTagService {
         return "lg-" + (slug.isEmpty() ? FALLBACK_TAG : slug);
     }
 
-    /** Fetches the player's own gear configs, most recently updated first, for one-click tag tabs. */
     public void listOwnConfigs(Consumer<List<OwnedGearConfig>> onSuccess, Consumer<String> onFailure) {
         apiClient.get("/plugin/gear-configs",
                 response -> {
@@ -209,11 +207,7 @@ public class GearTagService {
         return names;
     }
 
-    /**
-     * The bank item to lay out for a config item: the exact item if the bank has it, otherwise another variation the
-     * player owns (a different potion dose or poison level), otherwise -1. Tags are then added for that exact item
-     * only, since a tag on every variation pulls the variations the config did not ask for into the tab as well.
-     */
+    /** The exact item if the bank has it, otherwise a variation the player owns, otherwise -1 */
     static int bankItemFor(int itemId, Set<Integer> owned, Map<Integer, Integer> ownedByVariation,
                            IntUnaryOperator variation) {
         if (owned.contains(itemId)) {

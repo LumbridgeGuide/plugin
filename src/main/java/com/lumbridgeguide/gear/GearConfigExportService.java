@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/** Builds a website gear setup from the player's worn and carried items */
 @Singleton
 public class GearConfigExportService {
 
