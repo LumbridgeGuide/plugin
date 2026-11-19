@@ -6,7 +6,6 @@ import lombok.Value;
 import java.util.List;
 import java.util.Set;
 
-/** Skills, quests and account details the plugin sends when syncing */
 @Value
 @Builder(toBuilder = true)
 public class AccountSyncPayload {

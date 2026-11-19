@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/** Sends the plugin's requests to the Lumbridge Guide API with the user's API key */
 @Slf4j
 @Singleton
 public class LumbridgeGuideClient {
@@ -49,7 +48,7 @@ public class LumbridgeGuideClient {
         this.apiBaseUrl = HttpUrl.get(System.getProperty(API_BASE_PROPERTY, DEFAULT_API_BASE_URL));
     }
 
-    /** The website's home page, overridable like the API base for local development. */
+    /** The website's home page, overridable like the API base for local development */
     public static String websiteUrl() {
         return System.getProperty(WEB_BASE_PROPERTY, DEFAULT_WEB_BASE_URL);
     }
@@ -77,7 +76,6 @@ public class LumbridgeGuideClient {
         executeAsync(request, onSuccess, onFailure);
     }
 
-    /** Posts form fields and a PNG image as multipart form data, for uploads such as proof screenshots. */
     public void postImage(String path, Map<String, String> fields, String imagePart, byte[] png,
                           Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
@@ -93,7 +91,7 @@ public class LumbridgeGuideClient {
         return gson.fromJson(json, clazz);
     }
 
-    /** What to tell the player about a failed request, with the fallback used when the backend gives no message */
+    /** What to tell the player about a failed request, or the fallback when the backend gives no message */
     public String failureMessage(ApiResponse response, String fallback) {
         if (response.getStatusCode() == -1) {
             return "Could not reach Lumbridge Guide";
@@ -154,7 +152,7 @@ public class LumbridgeGuideClient {
         }
     }
 
-    /** Passes the response to its callback; a success callback that throws ends in the failure callback */
+    /** A success callback that throws ends in the failure callback */
     private static void deliver(ApiResponse response, boolean successful, String path,
                                 Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         if (!successful) {

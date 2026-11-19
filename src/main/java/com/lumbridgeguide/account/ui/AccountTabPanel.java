@@ -25,7 +25,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import net.runelite.client.util.LinkBrowser;
 
-/** Sidebar page for linking and syncing the logged-in game account */
 public class AccountTabPanel extends JPanel {
 
     private static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 24;
@@ -170,7 +169,6 @@ public class AccountTabPanel extends JPanel {
         }
     }
 
-    /** A round placeholder with the account's first letter, since the plugin has no account avatar. */
     private static final class InitialAvatar extends JComponent {
 
         private static final int SIZE = 30;

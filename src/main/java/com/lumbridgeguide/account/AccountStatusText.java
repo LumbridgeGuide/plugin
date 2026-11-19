@@ -4,7 +4,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 
-/** Sidebar wording and tone for account link statuses, error codes and account types */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AccountStatusText {
 
@@ -59,7 +58,6 @@ public final class AccountStatusText {
         }
     }
 
-    /** The account type as the website words it, such as "Hardcore ironman". Regular accounts are "Main". */
     static String accountTypeLabel(String accountType) {
         if (accountType == null) {
             return "";
@@ -82,7 +80,7 @@ public final class AccountStatusText {
         }
     }
 
-    /** A short badge for the link status, such as LINKED, or an empty string while it is unknown. */
+    /** A short badge for the link status, or an empty string while it is unknown */
     static String statusBadge(String status) {
         return status == null ? "" : status.replace('_', ' ');
     }

@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/** Links the logged-in game account and syncs its skills and quests to Lumbridge Guide */
 @Slf4j
 @Singleton
 public class AccountSyncService {
@@ -74,12 +73,11 @@ public class AccountSyncService {
 
     private final LoginTracker loginTracker = new LoginTracker();
 
-    /** Called when the plugin starts, which may be while the player is already logged in. */
+    /** May be called while the player is already logged in */
     public void startUp() {
         loginTracker.start(client.getGameState() == GameState.LOGGED_IN);
     }
 
-    /** Called when the plugin stops, so a later start does not show the previous account */
     public void reset() {
         listener = null;
         latest = null;
@@ -155,7 +153,6 @@ public class AccountSyncService {
         }
     }
 
-    /** Quest points change when a quest is completed. */
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         if (event.getVarpId() != VarPlayerID.QP) {

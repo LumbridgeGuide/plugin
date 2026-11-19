@@ -5,7 +5,6 @@ import net.runelite.api.GameState;
 import java.util.EnumSet;
 import java.util.Set;
 
-/** Detects real logins and logouts, ignoring world hops */
 final class LoginTracker {
 
     private static final Set<GameState> LOGGED_OUT_STATES = EnumSet.of(
@@ -18,7 +17,7 @@ final class LoginTracker {
     private boolean awaitingLogin = true;
     private boolean loginPending;
 
-    /** Called when the plugin starts, which may be while the player is already logged in */
+    /** May be called while the player is already logged in */
     void start(boolean loggedIn) {
         loginPending = loggedIn;
         awaitingLogin = !loginPending;

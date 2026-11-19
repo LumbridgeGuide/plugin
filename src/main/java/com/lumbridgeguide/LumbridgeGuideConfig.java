@@ -9,7 +9,6 @@ import net.runelite.client.config.Units;
 
 import java.awt.Color;
 
-/** Plugin settings for appearance, bingo, gear, stars, notifications, account sync and the API key */
 @ConfigGroup(LumbridgeGuideConfig.CONFIG_GROUP)
 public interface LumbridgeGuideConfig extends Config {
 
