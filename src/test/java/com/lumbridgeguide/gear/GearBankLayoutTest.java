@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 
 public class GearBankLayoutTest {
 
-    /** Rows are counted within the setup, below the padding row. */
+    /** The row is counted within the setup, below the padding row */
     private static int at(int[] layout, int row, int column) {
         return layout[(row + GearBankLayout.PADDING_ROWS) * GearBankLayout.COLUMNS + column];
     }

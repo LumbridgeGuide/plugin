@@ -15,7 +15,6 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-/** Plays real game messages and loot through the counter, the way a player's session would deliver them. */
 public class TileProgressCounterTest {
 
     private final Map<String, Map<String, Long>> saved = new HashMap<>();
