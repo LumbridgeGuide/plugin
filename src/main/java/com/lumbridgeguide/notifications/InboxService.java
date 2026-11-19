@@ -23,10 +23,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
-/**
- * The player's Lumbridge Guide notifications: bingo invites they can answer in game, proof results and board news.
- * The unread count is checked every minute; the list is only fetched when the inbox is opened.
- */
 @Singleton
 public class InboxService {
 
@@ -57,7 +53,6 @@ public class InboxService {
         }
     }
 
-    /** Checks the unread count once a minute. */
     @Subscribe
     public void onGameTick(GameTick tick) {
         if (!apiClient.hasApiKey() || Duration.between(lastPoll, Instant.now()).compareTo(POLL_INTERVAL) < 0) {

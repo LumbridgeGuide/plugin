@@ -24,7 +24,6 @@ import java.awt.Font;
 import java.util.Comparator;
 import java.util.List;
 
-/** The star next to the player, ready to report, and the live stars other players have reported. */
 public class StarsTabPanel extends Section {
 
     private final ShootingStarService starService;
@@ -65,7 +64,6 @@ public class StarsTabPanel extends Section {
         starService.setOnNearbyStar(star -> SwingUtilities.invokeLater(() -> showNearby(star)));
     }
 
-    /** Loads the list the first time the tab opens, so players who never look cost no request. */
     public void loadIfNeeded() {
         if (!loaded) {
             load();

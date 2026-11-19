@@ -30,7 +30,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-/** The player's notifications. Bingo invites can be answered here; other notifications open on the website. */
 public class InboxPanel extends Section {
 
     private static final int TEXT_WIDTH = Components.CONTENT_WIDTH - 44;
@@ -93,10 +92,6 @@ public class InboxPanel extends Section {
                 && notification.getActions().stream().anyMatch(action -> "accept".equals(action.getAction()));
     }
 
-    /**
-     * One notification: a dot while it is unread, the title and when, the details, and for a bingo invite the buttons
-     * that answer it. Others open on the website when clicked.
-     */
     private JPanel row(NotificationData notification) {
         JPanel row = new JPanel(new BorderLayout(8, 0));
         row.setOpaque(false);

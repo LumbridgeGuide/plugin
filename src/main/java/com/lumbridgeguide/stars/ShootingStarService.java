@@ -23,10 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/**
- * Spots a crashed shooting star next to the player, reports it to Lumbridge Guide on request, and lists the stars
- * other players have reported.
- */
 @Singleton
 public class ShootingStarService {
 
@@ -62,7 +58,7 @@ public class ShootingStarService {
         this.gson = gson;
     }
 
-    /** Called with the star next to the player, or null once it is gone. */
+    /** Called with the star next to the player, or null once it is gone */
     public void setOnNearbyStar(Consumer<ShootingStarData> listener) {
         onNearbyStar = listener;
         listener.accept(nearbyStar);
@@ -76,7 +72,6 @@ public class ShootingStarService {
         return playerLocation;
     }
 
-    /** Remembers where the player is, for distances in the list. */
     @Subscribe
     public void onGameTick(GameTick tick) {
         if (client.getLocalPlayer() != null) {
@@ -84,7 +79,6 @@ public class ShootingStarService {
         }
     }
 
-    /** A star spawns again each time it shrinks a size. */
     @Subscribe
     public void onGameObjectSpawned(GameObjectSpawned event) {
         GameObject object = event.getGameObject();
@@ -110,7 +104,6 @@ public class ShootingStarService {
         }
     }
 
-    /** A shrinking star can spawn its next size before the old one despawns, so only the size showing clears it. */
     @Subscribe
     public void onGameObjectDespawned(GameObjectDespawned event) {
         GameObject object = event.getGameObject();
