@@ -9,7 +9,6 @@ import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
-import com.lumbridgeguide.gear.TripCheckService;
 import lombok.RequiredArgsConstructor;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
@@ -42,7 +41,6 @@ public class SidebarController {
     private final ProofService proofService;
     private final GearTagService gearTagService;
     private final GearConfigExportService gearConfigExportService;
-    private final TripCheckService tripCheckService;
     private final AccountSyncService accountSyncService;
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
@@ -126,7 +124,7 @@ public class SidebarController {
 
     private void addPanel() {
         panel = new SidebarPanel(boardDataService, tileProgressTracker, proofService, gearTagService,
-                gearConfigExportService, tripCheckService, accountSyncService, itemManager, skillIconManager, config, apiClient::hasApiKey);
+                gearConfigExportService, accountSyncService, itemManager, skillIconManager, config, apiClient::hasApiKey);
         navigationButton = NavigationButton.builder()
                 .tooltip("Lumbridge Guide")
                 .icon(ImageUtil.loadImageResource(LumbridgeGuidePlugin.class, "icon.png"))

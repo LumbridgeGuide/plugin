@@ -3,8 +3,6 @@ package com.lumbridgeguide.gear;
 import com.google.gson.Gson;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
-import com.lumbridgeguide.gear.data.OwnedGearConfig;
-import com.lumbridgeguide.gear.data.OwnedGearConfigPage;
 import com.lumbridgeguide.gear.data.PluginGearData;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -83,15 +81,6 @@ public class GearTagService {
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-+|-+$", "");
         return "lg-" + (slug.isEmpty() ? FALLBACK_TAG : slug);
-    }
-
-    public void listOwnConfigs(Consumer<List<OwnedGearConfig>> onSuccess, Consumer<String> onFailure) {
-        apiClient.get("/plugin/gear-configs",
-                response -> {
-                    OwnedGearConfigPage page = gson.fromJson(response.getBody(), OwnedGearConfigPage.class);
-                    onSuccess.accept(page == null || page.getConfigs() == null ? List.of() : page.getConfigs());
-                },
-                response -> onFailure.accept(failureMessage(apiClient, response)));
     }
 
     public void generate(String code, boolean includeMissing, Consumer<Result> onComplete) {

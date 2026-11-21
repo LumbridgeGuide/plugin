@@ -77,13 +77,6 @@ public class Components {
         return button;
     }
 
-    public static JButton smallButton(String text, boolean primary) {
-        ActionButton button = new ActionButton(text, primary ? ActionButton.Kind.PRIMARY : ActionButton.Kind.SECONDARY);
-        button.setFont(FontManager.getRunescapeSmallFont());
-        button.setBorder(new EmptyBorder(3, 8, 3, 8));
-        return button;
-    }
-
     public static JLabel statusLine(String text, Color dotColor, Color textColor) {
         JLabel label = label(text, 12f, Font.PLAIN, textColor);
         label.setIcon(new DotIcon(dotColor));
