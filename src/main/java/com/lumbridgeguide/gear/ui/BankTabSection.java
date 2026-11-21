@@ -15,7 +15,6 @@ import java.awt.Color;
 import java.util.List;
 import java.util.Optional;
 
-/** Generates a bank tag tab from a gear code while the bank is open, then lists what was missing. */
 class BankTabSection extends Section {
 
     private static final String BANK_CLOSED_HINT = "Open your bank to generate a tab.";
@@ -68,10 +67,7 @@ class BankTabSection extends Section {
         add(missingPanel);
     }
 
-    /**
-     * Generating reads the bank, so it is only offered while the bank is open. Called on the Swing thread when the
-     * bank opens or closes.
-     */
+    /** Called on the Swing thread when the bank opens or closes */
     void setBankOpen(boolean open) {
         bankOpen = open;
         generateButton.setEnabled(open && !generating);

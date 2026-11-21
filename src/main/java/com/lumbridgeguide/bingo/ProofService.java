@@ -62,7 +62,6 @@ import java.util.function.Consumer;
 @Singleton
 public class ProofService {
 
-    /** A screenshot ready to send as proof for one tile. */
     @Value
     public static class Offer {
         String id;
@@ -101,7 +100,7 @@ public class ProofService {
     private boolean restored;
     private int ticksSincePrune;
 
-    /** The offers waiting to be sent, oldest first. Called on any thread whenever the queue changes. */
+    /** Receives the waiting offers, oldest first, on any thread whenever the queue changes */
     @Setter
     private Consumer<List<Offer>> onQueueChanged = offers -> { };
 
@@ -152,15 +151,11 @@ public class ProofService {
         return List.copyOf(queue);
     }
 
-    /** Drops an offer the player doesn't want to send, here and on disk. */
+    /** Drops the offer here and on disk */
     public void dismiss(Offer offer) {
         remove(offer);
     }
 
-    /**
-     * Offers saved before the client last closed come back once the player is in game and the boards have loaded.
-     * Offers whose board has ended, or whose tile the team has claimed some other way, are dropped as they're found.
-     */
     @Subscribe
     public void onGameTick(GameTick tick) {
         if (!restored && boardDataService.hasCachedData()) {
@@ -176,7 +171,6 @@ public class ProofService {
         }
     }
 
-    /** The queue belongs to the account that was logged in, so it is cleared on logout and restored on login. */
     @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.LOGIN_SCREEN) {
@@ -187,10 +181,6 @@ public class ProofService {
         }
     }
 
-    /**
-     * Proof the owner turned down frees the tile up again: completing it again, such as another drop or kill, offers
-     * fresh proof. Proof already waiting in the queue keeps the tile from being offered twice.
-     */
     private void rearmRejected() {
         for (PluginBoardData board : boardDataService.getRunningBoards()) {
             for (PluginTileData tile : board.getTiles() == null ? List.<PluginTileData>of() : board.getTiles()) {
@@ -238,7 +228,7 @@ public class ProofService {
         }
     }
 
-    /** The board and tile as the latest sync has them, only while the board runs and the team still needs the tile. */
+    /** Empty unless the board is running and the team still needs the tile */
     private Optional<Map.Entry<PluginBoardData, PluginTileData>> current(String boardId, String tileId) {
         return boardDataService.getRunningBoards().stream()
                 .filter(board -> board.getId().equals(boardId))
@@ -264,7 +254,7 @@ public class ProofService {
         executor.execute(() -> store.delete(offer.getAccountHash(), offer.getId()));
     }
 
-    /** Encodes the screenshot off the calling thread, since a full-size PNG takes long enough to stall the panel. */
+    /** Encodes and sends the screenshot off the calling thread */
     public void submit(Offer offer, Consumer<String> onDone) {
         executor.execute(() -> send(offer, onDone));
     }
@@ -327,7 +317,6 @@ public class ProofService {
                 .build());
     }
 
-    /** Only a frame of the game itself is proof, never the login or welcome screen. */
     private void capture(PluginBoardData board, PluginTileData tile, String reason) {
         if (board.getVerificationCode() == null || client.getGameState() != GameState.LOGGED_IN) {
             return;
@@ -357,11 +346,6 @@ public class ProofService {
         });
     }
 
-    /**
-     * Draws the XP behind XP proof in the top left, in the same style as the code stamp, since nothing else on a
-     * screenshot shows it. It stays clear of the chatbox, where level-up messages back it up. The website checks these
-     * numbers against the OSRS hiscores.
-     */
     static void drawXpCard(BufferedImage image, TileProgressTracker.XpReading xp, long target, BufferedImage icon) {
         NumberFormat numbers = NumberFormat.getIntegerInstance(Locale.UK);
         String title = xp.getSkill().getName();
@@ -406,7 +390,6 @@ public class ProofService {
         canvas.dispose();
     }
 
-    /** Copies the frame and stamps the board code and the time in the bottom right, where the website expects it. */
     static BufferedImage stamp(Image frame, String code) {
         BufferedImage image = new BufferedImage(frame.getWidth(null), frame.getHeight(null),
                 BufferedImage.TYPE_INT_RGB);

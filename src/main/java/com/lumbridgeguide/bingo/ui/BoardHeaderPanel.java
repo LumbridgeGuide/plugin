@@ -17,7 +17,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-/** Board summary with its title, switcher, team, time left and verification code */
 public class BoardHeaderPanel extends JPanel {
 
     private final WrapText titleLabel;

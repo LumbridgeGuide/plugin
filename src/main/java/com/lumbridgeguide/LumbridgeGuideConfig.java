@@ -9,13 +9,11 @@ import net.runelite.client.config.Units;
 
 import java.awt.Color;
 
-/** Plugin settings for appearance, bingo, gear, stars, notifications, account sync and the API key */
 @ConfigGroup(LumbridgeGuideConfig.CONFIG_GROUP)
 public interface LumbridgeGuideConfig extends Config {
 
     String CONFIG_GROUP = "lumbridge_guide";
     String ACCENT_COLOUR_KEY = "accentColour";
-    String SHOW_STARS_TAB_KEY = "showStarsTab";
     String API_KEY_KEY = "apiKey";
 
     @ConfigSection(
@@ -121,55 +119,6 @@ public interface LumbridgeGuideConfig extends Config {
             position = 0
     )
     default boolean includeMissingItems() {
-        return true;
-    }
-
-    @ConfigSection(
-            name = "Shooting stars",
-            description = "Reporting and finding shooting stars",
-            position = 3,
-            closedByDefault = true
-    )
-    String starsSection = "starsSection";
-
-    @ConfigItem(
-            keyName = SHOW_STARS_TAB_KEY,
-            name = "Show the Stars tab",
-            description = "Add a tab listing live shooting stars and the one next to you",
-            section = starsSection,
-            position = 0
-    )
-    default boolean showStarsTab() {
-        return false;
-    }
-
-    @ConfigItem(
-            keyName = "promptNearbyStars",
-            name = "Say when a star is next to you",
-            description = "Post a game chat message when a shooting star lands next to you, so you can report it",
-            section = starsSection,
-            position = 1
-    )
-    default boolean promptNearbyStars() {
-        return false;
-    }
-
-    @ConfigSection(
-            name = "Notifications",
-            description = "Your Lumbridge Guide inbox",
-            position = 4,
-            closedByDefault = true
-    )
-    String notificationSection = "notificationSection";
-
-    @ConfigItem(
-            keyName = "notificationChatMessages",
-            name = "Chat message for new notifications",
-            description = "Say in the game chat when a new invite or proof result arrives",
-            section = notificationSection,
-            position = 0
-    )
-    default boolean notificationChatMessages() {
         return true;
     }
 

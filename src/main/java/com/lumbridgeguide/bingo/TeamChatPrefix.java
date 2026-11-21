@@ -6,7 +6,6 @@ import net.runelite.client.util.Text;
 
 import java.util.regex.Pattern;
 
-/** Escaped, colour-safe bingo team tag placed before the player's name in chat */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TeamChatPrefix {
 

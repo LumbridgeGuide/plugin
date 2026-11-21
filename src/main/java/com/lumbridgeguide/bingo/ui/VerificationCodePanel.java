@@ -17,7 +17,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/** Click-to-copy display of a board's code, one boxed character at a time */
 class VerificationCodePanel extends JPanel {
 
     private static final int GAP = 3;

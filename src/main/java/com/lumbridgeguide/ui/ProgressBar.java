@@ -7,7 +7,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** A thin bar filled to a fraction in a given colour, such as a team's share of claimed tiles. */
 public class ProgressBar extends JComponent {
 
     private final int height;

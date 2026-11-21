@@ -17,11 +17,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Keeps proof the player hasn't sent yet on disk, a PNG and a JSON file per offer in the account's own folder, so
- * closing the client doesn't lose it and the next login offers it again. Each account keeps at most
- * {@link #MAX_SAVED}, dropping the oldest.
- */
 @Slf4j
 @Singleton
 class ProofOfferStore {
@@ -29,7 +24,6 @@ class ProofOfferStore {
     static final int MAX_SAVED = 10;
     private static final File ROOT = new File(new File(RuneLite.RUNELITE_DIR, "lumbridge-guide"), "proof");
 
-    /** Everything needed to rebuild an offer, apart from the screenshot. */
     @Value
     static class Saved {
         String id;
@@ -80,7 +74,7 @@ class ProofOfferStore {
         new File(folder, id + ".json").delete();
     }
 
-    /** The account's saved offers, oldest first. Unreadable ones are deleted. */
+    /** The account's saved offers, oldest first, deleting any that cannot be read */
     List<Loaded> load(long accountHash) {
         File folder = folder(accountHash);
         List<Loaded> loaded = new ArrayList<>();

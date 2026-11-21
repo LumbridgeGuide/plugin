@@ -24,10 +24,6 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
-/**
- * A section at the top of the Bingo tab offering to send proof for a tile. Offers queue up, oldest first: it shows
- * one at a time with how many are waiting, and sending or dismissing it brings up the next.
- */
 class ProofOfferPanel extends Section {
 
     private static final int THUMBNAIL_WIDTH = Components.CONTENT_WIDTH - 2;
@@ -43,7 +39,7 @@ class ProofOfferPanel extends Section {
         setVisible(false);
     }
 
-    /** Shows the oldest waiting offer. Called on the Swing thread whenever the queue changes. */
+    /** Called on the Swing thread whenever the queue changes */
     void showQueue(List<ProofService.Offer> queue) {
         if (queue.isEmpty()) {
             shownOfferId = null;

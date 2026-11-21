@@ -8,7 +8,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** Claimed-tile tick drawn with lines */
 public class CheckIcon implements Icon {
 
     private static final int SIZE = 14;

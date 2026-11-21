@@ -12,7 +12,6 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.util.Arrays;
 
-/** Sidebar page for gear bank tags, the player's own configs and new configs */
 public class GearTabPanel extends JPanel {
 
     private static final String BANK_TAB = "Bank tab";
@@ -63,7 +62,6 @@ public class GearTabPanel extends JPanel {
         tripCheckPanel.setBankOpen(open);
     }
 
-    /** CardLayout stretches each card to fill the space, so each section sits at the top of its own panel. */
     private static JPanel topAligned(JPanel section) {
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);

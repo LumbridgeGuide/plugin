@@ -4,7 +4,6 @@ import lombok.Value;
 
 import java.util.List;
 
-/** Worn items, inventory and rune pouch the plugin sends for a new gear setup */
 @Value
 public class GearConfigPayload {
     String name;

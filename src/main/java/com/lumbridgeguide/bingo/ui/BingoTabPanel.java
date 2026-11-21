@@ -27,7 +27,6 @@ import java.awt.GridLayout;
 import java.util.Arrays;
 import java.util.List;
 
-/** Sidebar page with the active board's overview and a detail view per tile */
 public class BingoTabPanel extends JPanel {
 
     private static final String OVERVIEW_CARD = "overview";
@@ -223,7 +222,6 @@ public class BingoTabPanel extends JPanel {
         repaint();
     }
 
-    /** CardLayout stretches each view to fill the space, so each one sits at the top of its own panel. */
     private static JPanel topAligned(JComponent content) {
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);

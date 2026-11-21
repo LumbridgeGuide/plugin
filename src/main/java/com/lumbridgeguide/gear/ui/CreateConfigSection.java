@@ -13,7 +13,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JTextField;
 import java.awt.Color;
 
-/** Creates a gear config on the website from what the player is wearing and carrying. */
 class CreateConfigSection extends Section {
 
     private final GearConfigExportService gearConfigExportService;

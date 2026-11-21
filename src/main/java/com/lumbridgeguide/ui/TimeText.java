@@ -1,5 +1,7 @@
 package com.lumbridgeguide.ui;
 
+import lombok.experimental.UtilityClass;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -8,8 +10,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-/** Short relative times, such as "12m ago" or "3w ago". */
-public final class TimeText {
+@UtilityClass
+public class TimeText {
 
     public static String ago(String isoInstant) {
         try {
@@ -35,10 +37,6 @@ public final class TimeText {
         }
     }
 
-    /**
-     * When something happened, as on the website's claim list: the time for today, the weekday for this week, and the
-     * date before that.
-     */
     public static String clock(String isoInstant) {
         try {
             ZonedDateTime when = Instant.parse(isoInstant).atZone(ZoneId.systemDefault());
@@ -53,8 +51,5 @@ public final class TimeText {
         } catch (RuntimeException ignored) {
             return "";
         }
-    }
-
-    private TimeText() {
     }
 }

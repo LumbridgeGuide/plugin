@@ -1,9 +1,11 @@
 package com.lumbridgeguide.ui;
 
+import lombok.experimental.UtilityClass;
+
 import java.awt.Color;
 
-/** Website dark-mode colours and fonts for the sidebar */
-public final class Theme {
+@UtilityClass
+public class Theme {
 
     public static final Color PANEL_BACKGROUND = new Color(0x1A1A1E);
     public static final Color SURFACE_RAISED = new Color(0x242428);
@@ -28,10 +30,8 @@ public final class Theme {
     public static final Color WARNING = new Color(0xD4A32A);
     public static final Color ERROR = new Color(0xD3836D);
 
-    /** Corner diameter for cards, buttons, inputs and chips: a slight softening of square corners. */
     public static final int ARC = 4;
 
-    /** The highlight colour for selected tabs, primary buttons and codes, set from the plugin's settings. */
     public static Color accent() {
         return accent;
     }
@@ -46,17 +46,14 @@ public final class Theme {
         accentText = textOf(accent);
     }
 
-    /** The accent for text, such as links and the open pill tab: a little lighter so it reads on dark surfaces. */
     public static Color accentText() {
         return accentText;
     }
 
-    /** A faint wash of the accent, behind the open pill tab and accent badges. */
     public static Color accentWash() {
         return wash(accent);
     }
 
-    /** A colour at 15% strength, for a badge or highlight behind text in that colour. */
     public static Color wash(Color colour) {
         return new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), 38);
     }
@@ -81,8 +78,5 @@ public final class Theme {
         } catch (NumberFormatException ignored) {
             return TEXT_MUTED;
         }
-    }
-
-    private Theme() {
     }
 }

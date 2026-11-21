@@ -23,7 +23,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 
-/** Compares what the player wears and carries with one of their configs, and lists what is missing and where. */
 class TripCheckPanel extends Section {
 
     private final TripCheckService tripCheckService;

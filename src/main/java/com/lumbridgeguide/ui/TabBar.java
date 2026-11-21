@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** Row of tabs that switches sidebar pages, underlined or as pills */
 public class TabBar extends JPanel {
 
     public enum Style {
@@ -84,10 +83,6 @@ public class TabBar extends JPanel {
             repaint();
         }
 
-        /**
-         * Underlined tabs draw a hairline under every tab and a thicker accent line under the open one. The open pill
-         * sits on a wash of the accent.
-         */
         @Override
         protected void paintComponent(Graphics graphics) {
             if (style == Style.PILL && isSelected()) {

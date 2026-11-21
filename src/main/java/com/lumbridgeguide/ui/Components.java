@@ -1,5 +1,6 @@
 package com.lumbridgeguide.ui;
 
+import lombok.experimental.UtilityClass;
 import net.runelite.client.ui.FontManager;
 
 import javax.swing.BorderFactory;
@@ -24,12 +25,11 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.util.Locale;
 
-/** Themed labels, wrapped text, buttons and fields for the sidebar */
-public final class Components {
+@UtilityClass
+public class Components {
 
     public static final int CONTENT_WIDTH = 188;
 
-    /** RuneLite's fonts come in three cuts, so a bold style or a small size picks the matching one. */
     public static Font font(float size, int style) {
         if (style == Font.BOLD) {
             return FontManager.getRunescapeBoldFont();
@@ -47,10 +47,6 @@ public final class Components {
         return label;
     }
 
-    /**
-     * A section heading as on the website: the small uppercase label, a hairline running to the right edge, and an
-     * optional link or note at the end, such as "Copy" or "Refresh".
-     */
     public static JPanel sectionHeader(String text, JComponent trailing) {
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
@@ -74,7 +70,6 @@ public final class Components {
         return sectionHeader(text, null);
     }
 
-    /** A small accent link for the end of a section heading or a row, such as "Refresh". */
     public static JButton textLink(String text) {
         JButton button = linkButton(text);
         button.setFont(FontManager.getRunescapeSmallFont());
@@ -82,7 +77,6 @@ public final class Components {
         return button;
     }
 
-    /** A compact button for an action inside a row, such as "Make tab" or "Accept". */
     public static JButton smallButton(String text, boolean primary) {
         ActionButton button = new ActionButton(text, primary ? ActionButton.Kind.PRIMARY : ActionButton.Kind.SECONDARY);
         button.setFont(FontManager.getRunescapeSmallFont());
@@ -90,7 +84,6 @@ public final class Components {
         return button;
     }
 
-    /** A line of text led by a coloured dot, for statuses such as "Not claimed yet". */
     public static JLabel statusLine(String text, Color dotColor, Color textColor) {
         JLabel label = label(text, 12f, Font.PLAIN, textColor);
         label.setIcon(new DotIcon(dotColor));
@@ -115,7 +108,6 @@ public final class Components {
         return new ActionButton(text, ActionButton.Kind.SECONDARY);
     }
 
-    /** An accent text link, such as "Back to tiles". */
     public static JButton linkButton(String text) {
         JButton button = new JButton(text);
         button.setFont(FontManager.getRunescapeBoldFont());
@@ -129,16 +121,6 @@ public final class Components {
         return button;
     }
 
-    /** A compact outlined button in the accent, for an action on one row of a list. */
-    public static JButton rowButton(String text) {
-        JButton button = new ActionButton(text, ActionButton.Kind.SECONDARY);
-        button.setFont(FontManager.getRunescapeSmallFont());
-        button.setForeground(Theme.accent());
-        button.setBorder(new EmptyBorder(4, 9, 4, 9));
-        return button;
-    }
-
-    /** A primary button that stretches to the width of a vertical form. */
     public static JButton fullWidthButton(String text) {
         JButton button = primaryButton(text);
         button.setMaximumSize(new Dimension(Integer.MAX_VALUE, button.getPreferredSize().height));
@@ -146,7 +128,6 @@ public final class Components {
         return button;
     }
 
-    /** A borderless, see-through scroll pane that only scrolls vertically */
     public static JScrollPane scrolling(JComponent content) {
         JScrollPane scroll = new JScrollPane(content);
         scroll.setOpaque(false);
@@ -157,7 +138,7 @@ public final class Components {
         return scroll;
     }
 
-    /** A text field that shows its tooltip as faded placeholder text while it is empty. */
+    /** Shows the tooltip as faded placeholder text while the field is empty */
     public static JTextField textField(String tooltip) {
         JTextField field = new PlaceholderField(tooltip);
         field.setToolTipText(tooltip);
@@ -185,9 +166,6 @@ public final class Components {
         box.setFocusPainted(false);
         box.setAlignmentX(Component.LEFT_ALIGNMENT);
         return box;
-    }
-
-    private Components() {
     }
 
     private static final class PlaceholderField extends JTextField {

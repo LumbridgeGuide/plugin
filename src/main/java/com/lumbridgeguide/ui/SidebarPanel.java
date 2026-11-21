@@ -11,20 +11,13 @@ import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.gear.ui.GearTabPanel;
-import com.lumbridgeguide.notifications.InboxService;
-import com.lumbridgeguide.notifications.ui.InboxPanel;
-import com.lumbridgeguide.stars.ShootingStarService;
-import com.lumbridgeguide.stars.ui.StarsTabPanel;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
-import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 import javax.swing.Box;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
@@ -32,27 +25,21 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagLayout;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-/** Sidebar root showing the tabs, or an API key prompt when no key is set */
 public class SidebarPanel extends PluginPanel {
 
     private static final String NO_KEY_CARD = "noKey";
     private static final String TABS_CARD = "tabs";
-    private static final String INBOX_CARD = "inbox";
     private static final String BINGO_TAB = "Bingo";
     private static final String GEAR_TAB = "Gear";
     private static final String ACCOUNT_TAB = "Account";
-    private static final String STARS_TAB = "Stars";
 
     private final BooleanSupplier hasApiKey;
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
     private final GearTabPanel gearTab;
-    private final JButton inboxButton;
-    private final StarsTabPanel starsTab;
 
     public SidebarPanel(
             BoardDataService boardDataService,
@@ -62,8 +49,6 @@ public class SidebarPanel extends PluginPanel {
             GearConfigExportService gearConfigExportService,
             TripCheckService tripCheckService,
             AccountSyncService accountSyncService,
-            InboxService inboxService,
-            ShootingStarService starService,
             ItemManager itemManager,
             SkillIconManager skillIconManager,
             LumbridgeGuideConfig config,
@@ -76,41 +61,19 @@ public class SidebarPanel extends PluginPanel {
         setBackground(Theme.PANEL_BACKGROUND);
 
         JLabel pluginTitle = Components.label("Lumbridge Guide", 16f, Font.BOLD, Theme.TEXT_PRIMARY);
-        inboxButton = Components.linkButton("");
-        inboxButton.setIcon(new BellIcon());
-        inboxButton.setIconTextGap(3);
-        inboxButton.setFont(FontManager.getRunescapeSmallFont());
-        inboxButton.setToolTipText("Your Lumbridge Guide notifications");
-        JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
-        header.setBorder(new EmptyBorder(2, 0, 10, 0));
-        header.add(pluginTitle, BorderLayout.WEST);
-        header.add(inboxButton, BorderLayout.EAST);
-        add(header, BorderLayout.NORTH);
+        pluginTitle.setBorder(new EmptyBorder(2, 0, 10, 0));
+        add(pluginTitle, BorderLayout.NORTH);
 
         bingoTab = new BingoTabPanel(boardDataService, tileProgressTracker, proofService, config, itemManager,
                 skillIconManager);
         gearTab = new GearTabPanel(gearTagService, gearConfigExportService, tripCheckService,
                 config.includeMissingItems());
-        starsTab = config.showStarsTab() ? new StarsTabPanel(starService) : null;
 
         centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);
         centerPanel.add(buildNoKeyCard(), NO_KEY_CARD);
         centerPanel.add(buildTabsCard(new AccountTabPanel(accountSyncService)), TABS_CARD);
-        InboxPanel inboxPanel = new InboxPanel(inboxService,
-                () -> ((CardLayout) centerPanel.getLayout()).show(centerPanel, TABS_CARD));
-        centerPanel.add(scrolling(inboxPanel), INBOX_CARD);
         add(centerPanel, BorderLayout.CENTER);
-
-        inboxButton.addActionListener(event -> {
-            ((CardLayout) centerPanel.getLayout()).show(centerPanel, INBOX_CARD);
-            inboxPanel.load();
-        });
-        inboxService.setOnUnreadCount(count -> SwingUtilities.invokeLater(() -> {
-            inboxButton.setText(count > 0 ? String.valueOf(count) : "");
-            inboxButton.revalidate();
-        }));
 
         refresh();
     }
@@ -125,7 +88,6 @@ public class SidebarPanel extends PluginPanel {
             boolean hasKey = hasApiKey.getAsBoolean();
 
             ((CardLayout) centerPanel.getLayout()).show(centerPanel, hasKey ? TABS_CARD : NO_KEY_CARD);
-            inboxButton.setVisible(hasKey);
 
             if (hasKey) {
                 bingoTab.refresh();
@@ -136,13 +98,6 @@ public class SidebarPanel extends PluginPanel {
         });
     }
 
-    private static JScrollPane scrolling(JPanel content) {
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
-        wrapper.add(content, BorderLayout.NORTH);
-        return Components.scrolling(wrapper);
-    }
-
     private JPanel buildTabsCard(AccountTabPanel accountTab) {
         CardLayout tabCards = new CardLayout();
         JPanel display = new JPanel(tabCards);
@@ -151,18 +106,8 @@ public class SidebarPanel extends PluginPanel {
         display.add(gearTab, GEAR_TAB);
         display.add(accountTab, ACCOUNT_TAB);
 
-        List<String> tabs = new ArrayList<>(List.of(BINGO_TAB, GEAR_TAB));
-        if (starsTab != null) {
-            display.add(scrolling(starsTab), STARS_TAB);
-            tabs.add(STARS_TAB);
-        }
-        tabs.add(ACCOUNT_TAB);
-        TabBar tabBar = new TabBar(tabs, TabBar.Style.UNDERLINE, name -> {
-            tabCards.show(display, name);
-            if (STARS_TAB.equals(name) && starsTab != null) {
-                starsTab.loadIfNeeded();
-            }
-        });
+        TabBar tabBar = new TabBar(List.of(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB), TabBar.Style.UNDERLINE,
+                name -> tabCards.show(display, name));
         tabBar.setBorder(new EmptyBorder(0, 0, 10, 0));
 
         JPanel card = new JPanel(new BorderLayout());

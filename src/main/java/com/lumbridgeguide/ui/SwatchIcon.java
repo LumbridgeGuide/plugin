@@ -7,7 +7,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** A small rounded square in a team's colour. */
 public class SwatchIcon implements Icon {
 
     private static final int SIZE = 9;

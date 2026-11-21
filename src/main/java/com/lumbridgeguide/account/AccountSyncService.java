@@ -8,8 +8,8 @@ import com.lumbridgeguide.account.data.AccountSyncResultData;
 import com.lumbridgeguide.api.ApiErrorData;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Quest;
@@ -36,9 +36,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/** Links the logged-in game account and syncs its skills and quests to Lumbridge Guide */
-@Slf4j
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class AccountSyncService {
 
     private static final long UNKNOWN_ACCOUNT_HASH = -1L;
@@ -58,15 +57,6 @@ public class AccountSyncService {
     private volatile boolean busy;
     private volatile Consumer<AccountView> listener;
 
-    @Inject
-    public AccountSyncService(
-            Client client, ClientThread clientThread, LumbridgeGuideClient apiClient, LumbridgeGuideConfig config) {
-        this.client = client;
-        this.clientThread = clientThread;
-        this.apiClient = apiClient;
-        this.config = config;
-    }
-
     public void setListener(Consumer<AccountView> listener) {
         this.listener = listener;
         publish();
@@ -74,12 +64,11 @@ public class AccountSyncService {
 
     private final LoginTracker loginTracker = new LoginTracker();
 
-    /** Called when the plugin starts, which may be while the player is already logged in. */
+    /** May be called while the player is already logged in */
     public void startUp() {
         loginTracker.start(client.getGameState() == GameState.LOGGED_IN);
     }
 
-    /** Called when the plugin stops, so a later start does not show the previous account */
     public void reset() {
         listener = null;
         latest = null;
@@ -155,7 +144,6 @@ public class AccountSyncService {
         }
     }
 
-    /** Quest points change when a quest is completed. */
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         if (event.getVarpId() != VarPlayerID.QP) {

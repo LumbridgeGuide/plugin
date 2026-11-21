@@ -8,10 +8,6 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 
-/**
- * A rounded hairline outline. It only draws the outline: a border paints after its component, so a fill here would
- * cover the component's own content, such as the text in a field.
- */
 public class RoundedBorder extends AbstractBorder {
 
     private final Color outline;

@@ -5,8 +5,6 @@ import com.lumbridgeguide.account.AccountSyncService;
 import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TeamChatPrefixService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
-import com.lumbridgeguide.notifications.InboxService;
-import com.lumbridgeguide.stars.ShootingStarService;
 import com.lumbridgeguide.ui.SidebarController;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
@@ -19,7 +17,6 @@ import net.runelite.client.plugins.banktags.BankTagsPlugin;
 import javax.inject.Inject;
 import java.util.List;
 
-/** Entry point that starts the sidebar and registers the services that listen to game events */
 @Slf4j
 @PluginDescriptor(
         name = "Lumbridge Guide"
@@ -43,17 +40,11 @@ public class LumbridgeGuidePlugin extends Plugin {
     private ProofService proofService;
 
     @Inject
-    private InboxService inboxService;
-
-    @Inject
-    private ShootingStarService shootingStarService;
-
-    @Inject
     private TeamChatPrefixService teamChatPrefixService;
 
     @Override
     protected void startUp() {
-        log.info("Lumbridge Guide started");
+        log.debug("Lumbridge Guide started");
         accountSyncService.startUp();
         eventSubscribers().forEach(eventBus::register);
         sidebarController.startUp();
@@ -61,15 +52,15 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     @Override
     protected void shutDown() {
-        log.info("Lumbridge Guide stopped");
+        log.debug("Lumbridge Guide stopped");
         eventSubscribers().forEach(eventBus::unregister);
         sidebarController.shutDown();
         accountSyncService.reset();
     }
 
     private List<Object> eventSubscribers() {
-        return List.of(sidebarController, accountSyncService, tileProgressTracker, proofService, inboxService,
-                shootingStarService, teamChatPrefixService);
+        return List.of(sidebarController, accountSyncService, tileProgressTracker, proofService,
+                teamChatPrefixService);
     }
 
     @Provides

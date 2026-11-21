@@ -10,8 +10,7 @@ import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
-import com.lumbridgeguide.notifications.InboxService;
-import com.lumbridgeguide.stars.ShootingStarService;
+import lombok.RequiredArgsConstructor;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -32,11 +31,8 @@ import javax.swing.SwingUtilities;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * Owns the sidebar panel and its toolbar button: builds it, rebuilds it when a setting changes how it looks, keeps
- * boards fresh on the refresh interval, and tells it when the bank opens or closes.
- */
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class SidebarController {
 
     private final LumbridgeGuideConfig config;
@@ -48,8 +44,6 @@ public class SidebarController {
     private final GearConfigExportService gearConfigExportService;
     private final TripCheckService tripCheckService;
     private final AccountSyncService accountSyncService;
-    private final InboxService inboxService;
-    private final ShootingStarService starService;
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
     private final LumbridgeGuideClient apiClient;
@@ -57,30 +51,6 @@ public class SidebarController {
     private SidebarPanel panel;
     private NavigationButton navigationButton;
     private Instant lastBoardRefresh = Instant.now();
-
-    @Inject
-    public SidebarController(LumbridgeGuideConfig config, ClientToolbar clientToolbar,
-                             BoardDataService boardDataService, TileProgressTracker tileProgressTracker,
-                             ProofService proofService, GearTagService gearTagService,
-                             GearConfigExportService gearConfigExportService, TripCheckService tripCheckService,
-                             AccountSyncService accountSyncService, InboxService inboxService,
-                             ShootingStarService starService, ItemManager itemManager,
-                             SkillIconManager skillIconManager, LumbridgeGuideClient apiClient) {
-        this.config = config;
-        this.clientToolbar = clientToolbar;
-        this.boardDataService = boardDataService;
-        this.tileProgressTracker = tileProgressTracker;
-        this.proofService = proofService;
-        this.gearTagService = gearTagService;
-        this.gearConfigExportService = gearConfigExportService;
-        this.tripCheckService = tripCheckService;
-        this.accountSyncService = accountSyncService;
-        this.inboxService = inboxService;
-        this.starService = starService;
-        this.itemManager = itemManager;
-        this.skillIconManager = skillIconManager;
-        this.apiClient = apiClient;
-    }
 
     public void startUp() {
         Theme.setAccent(config.accentColour());
@@ -101,8 +71,7 @@ public class SidebarController {
                 || event.getKey().startsWith(TileProgressTracker.BASELINE_KEY_PREFIX)) {
             return;
         }
-        if (LumbridgeGuideConfig.ACCENT_COLOUR_KEY.equals(event.getKey())
-                || LumbridgeGuideConfig.SHOW_STARS_TAB_KEY.equals(event.getKey())) {
+        if (LumbridgeGuideConfig.ACCENT_COLOUR_KEY.equals(event.getKey())) {
             Theme.setAccent(config.accentColour());
             SwingUtilities.invokeLater(() -> {
                 clientToolbar.removeNavigation(navigationButton);
@@ -157,8 +126,7 @@ public class SidebarController {
 
     private void addPanel() {
         panel = new SidebarPanel(boardDataService, tileProgressTracker, proofService, gearTagService,
-                gearConfigExportService, tripCheckService, accountSyncService, inboxService, starService,
-                itemManager, skillIconManager, config, apiClient::hasApiKey);
+                gearConfigExportService, tripCheckService, accountSyncService, itemManager, skillIconManager, config, apiClient::hasApiKey);
         navigationButton = NavigationButton.builder()
                 .tooltip("Lumbridge Guide")
                 .icon(ImageUtil.loadImageResource(LumbridgeGuidePlugin.class, "icon.png"))

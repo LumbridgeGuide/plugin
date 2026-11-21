@@ -6,6 +6,7 @@ import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.gear.data.OwnedGearConfig;
 import com.lumbridgeguide.gear.data.OwnedGearConfigPage;
 import com.lumbridgeguide.gear.data.PluginGearData;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -38,9 +39,9 @@ import java.util.function.IntUnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Turns a gear set from the website into an lg- prefixed bank tag tab */
 @Slf4j
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class GearTagService {
 
     private static final Pattern GEAR_CODE = Pattern.compile(
@@ -57,33 +58,11 @@ public class GearTagService {
     private final TabManager tabManager;
     private final BankTagsService bankTagsService;
 
-    @Inject
-    public GearTagService(
-            LumbridgeGuideClient apiClient,
-            Gson gson,
-            Client client,
-            ClientThread clientThread,
-            ItemManager itemManager,
-            TagManager tagManager,
-            LayoutManager layoutManager,
-            TabManager tabManager,
-            BankTagsService bankTagsService) {
-        this.apiClient = apiClient;
-        this.gson = gson;
-        this.client = client;
-        this.clientThread = clientThread;
-        this.itemManager = itemManager;
-        this.tagManager = tagManager;
-        this.layoutManager = layoutManager;
-        this.tabManager = tabManager;
-        this.bankTagsService = bankTagsService;
-    }
-
     @Value
     public static class Result {
         boolean success;
         String message;
-        /** Names of the config's items that were not in the bank, in layout order. */
+        /** In layout order */
         List<String> missingItems;
 
         static Result failure(String message) {
@@ -106,7 +85,6 @@ public class GearTagService {
         return "lg-" + (slug.isEmpty() ? FALLBACK_TAG : slug);
     }
 
-    /** Fetches the player's own gear configs, most recently updated first, for one-click tag tabs. */
     public void listOwnConfigs(Consumer<List<OwnedGearConfig>> onSuccess, Consumer<String> onFailure) {
         apiClient.get("/plugin/gear-configs",
                 response -> {
@@ -171,7 +149,7 @@ public class GearTagService {
 
         String tag = tagName(gear.getName());
         writeTag(tag, gear, tagged, placed);
-        log.info("Gear tag '{}' generated: {} item(s), {} missing", tag, tagged.size(), missing.size());
+        log.debug("Gear tag '{}' generated: {} item(s), {} missing", tag, tagged.size(), missing.size());
         return new Result(true, summary(tag, tagged.size(), missing.size(), includeMissing), itemNames(missing));
     }
 
@@ -209,11 +187,7 @@ public class GearTagService {
         return names;
     }
 
-    /**
-     * The bank item to lay out for a config item: the exact item if the bank has it, otherwise another variation the
-     * player owns (a different potion dose or poison level), otherwise -1. Tags are then added for that exact item
-     * only, since a tag on every variation pulls the variations the config did not ask for into the tab as well.
-     */
+    /** The exact item if the bank has it, otherwise a variation the player owns, otherwise -1 */
     static int bankItemFor(int itemId, Set<Integer> owned, Map<Integer, Integer> ownedByVariation,
                            IntUnaryOperator variation) {
         if (owned.contains(itemId)) {

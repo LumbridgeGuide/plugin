@@ -10,10 +10,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
-/**
- * A small square that holds a game icon, such as a tile's item or skill: inset and outlined like an empty inventory
- * slot, with the icon scaled to fit. Item images load in the background and appear when they arrive.
- */
 public class IconWell extends JComponent {
 
     private final int size;
@@ -32,7 +28,6 @@ public class IconWell extends JComponent {
         repaint();
     }
 
-    /** Fades the icon, for a tile another team has already claimed. */
     public void setIconOpacity(float newOpacity) {
         opacity = newOpacity;
         repaint();
