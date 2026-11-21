@@ -8,4 +8,5 @@ public class GearConfigCreatedData {
     private String name;
     private String url;
     private int flaggedItems;
+    private boolean alreadySaved;
 }

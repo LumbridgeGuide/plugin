@@ -1,6 +1,5 @@
 package com.lumbridgeguide.gear;
 
-import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.gear.data.GearConfigCreatedData;
 import com.lumbridgeguide.gear.data.GearConfigPayload;
@@ -56,8 +55,10 @@ public class GearConfigExportService {
                 onSwing.accept(Result.failure("Log in to the game first."));
                 return;
             }
+
             apiClient.post("/plugin/gear-configs", payload(name, includeEquipment, includeInventory),
-                    response -> onSwing.accept(Result.success(createdUrl(response))),
+                    response -> onSwing.accept(Result.success(
+                            apiClient.deserialize(response.getBody(), GearConfigCreatedData.class))),
                     response -> onSwing.accept(Result.failure(
                             apiClient.failureMessage(response, "Could not create the gear config"))));
         });
@@ -69,6 +70,7 @@ public class GearConfigExportService {
         String configName = name == null || name.trim().isEmpty()
                 ? defaultName()
                 : name.trim();
+
         return new GearConfigPayload(
                 configName,
                 includeEquipment,
@@ -78,22 +80,19 @@ public class GearConfigExportService {
                 hasRunePouch ? readRunePouch() : new ArrayList<>());
     }
 
-    private String createdUrl(ApiResponse response) {
-        return apiClient.deserialize(response.getBody(), GearConfigCreatedData.class).getUrl();
-    }
-
     List<GearConfigPayload.EquipmentEntry> readEquipment() {
         List<GearConfigPayload.EquipmentEntry> entries = new ArrayList<>();
         ItemContainer equipment = client.getItemContainer(InventoryID.WORN);
-        if (equipment == null) {
-            return entries;
-        }
+
+        if (equipment == null) return entries;
+
         Item[] contents = equipment.getItems();
         for (EquipmentInventorySlot slot : EquipmentInventorySlot.values()) {
             int index = slot.getSlotIdx();
             if (index >= contents.length || contents[index].getId() <= 0 || contents[index].getQuantity() <= 0) {
                 continue;
             }
+
             int itemId = itemManager.canonicalize(contents[index].getId());
             entries.add(new GearConfigPayload.EquipmentEntry(
                     slot.name(), itemId, itemName(itemId), contents[index].getQuantity()));
@@ -104,14 +103,15 @@ public class GearConfigExportService {
     List<GearConfigPayload.InventoryEntry> readInventory() {
         List<GearConfigPayload.InventoryEntry> entries = new ArrayList<>();
         ItemContainer inventory = client.getItemContainer(InventoryID.INV);
-        if (inventory == null) {
-            return entries;
-        }
+
+        if (inventory == null) return entries;
+
         Item[] contents = inventory.getItems();
         for (int slot = 0; slot < Math.min(contents.length, 28); slot++) {
             if (contents[slot].getId() <= 0 || contents[slot].getQuantity() <= 0) {
                 continue;
             }
+
             int itemId = itemManager.canonicalize(contents[slot].getId());
             entries.add(new GearConfigPayload.InventoryEntry(
                     slot, itemId, itemName(itemId), contents[slot].getQuantity()));
@@ -122,12 +122,14 @@ public class GearConfigExportService {
     List<GearConfigPayload.RunePouchEntry> readRunePouch() {
         List<GearConfigPayload.RunePouchEntry> entries = new ArrayList<>();
         EnumComposition runes = client.getEnum(EnumID.RUNEPOUCH_RUNE);
+
         for (int index = 0; index < POUCH_RUNE_VARBITS.length; index++) {
             int runeType = client.getVarbitValue(POUCH_RUNE_VARBITS[index]);
             int amount = client.getVarbitValue(POUCH_AMOUNT_VARBITS[index]);
             if (runeType <= 0 || amount <= 0) {
                 continue;
             }
+
             int itemId = runes.getIntValue(runeType);
             entries.add(new GearConfigPayload.RunePouchEntry(itemId, itemName(itemId), amount));
         }
@@ -149,8 +151,10 @@ public class GearConfigExportService {
         String message;
         String url;
 
-        static Result success(String url) {
-            return new Result(true, "Gear config created.", url);
+        static Result success(GearConfigCreatedData created) {
+            return new Result(true,
+                    created.isAlreadySaved() ? "You already saved this setup." : "Gear config created.",
+                    created.getUrl());
         }
 
         static Result failure(String message) {

@@ -69,10 +69,13 @@ class CreateConfigSection extends Section {
     }
 
     private void onCreateClicked() {
+        if (!createButton.isEnabled()) return;
+
         if (!includeEquipmentBox.isSelected() && !includeInventoryBox.isSelected()) {
             showStatus("Include equipment, inventory or both.", Theme.ERROR);
             return;
         }
+
         createButton.setEnabled(false);
         createButton.setText("Creating...");
         openButton.setVisible(false);
