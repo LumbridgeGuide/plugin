@@ -7,7 +7,6 @@ The RuneLite companion to [Lumbridge Guide](https://lumbridge.guide), a site for
 - **Bingo**: see your running boards, your team's tiles and standings in the side panel. When a drop, kill count or XP target matches an open tile, the plugin can take a screenshot with the board's verification code and offer to send it as proof. Nothing is sent until you choose to send it.
 - **Gear**: turn your gear configs into bank tag tabs, and save the gear you are wearing as a new config.
 - **Account**: link your RuneScape account to your Lumbridge Guide profile with Sync now.
-- **Notifications**: your Lumbridge Guide inbox, such as team invites and proof results.
 
 ## Getting started
 

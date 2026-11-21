@@ -5,7 +5,6 @@ import com.lumbridgeguide.account.AccountSyncService;
 import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TeamChatPrefixService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
-import com.lumbridgeguide.notifications.InboxService;
 import com.lumbridgeguide.stars.ShootingStarService;
 import com.lumbridgeguide.ui.SidebarController;
 import lombok.extern.slf4j.Slf4j;
@@ -42,9 +41,6 @@ public class LumbridgeGuidePlugin extends Plugin {
     private ProofService proofService;
 
     @Inject
-    private InboxService inboxService;
-
-    @Inject
     private ShootingStarService shootingStarService;
 
     @Inject
@@ -67,7 +63,7 @@ public class LumbridgeGuidePlugin extends Plugin {
     }
 
     private List<Object> eventSubscribers() {
-        return List.of(sidebarController, accountSyncService, tileProgressTracker, proofService, inboxService,
+        return List.of(sidebarController, accountSyncService, tileProgressTracker, proofService,
                 shootingStarService, teamChatPrefixService);
     }
 

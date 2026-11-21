@@ -10,7 +10,6 @@ import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
-import com.lumbridgeguide.notifications.InboxService;
 import com.lumbridgeguide.stars.ShootingStarService;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
@@ -44,7 +43,6 @@ public class SidebarController {
     private final GearConfigExportService gearConfigExportService;
     private final TripCheckService tripCheckService;
     private final AccountSyncService accountSyncService;
-    private final InboxService inboxService;
     private final ShootingStarService starService;
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
@@ -59,8 +57,7 @@ public class SidebarController {
                              BoardDataService boardDataService, TileProgressTracker tileProgressTracker,
                              ProofService proofService, GearTagService gearTagService,
                              GearConfigExportService gearConfigExportService, TripCheckService tripCheckService,
-                             AccountSyncService accountSyncService, InboxService inboxService,
-                             ShootingStarService starService, ItemManager itemManager,
+                             AccountSyncService accountSyncService, ShootingStarService starService, ItemManager itemManager,
                              SkillIconManager skillIconManager, LumbridgeGuideClient apiClient) {
         this.config = config;
         this.clientToolbar = clientToolbar;
@@ -71,7 +68,6 @@ public class SidebarController {
         this.gearConfigExportService = gearConfigExportService;
         this.tripCheckService = tripCheckService;
         this.accountSyncService = accountSyncService;
-        this.inboxService = inboxService;
         this.starService = starService;
         this.itemManager = itemManager;
         this.skillIconManager = skillIconManager;
@@ -153,7 +149,7 @@ public class SidebarController {
 
     private void addPanel() {
         panel = new SidebarPanel(boardDataService, tileProgressTracker, proofService, gearTagService,
-                gearConfigExportService, tripCheckService, accountSyncService, inboxService, starService,
+                gearConfigExportService, tripCheckService, accountSyncService, starService,
                 itemManager, skillIconManager, config, apiClient::hasApiKey);
         navigationButton = NavigationButton.builder()
                 .tooltip("Lumbridge Guide")

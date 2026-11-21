@@ -11,17 +11,13 @@ import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.gear.ui.GearTabPanel;
-import com.lumbridgeguide.notifications.InboxService;
-import com.lumbridgeguide.notifications.ui.InboxPanel;
 import com.lumbridgeguide.stars.ShootingStarService;
 import com.lumbridgeguide.stars.ui.StarsTabPanel;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
-import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 import javax.swing.Box;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -40,7 +36,6 @@ public class SidebarPanel extends PluginPanel {
 
     private static final String NO_KEY_CARD = "noKey";
     private static final String TABS_CARD = "tabs";
-    private static final String INBOX_CARD = "inbox";
     private static final String BINGO_TAB = "Bingo";
     private static final String GEAR_TAB = "Gear";
     private static final String ACCOUNT_TAB = "Account";
@@ -50,7 +45,6 @@ public class SidebarPanel extends PluginPanel {
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
     private final GearTabPanel gearTab;
-    private final JButton inboxButton;
     private final StarsTabPanel starsTab;
 
     public SidebarPanel(
@@ -61,7 +55,6 @@ public class SidebarPanel extends PluginPanel {
             GearConfigExportService gearConfigExportService,
             TripCheckService tripCheckService,
             AccountSyncService accountSyncService,
-            InboxService inboxService,
             ShootingStarService starService,
             ItemManager itemManager,
             SkillIconManager skillIconManager,
@@ -75,17 +68,8 @@ public class SidebarPanel extends PluginPanel {
         setBackground(Theme.PANEL_BACKGROUND);
 
         JLabel pluginTitle = Components.label("Lumbridge Guide", 16f, Font.BOLD, Theme.TEXT_PRIMARY);
-        inboxButton = Components.linkButton("");
-        inboxButton.setIcon(new BellIcon());
-        inboxButton.setIconTextGap(3);
-        inboxButton.setFont(FontManager.getRunescapeSmallFont());
-        inboxButton.setToolTipText("Your Lumbridge Guide notifications");
-        JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
-        header.setBorder(new EmptyBorder(2, 0, 10, 0));
-        header.add(pluginTitle, BorderLayout.WEST);
-        header.add(inboxButton, BorderLayout.EAST);
-        add(header, BorderLayout.NORTH);
+        pluginTitle.setBorder(new EmptyBorder(2, 0, 10, 0));
+        add(pluginTitle, BorderLayout.NORTH);
 
         bingoTab = new BingoTabPanel(boardDataService, tileProgressTracker, proofService, config, itemManager,
                 skillIconManager);
@@ -97,19 +81,7 @@ public class SidebarPanel extends PluginPanel {
         centerPanel.setOpaque(false);
         centerPanel.add(buildNoKeyCard(), NO_KEY_CARD);
         centerPanel.add(buildTabsCard(new AccountTabPanel(accountSyncService)), TABS_CARD);
-        InboxPanel inboxPanel = new InboxPanel(inboxService,
-                () -> ((CardLayout) centerPanel.getLayout()).show(centerPanel, TABS_CARD));
-        centerPanel.add(scrolling(inboxPanel), INBOX_CARD);
         add(centerPanel, BorderLayout.CENTER);
-
-        inboxButton.addActionListener(event -> {
-            ((CardLayout) centerPanel.getLayout()).show(centerPanel, INBOX_CARD);
-            inboxPanel.load();
-        });
-        inboxService.setOnUnreadCount(count -> SwingUtilities.invokeLater(() -> {
-            inboxButton.setText(count > 0 ? String.valueOf(count) : "");
-            inboxButton.revalidate();
-        }));
 
         refresh();
     }
@@ -124,7 +96,6 @@ public class SidebarPanel extends PluginPanel {
             boolean hasKey = hasApiKey.getAsBoolean();
 
             ((CardLayout) centerPanel.getLayout()).show(centerPanel, hasKey ? TABS_CARD : NO_KEY_CARD);
-            inboxButton.setVisible(hasKey);
 
             if (hasKey) {
                 bingoTab.refresh();
