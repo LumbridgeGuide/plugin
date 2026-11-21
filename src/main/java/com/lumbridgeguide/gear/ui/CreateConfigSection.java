@@ -9,15 +9,15 @@ import net.runelite.client.util.LinkBrowser;
 
 import javax.swing.Box;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
+import javax.swing.JToggleButton;
 import javax.swing.JTextField;
 import java.awt.Color;
 
 class CreateConfigSection extends Section {
 
     private final GearConfigExportService gearConfigExportService;
-    private final JCheckBox includeEquipmentBox;
-    private final JCheckBox includeInventoryBox;
+    private final JToggleButton includeEquipmentBox;
+    private final JToggleButton includeInventoryBox;
     private final JTextField configNameField;
     private final JButton createButton;
     private final WrapText statusLabel;
@@ -28,10 +28,10 @@ class CreateConfigSection extends Section {
         super(0);
         this.gearConfigExportService = gearConfigExportService;
 
-        includeEquipmentBox = GearForm.checkBox("Include equipment");
-        includeInventoryBox = GearForm.checkBox("Include inventory");
+        includeEquipmentBox = Components.toggleChips("Equipment");
+        includeInventoryBox = Components.toggleChips("Inventory");
 
-        configNameField = GearForm.textField("Name (defaults to your name + setup)");
+        configNameField = GearForm.textField("Name (optional)");
         configNameField.addActionListener(event -> onCreateClicked());
 
         createButton = GearForm.actionButton("Create");
@@ -47,25 +47,17 @@ class CreateConfigSection extends Section {
             }
         });
 
-        Section form = new Section(0);
-        form.add(Components.sectionHeader("Create a config"));
-        form.add(Box.createVerticalStrut(8));
-        form.add(GearForm.help("Save what you're wearing and carrying as a config."));
-        form.add(Box.createVerticalStrut(10));
-        form.add(includeEquipmentBox);
-        form.add(Box.createVerticalStrut(4));
-        form.add(includeInventoryBox);
-        form.add(Box.createVerticalStrut(10));
-        form.add(GearForm.fieldLabel("Name"));
-        form.add(Box.createVerticalStrut(4));
-        form.add(configNameField);
-        form.add(Box.createVerticalStrut(10));
-        form.add(createButton);
-        form.add(Box.createVerticalStrut(8));
-        form.add(statusLabel);
-        form.add(Box.createVerticalStrut(4));
-        form.add(openButton);
-        add(form);
+        add(Components.sectionHeader("Save your current setup"));
+        add(Box.createVerticalStrut(8));
+        add(GearForm.sideBySide(includeEquipmentBox, includeInventoryBox));
+        add(Box.createVerticalStrut(10));
+        add(GearForm.fieldRow(configNameField, createButton));
+        add(Box.createVerticalStrut(4));
+        add(GearForm.note("Leave blank to use your name + setup.", 0));
+        add(Box.createVerticalStrut(6));
+        add(statusLabel);
+        add(Box.createVerticalStrut(4));
+        add(openButton);
     }
 
     private void onCreateClicked() {

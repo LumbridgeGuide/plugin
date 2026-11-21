@@ -13,6 +13,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -21,8 +22,6 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Insets;
 import java.util.Locale;
 
 @UtilityClass
@@ -131,7 +130,6 @@ public class Components {
         return scroll;
     }
 
-    /** Shows the tooltip as faded placeholder text while the field is empty */
     public static JTextField textField(String tooltip) {
         JTextField field = new PlaceholderField(tooltip);
         field.setToolTipText(tooltip);
@@ -147,6 +145,21 @@ public class Components {
         return field;
     }
 
+    public static JToggleButton toggleChips(String text) {
+        JToggleButton chip = new JToggleButton(text, true);
+        chip.setFont(font(12f, Font.PLAIN));
+        chip.setIcon(new CheckIcon(new Color(0, 0, 0, 0)));
+        chip.setSelectedIcon(new CheckIcon(Theme.accent()));
+        chip.setIconTextGap(6);
+        chip.setBorder(new CompoundBorder(new RoundedBorder(Theme.BORDER), new EmptyBorder(6, 8, 6, 8)));
+        chip.setContentAreaFilled(false);
+        chip.setFocusPainted(false);
+        chip.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        chip.setForeground(Theme.TEXT_PRIMARY);
+        chip.addItemListener(event -> chip.setForeground(chip.isSelected() ? Theme.TEXT_PRIMARY : Theme.TEXT_MUTED));
+        return chip;
+    }
+
     public static JCheckBox checkBox(String text) {
         JCheckBox box = new JCheckBox(text, true);
         box.setFont(font(12f, Font.PLAIN));
@@ -159,27 +172,5 @@ public class Components {
         box.setFocusPainted(false);
         box.setAlignmentX(Component.LEFT_ALIGNMENT);
         return box;
-    }
-
-    private static final class PlaceholderField extends JTextField {
-
-        private final String placeholder;
-
-        PlaceholderField(String placeholder) {
-            this.placeholder = placeholder;
-        }
-
-        @Override
-        protected void paintComponent(Graphics graphics) {
-            graphics.setColor(Theme.SURFACE_OVERLAY);
-            graphics.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.ARC, Theme.ARC);
-            super.paintComponent(graphics);
-            if (getText().isEmpty() && !isFocusOwner()) {
-                Insets insets = getInsets();
-                graphics.setFont(getFont());
-                graphics.setColor(Theme.TEXT_MUTED);
-                graphics.drawString(placeholder, insets.left, insets.top + graphics.getFontMetrics().getAscent());
-            }
-        }
     }
 }

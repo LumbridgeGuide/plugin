@@ -17,7 +17,7 @@ import java.util.Optional;
 
 class BankTabSection extends Section {
 
-    private static final String BANK_CLOSED_HINT = "Open your bank to generate a tab.";
+    private static final String BANK_CLOSED_HINT = "Open your bank to generate.";
 
     private final GearTagService gearTagService;
     private final JCheckBox includeMissingBox;
@@ -36,7 +36,7 @@ class BankTabSection extends Section {
         includeMissingBox = GearForm.checkBox("Include missing items");
         includeMissingBox.setSelected(includeMissingByDefault);
 
-        codeField = GearForm.textField("Gear code or gear page link");
+        codeField = GearForm.textField("Gear code or link");
         codeField.addActionListener(event -> onGenerateClicked());
 
         generateButton = GearForm.actionButton("Generate");
@@ -48,21 +48,15 @@ class BankTabSection extends Section {
         missingPanel = new Section(0);
         missingPanel.setVisible(false);
 
-        Section form = new Section(0);
-        form.add(Components.sectionHeader("Make a bank tab"));
-        form.add(Box.createVerticalStrut(8));
-        form.add(GearForm.help("Paste a gear code to lay out its tab."));
-        form.add(Box.createVerticalStrut(10));
-        form.add(codeField);
-        form.add(Box.createVerticalStrut(10));
-        includeMissingBox.setToolTipText("Show items you don't have as placeholders in the tab");
-        form.add(includeMissingBox);
-        form.add(Box.createVerticalStrut(10));
-        form.add(generateButton);
-        form.add(Box.createVerticalStrut(8));
-        form.add(statusLabel);
-
-        add(form);
+        add(Components.sectionHeader("Bank tab"));
+        add(Box.createVerticalStrut(8));
+        add(GearForm.fieldRow(codeField, generateButton));
+        add(Box.createVerticalStrut(6));
+        add(statusLabel);
+        add(Box.createVerticalStrut(10));
+        add(includeMissingBox);
+        add(Box.createVerticalStrut(2));
+        add(GearForm.note("Shown as placeholders in the tab", 22));
         add(Box.createVerticalStrut(16));
         add(missingPanel);
     }
