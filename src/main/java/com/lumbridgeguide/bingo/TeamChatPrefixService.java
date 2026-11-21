@@ -3,6 +3,7 @@ package com.lumbridgeguide.bingo;
 import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
+import lombok.RequiredArgsConstructor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.MessageNode;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class TeamChatPrefixService {
 
     private static final Set<ChatMessageType> PREFIXED_TYPES = EnumSet.of(
@@ -33,43 +35,31 @@ public class TeamChatPrefixService {
     private final LumbridgeGuideConfig config;
     private final BoardDataService boardDataService;
 
-    @Inject
-    public TeamChatPrefixService(Client client, LumbridgeGuideConfig config, BoardDataService boardDataService) {
-        this.client = client;
-        this.config = config;
-        this.boardDataService = boardDataService;
-    }
-
     @Subscribe
     public void onChatMessage(ChatMessage chatMessage) {
         if (!config.showTeamPrefix() || !PREFIXED_TYPES.contains(chatMessage.getType())
-                || client.getLocalPlayer() == null) {
-            return;
-        }
-        if (!isOwnName(client.getLocalPlayer().getName(), chatMessage.getName())) {
-            return;
-        }
+                || client.getLocalPlayer() == null) return;
+
+        if (!isOwnName(client.getLocalPlayer().getName(), chatMessage.getName())) return;
+
         String prefix = ownTeamPrefix();
-        if (prefix == null) {
-            return;
-        }
+        if (prefix == null) return;
+
         MessageNode messageNode = chatMessage.getMessageNode();
         messageNode.setName(prefix + messageNode.getName());
     }
 
     @Subscribe
     public void onGameTick(GameTick tick) {
-        if (!config.showTeamPrefix()) {
-            return;
-        }
+        if (!config.showTeamPrefix()) return;
+
         Widget chatboxInput = client.getWidget(InterfaceID.Chatbox.INPUT);
-        if (chatboxInput == null || client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null) {
+        if (chatboxInput == null || client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null)
             return;
-        }
+
         String prefix = ownTeamPrefix();
-        if (prefix == null) {
-            return;
-        }
+        if (prefix == null) return;
+
         String playerName = client.getLocalPlayer().getName();
         String currentText = chatboxInput.getText();
         if (currentText != null && currentText.contains(playerName) && !currentText.contains(prefix)) {
@@ -81,7 +71,6 @@ public class TeamChatPrefixService {
         return localName != null && chatName != null && Text.sanitize(localName).equals(Text.sanitize(chatName));
     }
 
-    /** The chat prefix for the player's team on the first active board, or null without one */
     private String ownTeamPrefix() {
         List<PluginBoardData> boards = boardDataService.getBoards();
         PluginTeamData team = boards.isEmpty() ? null : boards.get(0).getMyTeam();

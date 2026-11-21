@@ -1,12 +1,14 @@
 package com.lumbridgeguide.gear;
 
 import com.lumbridgeguide.gear.data.PluginGearData;
+import lombok.experimental.UtilityClass;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public final class GearBankLayout {
+@UtilityClass
+public class GearBankLayout {
 
     public static final int COLUMNS = 8;
     public static final int PADDING_ROWS = 1;
@@ -30,9 +32,6 @@ public final class GearBankLayout {
             Map.entry("hands", new int[] {4, 0}),
             Map.entry("feet", new int[] {4, 1}),
             Map.entry("ring", new int[] {4, 2}));
-
-    private GearBankLayout() {
-    }
 
     /** Item ids by bank position, row by row, -1 where empty, leaving out unknown slots and overflow */
     public static int[] positions(PluginGearData gear) {

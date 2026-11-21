@@ -4,6 +4,7 @@ import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.gear.data.GearConfigCreatedData;
 import com.lumbridgeguide.gear.data.GearConfigPayload;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
@@ -28,6 +29,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class GearConfigExportService {
 
     private static final Set<Integer> RUNE_POUCHES = Set.of(ItemID.BH_RUNE_POUCH, ItemID.BH_RUNE_POUCH_TROUVER,
@@ -46,17 +48,6 @@ public class GearConfigExportService {
     private final ClientThread clientThread;
     private final ItemManager itemManager;
     private final LumbridgeGuideClient apiClient;
-
-    @Inject
-    public GearConfigExportService(Client client,
-                                   ClientThread clientThread,
-                                   ItemManager itemManager,
-                                   LumbridgeGuideClient apiClient) {
-        this.client = client;
-        this.clientThread = clientThread;
-        this.itemManager = itemManager;
-        this.apiClient = apiClient;
-    }
 
     public void create(String name, boolean includeEquipment, boolean includeInventory, Consumer<Result> onComplete) {
         Consumer<Result> onSwing = result -> SwingUtilities.invokeLater(() -> onComplete.accept(result));

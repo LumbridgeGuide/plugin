@@ -10,6 +10,7 @@ import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
+import lombok.RequiredArgsConstructor;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -31,6 +32,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class SidebarController {
 
     private final LumbridgeGuideConfig config;
@@ -49,27 +51,6 @@ public class SidebarController {
     private SidebarPanel panel;
     private NavigationButton navigationButton;
     private Instant lastBoardRefresh = Instant.now();
-
-    @Inject
-    public SidebarController(LumbridgeGuideConfig config, ClientToolbar clientToolbar,
-                             BoardDataService boardDataService, TileProgressTracker tileProgressTracker,
-                             ProofService proofService, GearTagService gearTagService,
-                             GearConfigExportService gearConfigExportService, TripCheckService tripCheckService,
-                             AccountSyncService accountSyncService, ItemManager itemManager,
-                             SkillIconManager skillIconManager, LumbridgeGuideClient apiClient) {
-        this.config = config;
-        this.clientToolbar = clientToolbar;
-        this.boardDataService = boardDataService;
-        this.tileProgressTracker = tileProgressTracker;
-        this.proofService = proofService;
-        this.gearTagService = gearTagService;
-        this.gearConfigExportService = gearConfigExportService;
-        this.tripCheckService = tripCheckService;
-        this.accountSyncService = accountSyncService;
-        this.itemManager = itemManager;
-        this.skillIconManager = skillIconManager;
-        this.apiClient = apiClient;
-    }
 
     public void startUp() {
         Theme.setAccent(config.accentColour());

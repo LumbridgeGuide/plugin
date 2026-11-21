@@ -5,6 +5,7 @@ import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginSyncResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -16,18 +17,13 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class BoardDataService {
 
     private final LumbridgeGuideClient apiClient;
     private final Gson gson;
 
     private volatile PluginSyncResponse cachedData;
-
-    @Inject
-    public BoardDataService(LumbridgeGuideClient apiClient, Gson gson) {
-        this.apiClient = apiClient;
-        this.gson = gson;
-    }
 
     public List<PluginBoardData> getBoards() {
         if (cachedData == null || cachedData.getBoards() == null) {
@@ -36,7 +32,6 @@ public class BoardDataService {
         return Collections.unmodifiableList(cachedData.getBoards());
     }
 
-    /** Boards that have started and not yet ended */
     public List<PluginBoardData> getRunningBoards() {
         Instant now = Instant.now();
         return getBoards().stream()
@@ -93,7 +88,7 @@ public class BoardDataService {
             if (syncResponse != null) {
                 cachedData = syncResponse;
                 int boardCount = syncResponse.getBoards() != null ? syncResponse.getBoards().size() : 0;
-                log.info("Board data synced: {} active board(s)", boardCount);
+                log.debug("Board data synced: {} active board(s)", boardCount);
             }
         } catch (Exception exception) {
             log.warn("Failed to parse board sync response", exception);

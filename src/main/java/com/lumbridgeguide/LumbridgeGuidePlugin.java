@@ -44,7 +44,7 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     @Override
     protected void startUp() {
-        log.info("Lumbridge Guide started");
+        log.debug("Lumbridge Guide started");
         accountSyncService.startUp();
         eventSubscribers().forEach(eventBus::register);
         sidebarController.startUp();
@@ -52,7 +52,7 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     @Override
     protected void shutDown() {
-        log.info("Lumbridge Guide stopped");
+        log.debug("Lumbridge Guide stopped");
         eventSubscribers().forEach(eventBus::unregister);
         sidebarController.shutDown();
         accountSyncService.reset();

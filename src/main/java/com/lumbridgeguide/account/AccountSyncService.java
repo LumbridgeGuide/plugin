@@ -8,8 +8,8 @@ import com.lumbridgeguide.account.data.AccountSyncResultData;
 import com.lumbridgeguide.api.ApiErrorData;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Quest;
@@ -36,8 +36,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class AccountSyncService {
 
     private static final long UNKNOWN_ACCOUNT_HASH = -1L;
@@ -56,15 +56,6 @@ public class AccountSyncService {
     private volatile String lastSynced;
     private volatile boolean busy;
     private volatile Consumer<AccountView> listener;
-
-    @Inject
-    public AccountSyncService(
-            Client client, ClientThread clientThread, LumbridgeGuideClient apiClient, LumbridgeGuideConfig config) {
-        this.client = client;
-        this.clientThread = clientThread;
-        this.apiClient = apiClient;
-        this.config = config;
-    }
 
     public void setListener(Consumer<AccountView> listener) {
         this.listener = listener;

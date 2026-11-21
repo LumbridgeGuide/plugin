@@ -3,25 +3,20 @@ package com.lumbridgeguide.gear.ui;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.Theme;
 import com.lumbridgeguide.ui.WrapText;
+import lombok.experimental.UtilityClass;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
 
-final class GearForm {
+@UtilityClass
+class GearForm {
 
     static final int TEXT_WIDTH = Components.CONTENT_WIDTH;
-
-    private GearForm() {
-    }
 
     static JComponent help(String text) {
         JComponent help = Components.wrapped(text, TEXT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);

@@ -1,8 +1,11 @@
 package com.lumbridgeguide.ui;
 
+import lombok.experimental.UtilityClass;
+
 import java.awt.Color;
 
-public final class Theme {
+@UtilityClass
+public class Theme {
 
     public static final Color PANEL_BACKGROUND = new Color(0x1A1A1E);
     public static final Color SURFACE_RAISED = new Color(0x242428);
@@ -75,8 +78,5 @@ public final class Theme {
         } catch (NumberFormatException ignored) {
             return TEXT_MUTED;
         }
-    }
-
-    private Theme() {
     }
 }

@@ -1,26 +1,10 @@
 package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.bingo.data.PluginTileData;
+import lombok.experimental.UtilityClass;
 
-import java.util.Locale;
-
-final class TileText {
-
-    static String badgeLabel(PluginTileData tile) {
-        if (tile.getType() == null) {
-            return "GOAL";
-        }
-        switch (tile.getType()) {
-            case "skill_xp":
-                return "XP";
-            case "item_drop":
-                return "DROP";
-            case "kill_count":
-                return "KC";
-            default:
-                return "GOAL";
-        }
-    }
+@UtilityClass
+class TileText {
 
     static String typeName(PluginTileData tile) {
         if (tile.getType() == null) {
@@ -36,15 +20,5 @@ final class TileText {
             default:
                 return "Custom goal";
         }
-    }
-
-    static String capitalise(String text) {
-        if (text == null || text.isEmpty()) {
-            return "";
-        }
-        return Character.toUpperCase(text.charAt(0)) + text.substring(1).toLowerCase(Locale.ROOT);
-    }
-
-    private TileText() {
     }
 }

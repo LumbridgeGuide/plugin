@@ -1,5 +1,7 @@
 package com.lumbridgeguide.ui;
 
+import lombok.experimental.UtilityClass;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -8,7 +10,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-public final class TimeText {
+@UtilityClass
+public class TimeText {
 
     public static String ago(String isoInstant) {
         try {
@@ -48,8 +51,5 @@ public final class TimeText {
         } catch (RuntimeException ignored) {
             return "";
         }
-    }
-
-    private TimeText() {
     }
 }

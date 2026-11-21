@@ -6,6 +6,7 @@ import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.gear.data.OwnedGearConfig;
 import com.lumbridgeguide.gear.data.OwnedGearConfigPage;
 import com.lumbridgeguide.gear.data.PluginGearData;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -40,6 +41,7 @@ import java.util.regex.Pattern;
 
 @Slf4j
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class GearTagService {
 
     private static final Pattern GEAR_CODE = Pattern.compile(
@@ -55,28 +57,6 @@ public class GearTagService {
     private final LayoutManager layoutManager;
     private final TabManager tabManager;
     private final BankTagsService bankTagsService;
-
-    @Inject
-    public GearTagService(
-            LumbridgeGuideClient apiClient,
-            Gson gson,
-            Client client,
-            ClientThread clientThread,
-            ItemManager itemManager,
-            TagManager tagManager,
-            LayoutManager layoutManager,
-            TabManager tabManager,
-            BankTagsService bankTagsService) {
-        this.apiClient = apiClient;
-        this.gson = gson;
-        this.client = client;
-        this.clientThread = clientThread;
-        this.itemManager = itemManager;
-        this.tagManager = tagManager;
-        this.layoutManager = layoutManager;
-        this.tabManager = tabManager;
-        this.bankTagsService = bankTagsService;
-    }
 
     @Value
     public static class Result {
@@ -169,7 +149,7 @@ public class GearTagService {
 
         String tag = tagName(gear.getName());
         writeTag(tag, gear, tagged, placed);
-        log.info("Gear tag '{}' generated: {} item(s), {} missing", tag, tagged.size(), missing.size());
+        log.debug("Gear tag '{}' generated: {} item(s), {} missing", tag, tagged.size(), missing.size());
         return new Result(true, summary(tag, tagged.size(), missing.size(), includeMissing), itemNames(missing));
     }
 

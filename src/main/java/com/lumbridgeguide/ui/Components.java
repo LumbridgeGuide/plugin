@@ -1,5 +1,6 @@
 package com.lumbridgeguide.ui;
 
+import lombok.experimental.UtilityClass;
 import net.runelite.client.ui.FontManager;
 
 import javax.swing.BorderFactory;
@@ -24,7 +25,8 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.util.Locale;
 
-public final class Components {
+@UtilityClass
+public class Components {
 
     public static final int CONTENT_WIDTH = 188;
 
@@ -119,14 +121,6 @@ public final class Components {
         return button;
     }
 
-    public static JButton rowButton(String text) {
-        JButton button = new ActionButton(text, ActionButton.Kind.SECONDARY);
-        button.setFont(FontManager.getRunescapeSmallFont());
-        button.setForeground(Theme.accent());
-        button.setBorder(new EmptyBorder(4, 9, 4, 9));
-        return button;
-    }
-
     public static JButton fullWidthButton(String text) {
         JButton button = primaryButton(text);
         button.setMaximumSize(new Dimension(Integer.MAX_VALUE, button.getPreferredSize().height));
@@ -172,9 +166,6 @@ public final class Components {
         box.setFocusPainted(false);
         box.setAlignmentX(Component.LEFT_ALIGNMENT);
         return box;
-    }
-
-    private Components() {
     }
 
     private static final class PlaceholderField extends JTextField {
