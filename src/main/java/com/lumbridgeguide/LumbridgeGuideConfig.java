@@ -14,7 +14,6 @@ public interface LumbridgeGuideConfig extends Config {
 
     String CONFIG_GROUP = "lumbridge_guide";
     String ACCENT_COLOUR_KEY = "accentColour";
-    String SHOW_STARS_TAB_KEY = "showStarsTab";
     String API_KEY_KEY = "apiKey";
 
     @ConfigSection(
@@ -121,36 +120,6 @@ public interface LumbridgeGuideConfig extends Config {
     )
     default boolean includeMissingItems() {
         return true;
-    }
-
-    @ConfigSection(
-            name = "Shooting stars",
-            description = "Reporting and finding shooting stars",
-            position = 3,
-            closedByDefault = true
-    )
-    String starsSection = "starsSection";
-
-    @ConfigItem(
-            keyName = SHOW_STARS_TAB_KEY,
-            name = "Show the Stars tab",
-            description = "Add a tab listing live shooting stars and the one next to you",
-            section = starsSection,
-            position = 0
-    )
-    default boolean showStarsTab() {
-        return false;
-    }
-
-    @ConfigItem(
-            keyName = "promptNearbyStars",
-            name = "Say when a star is next to you",
-            description = "Post a game chat message when a shooting star lands next to you, so you can report it",
-            section = starsSection,
-            position = 1
-    )
-    default boolean promptNearbyStars() {
-        return false;
     }
 
     @ConfigSection(

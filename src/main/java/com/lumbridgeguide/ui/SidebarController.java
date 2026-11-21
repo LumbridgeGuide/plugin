@@ -10,7 +10,6 @@ import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.gear.GearConfigExportService;
 import com.lumbridgeguide.gear.GearTagService;
 import com.lumbridgeguide.gear.TripCheckService;
-import com.lumbridgeguide.stars.ShootingStarService;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -43,7 +42,6 @@ public class SidebarController {
     private final GearConfigExportService gearConfigExportService;
     private final TripCheckService tripCheckService;
     private final AccountSyncService accountSyncService;
-    private final ShootingStarService starService;
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
     private final LumbridgeGuideClient apiClient;
@@ -57,7 +55,7 @@ public class SidebarController {
                              BoardDataService boardDataService, TileProgressTracker tileProgressTracker,
                              ProofService proofService, GearTagService gearTagService,
                              GearConfigExportService gearConfigExportService, TripCheckService tripCheckService,
-                             AccountSyncService accountSyncService, ShootingStarService starService, ItemManager itemManager,
+                             AccountSyncService accountSyncService, ItemManager itemManager,
                              SkillIconManager skillIconManager, LumbridgeGuideClient apiClient) {
         this.config = config;
         this.clientToolbar = clientToolbar;
@@ -68,7 +66,6 @@ public class SidebarController {
         this.gearConfigExportService = gearConfigExportService;
         this.tripCheckService = tripCheckService;
         this.accountSyncService = accountSyncService;
-        this.starService = starService;
         this.itemManager = itemManager;
         this.skillIconManager = skillIconManager;
         this.apiClient = apiClient;
@@ -93,8 +90,7 @@ public class SidebarController {
                 || event.getKey().startsWith(TileProgressTracker.BASELINE_KEY_PREFIX)) {
             return;
         }
-        if (LumbridgeGuideConfig.ACCENT_COLOUR_KEY.equals(event.getKey())
-                || LumbridgeGuideConfig.SHOW_STARS_TAB_KEY.equals(event.getKey())) {
+        if (LumbridgeGuideConfig.ACCENT_COLOUR_KEY.equals(event.getKey())) {
             Theme.setAccent(config.accentColour());
             SwingUtilities.invokeLater(() -> {
                 clientToolbar.removeNavigation(navigationButton);
@@ -149,8 +145,7 @@ public class SidebarController {
 
     private void addPanel() {
         panel = new SidebarPanel(boardDataService, tileProgressTracker, proofService, gearTagService,
-                gearConfigExportService, tripCheckService, accountSyncService, starService,
-                itemManager, skillIconManager, config, apiClient::hasApiKey);
+                gearConfigExportService, tripCheckService, accountSyncService, itemManager, skillIconManager, config, apiClient::hasApiKey);
         navigationButton = NavigationButton.builder()
                 .tooltip("Lumbridge Guide")
                 .icon(ImageUtil.loadImageResource(LumbridgeGuidePlugin.class, "icon.png"))

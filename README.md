@@ -4,9 +4,9 @@ The RuneLite companion to [Lumbridge Guide](https://lumbridge.guide), a site for
 
 ## Features
 
-- **Bingo**: see your running boards, your team's tiles and standings in the side panel. When a drop, kill count or XP target matches an open tile, the plugin can take a screenshot with the board's verification code and offer to send it as proof. Nothing is sent until you choose to send it.
-- **Gear**: turn your gear configs into bank tag tabs, and save the gear you are wearing as a new config.
-- **Account**: link your RuneScape account to your Lumbridge Guide profile with Sync now.
+- **Bingo**: see the boards you play in, your team and its tiles in the side panel, with the board's verification code for screenshots. Optionally show your team name before your name in chat.
+- **Gear**: turn a gear config into a bank tag tab, and save what you are wearing and carrying as a new config.
+- **Account**: link your RuneScape account to your Lumbridge Guide profile and keep its stats and quests up to date.
 
 ## Getting started
 
@@ -14,17 +14,41 @@ The RuneLite companion to [Lumbridge Guide](https://lumbridge.guide), a site for
 2. Paste the key into the plugin's settings, under Account.
 3. Open the Lumbridge Guide panel from the RuneLite sidebar.
 
+Without an API key the plugin makes no requests.
+
+## How it works
+
+The plugin talks only to the Lumbridge Guide API (`api.lumbridge.guide`), and every request carries your API key. It never contacts the game servers, and it only reads data about your own account.
+
+| When | Request | Why |
+|---|---|---|
+| The plugin starts, the API key changes, and every 5 minutes while you are logged in | Fetches your boards | Shows your boards, including claims made on the website. The interval is a setting, and 0 turns it off |
+| You log in | Sends your account hash | Checks whether this account is linked to you |
+| You press Sync now | Sends your account details (below) | Links the account on the first sync, then updates it |
+| You log in or out, with Sync on login and logout turned on | Sends your account details | Keeps a linked account up to date. Off by default, and never links a new account |
+| You generate a bank tag tab | Fetches the gear config for the code or link you entered | Gets the items to tag |
+| You save a gear config | Sends the gear you chose to include | Creates the config on your profile |
+
+Board data is kept in memory only and is cleared when the API key is removed or rejected.
+
 ## What the plugin sends
 
-The plugin only talks to Lumbridge Guide, and only with your API key. It only ever sends your own data:
+- **Account hash**: the number RuneLite uses to tell accounts apart. It is not your login name or password, and it keeps the account linked when you change your display name.
+- **Account details**, sent only by Sync now, or on login and logout when you turn that on:
+  - display name and account type (for example ironman or group ironman)
+  - the world type, so syncs from Leagues, Deadman and other temporary worlds are refused
+  - level and XP for each skill
+  - quest points and the state of each quest
+- **Gear config**: the name you give it, and the worn items, inventory and rune pouch contents you chose to include.
 
-- **On login**, with an API key set, the plugin sends RuneLite's account hash (an anonymous number for the account) to check whether it is linked to you.
-- **Sync now** sends the logged-in account's name, account type, skill levels, XP and quest progress. The first sync links the account to you. Syncing on login and logout is off by default.
-- **Track tile progress** (off by default) sends your kill count and XP progress on kill count and XP tiles of boards you play in, at most once a minute, so your team can see it.
-- **Proof** screenshots are sent only when you press send.
-- **Gear configs** are sent only when you save one.
+## What the plugin stores
 
-See the [privacy policy](https://lumbridge.guide/privacy) for how this data is kept.
+- The plugin's settings, including your API key, in your RuneLite settings. The settings panel masks the key.
+- Bank tag tabs you generate, through RuneLite's Bank Tags plugin, named `lg-<config name>`. You can edit or delete them like any other tag tab.
+
+Nothing else is written to disk.
+
+See the [privacy policy](https://lumbridge.guide/privacy) for how Lumbridge Guide keeps this data.
 
 ## Licence
 

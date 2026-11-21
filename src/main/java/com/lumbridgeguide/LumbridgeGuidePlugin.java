@@ -5,7 +5,6 @@ import com.lumbridgeguide.account.AccountSyncService;
 import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TeamChatPrefixService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
-import com.lumbridgeguide.stars.ShootingStarService;
 import com.lumbridgeguide.ui.SidebarController;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
@@ -41,9 +40,6 @@ public class LumbridgeGuidePlugin extends Plugin {
     private ProofService proofService;
 
     @Inject
-    private ShootingStarService shootingStarService;
-
-    @Inject
     private TeamChatPrefixService teamChatPrefixService;
 
     @Override
@@ -64,7 +60,7 @@ public class LumbridgeGuidePlugin extends Plugin {
 
     private List<Object> eventSubscribers() {
         return List.of(sidebarController, accountSyncService, tileProgressTracker, proofService,
-                shootingStarService, teamChatPrefixService);
+                teamChatPrefixService);
     }
 
     @Provides
