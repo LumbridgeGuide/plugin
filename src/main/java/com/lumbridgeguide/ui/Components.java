@@ -30,12 +30,8 @@ public class Components {
     public static final int CONTENT_WIDTH = 188;
 
     public static Font font(float size, int style) {
-        if (style == Font.BOLD) {
-            return FontManager.getRunescapeBoldFont();
-        }
-        if (size <= 11f) {
-            return FontManager.getRunescapeSmallFont();
-        }
+        if (style == Font.BOLD) return FontManager.getRunescapeBoldFont();
+        if (size <= 11f) return FontManager.getRunescapeSmallFont();
         return FontManager.getRunescapeFont();
     }
 
@@ -51,16 +47,19 @@ public class Components {
         header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
         header.setOpaque(false);
         header.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         JLabel label = label(text.toUpperCase(Locale.ROOT), 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
         label.setAlignmentY(Component.CENTER_ALIGNMENT);
         header.add(label);
         header.add(Box.createHorizontalStrut(8));
         header.add(new Rule());
+
         if (trailing != null) {
             trailing.setAlignmentY(Component.CENTER_ALIGNMENT);
             header.add(Box.createHorizontalStrut(8));
             header.add(trailing);
         }
+
         header.setMaximumSize(new Dimension(Integer.MAX_VALUE, header.getPreferredSize().height));
         return header;
     }

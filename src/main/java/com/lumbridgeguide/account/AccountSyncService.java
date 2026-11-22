@@ -258,16 +258,15 @@ public class AccountSyncService {
 
         AccountSyncPayload snapshot = latest;
         AccountStatusText.Line status = snapshot == null
-                ? new AccountStatusText.Line("Log in to the game to link or sync this account.",
-                AccountStatusText.Tone.MUTED)
+                ? AccountStatusText.LOGGED_OUT
                 : AccountStatusText.forStatus(linkStatus);
 
         current.accept(new AccountView(
                 snapshot == null ? null : snapshot.getDisplayName(),
-                snapshot == null ? "" : AccountStatusText.accountTypeLabel(snapshot.getAccountType()),
-                snapshot == null ? "" : AccountStatusText.statusBadge(linkStatus),
-                status.getText(),
+                status.getHeadline(),
+                status.getDetail(),
                 status.getTone(),
+                status.getAction(),
                 message,
                 messageTone,
                 lastSynced,
@@ -277,10 +276,10 @@ public class AccountSyncService {
     @Value
     public static class AccountView {
         String displayName;
-        String accountType;
-        String statusBadge;
-        String statusText;
-        AccountStatusText.Tone statusTone;
+        String headline;
+        String detail;
+        AccountStatusText.Tone tone;
+        AccountAction action;
         String message;
         AccountStatusText.Tone messageTone;
         String lastSynced;

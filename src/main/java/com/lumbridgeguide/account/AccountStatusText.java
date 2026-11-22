@@ -16,27 +16,34 @@ public final class AccountStatusText {
 
     @Value
     static class Line {
-        String text;
+        String headline;
+        String detail;
         Tone tone;
+        AccountAction action;
     }
+
+    static final Line LOGGED_OUT = new Line("Log in to sync this account", "", Tone.MUTED, AccountAction.NONE);
 
     static Line forStatus(String status) {
         if (status == null) {
-            return new Line("Checking link status...", Tone.MUTED);
+            return new Line("Checking link status...", "", Tone.MUTED, AccountAction.NONE);
         }
         switch (status) {
             case "LINKED":
-                return new Line("Linked to your Lumbridge Guide account", Tone.SUCCESS);
+                return new Line("Linked", "", Tone.SUCCESS, AccountAction.SYNC);
             case "NOT_LINKED":
-                return new Line("Not linked. Press Sync now to link this account.", Tone.MUTED);
+                return new Line("Not linked", "", Tone.MUTED, AccountAction.LINK);
             case "LIMIT_REACHED":
-                return new Line("Account limit reached. Manage your accounts on the website.", Tone.WARNING);
+                return new Line("Account limit reached", "Manage your accounts on the website.", Tone.WARNING,
+                        AccountAction.REFRESH);
             case "LOCKED":
-                return new Line("Locked on your current plan. Manage it on the website.", Tone.WARNING);
+                return new Line("Account locked", "Locked on your current plan. Manage it on the website.",
+                        Tone.WARNING, AccountAction.REFRESH);
             case "LINKED_ELSEWHERE":
-                return new Line("Linked to another Lumbridge Guide user.", Tone.ERROR);
+                return new Line("Linked elsewhere", "This account is linked to another Lumbridge Guide user.",
+                        Tone.ERROR, AccountAction.REFRESH);
             default:
-                return new Line("Unknown link status", Tone.MUTED);
+                return new Line("Unknown link status", "", Tone.MUTED, AccountAction.REFRESH);
         }
     }
 
@@ -56,33 +63,6 @@ public final class AccountStatusText {
             default:
                 return null;
         }
-    }
-
-    static String accountTypeLabel(String accountType) {
-        if (accountType == null) {
-            return "";
-        }
-        switch (accountType) {
-            case "IRONMAN":
-                return "Ironman";
-            case "ULTIMATE_IRONMAN":
-                return "Ultimate ironman";
-            case "HARDCORE_IRONMAN":
-                return "Hardcore ironman";
-            case "GROUP_IRONMAN":
-                return "Group ironman";
-            case "HARDCORE_GROUP_IRONMAN":
-                return "Hardcore group ironman";
-            case "UNRANKED_GROUP_IRONMAN":
-                return "Unranked group ironman";
-            default:
-                return "Main";
-        }
-    }
-
-    /** A short badge for the link status, or an empty string while it is unknown */
-    static String statusBadge(String status) {
-        return status == null ? "" : status.replace('_', ' ');
     }
 
     static String accountTypeForIronmanVarbit(int ironmanVarbit) {

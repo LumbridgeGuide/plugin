@@ -2,7 +2,7 @@ package com.lumbridgeguide.ui;
 
 import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.account.AccountSyncService;
-import com.lumbridgeguide.account.ui.AccountTabPanel;
+import com.lumbridgeguide.account.ui.AccountFooter;
 import com.lumbridgeguide.bingo.BoardDataService;
 import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
@@ -33,12 +33,12 @@ public class SidebarPanel extends PluginPanel {
     private static final String TABS_CARD = "tabs";
     private static final String BINGO_TAB = "Bingo";
     private static final String GEAR_TAB = "Gear";
-    private static final String ACCOUNT_TAB = "Account";
 
     private final BooleanSupplier hasApiKey;
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
     private final GearTabPanel gearTab;
+    private final AccountFooter accountFooter;
 
     public SidebarPanel(
             BoardDataService boardDataService,
@@ -69,8 +69,10 @@ public class SidebarPanel extends PluginPanel {
         centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);
         centerPanel.add(buildNoKeyCard(), NO_KEY_CARD);
-        centerPanel.add(buildTabsCard(new AccountTabPanel(accountSyncService)), TABS_CARD);
+        centerPanel.add(buildTabsCard(), TABS_CARD);
         add(centerPanel, BorderLayout.CENTER);
+        accountFooter = new AccountFooter(accountSyncService);
+        add(accountFooter, BorderLayout.SOUTH);
 
         refresh();
     }
@@ -85,6 +87,7 @@ public class SidebarPanel extends PluginPanel {
             boolean hasKey = hasApiKey.getAsBoolean();
 
             ((CardLayout) centerPanel.getLayout()).show(centerPanel, hasKey ? TABS_CARD : NO_KEY_CARD);
+            accountFooter.setAccountVisible(hasKey);
 
             if (hasKey) {
                 bingoTab.refresh();
@@ -95,15 +98,14 @@ public class SidebarPanel extends PluginPanel {
         });
     }
 
-    private JPanel buildTabsCard(AccountTabPanel accountTab) {
+    private JPanel buildTabsCard() {
         CardLayout tabCards = new CardLayout();
         JPanel display = new JPanel(tabCards);
         display.setOpaque(false);
         display.add(bingoTab, BINGO_TAB);
         display.add(gearTab, GEAR_TAB);
-        display.add(accountTab, ACCOUNT_TAB);
 
-        TabBar tabBar = new TabBar(List.of(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB), TabBar.Style.UNDERLINE,
+        TabBar tabBar = new TabBar(List.of(BINGO_TAB, GEAR_TAB), TabBar.Style.UNDERLINE,
                 name -> tabCards.show(display, name));
         tabBar.setBorder(new EmptyBorder(0, 0, 10, 0));
 
