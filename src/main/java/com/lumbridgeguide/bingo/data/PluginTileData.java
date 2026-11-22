@@ -20,6 +20,7 @@ public class PluginTileData {
     private Integer killCount;
     private boolean claimed;
     private String claimedByTeamId;
+    private String claimedByTeamName;
     /** The viewer's team only, most first */
     private List<PluginProgressData> progress;
     /** PENDING, APPROVED, REJECTED or AUTO_CLAIMED, or null when the team has sent none */

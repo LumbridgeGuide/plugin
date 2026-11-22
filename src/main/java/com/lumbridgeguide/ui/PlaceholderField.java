@@ -4,11 +4,11 @@ import javax.swing.JTextField;
 import java.awt.Graphics;
 import java.awt.Insets;
 
-class PlaceholderField extends JTextField {
+public class PlaceholderField extends JTextField {
 
     private final String placeholder;
 
-    PlaceholderField(String placeholder) {
+    public PlaceholderField(String placeholder) {
         this.placeholder = placeholder;
     }
 

@@ -1,9 +1,7 @@
 package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.bingo.data.PluginBoardData;
-import com.lumbridgeguide.bingo.data.PluginClaimData;
 import com.lumbridgeguide.bingo.data.PluginProgressData;
-import com.lumbridgeguide.bingo.data.PluginStandingData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import lombok.experimental.UtilityClass;
@@ -20,23 +18,8 @@ class TileState {
                 && team.getId().equals(tile.getClaimedByTeamId());
     }
 
-    static String claimingTeamName(PluginTileData tile, PluginBoardData board) {
-        String teamId = tile.getClaimedByTeamId();
-        if (teamId != null && board.getStandings() != null) {
-            for (PluginStandingData standing : board.getStandings()) {
-                if (teamId.equals(standing.getTeamId())) {
-                    return standing.getName();
-                }
-            }
-        }
-        if (teamId != null && board.getRecentClaims() != null) {
-            for (PluginClaimData claim : board.getRecentClaims()) {
-                if (teamId.equals(claim.getTeamId())) {
-                    return claim.getTeamName();
-                }
-            }
-        }
-        return "another team";
+    static String claimingTeamName(PluginTileData tile) {
+        return tile.getClaimedByTeamName() != null ? tile.getClaimedByTeamName() : "another team";
     }
 
     static String pointsLabel(PluginTileData tile, PluginBoardData board) {

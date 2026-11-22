@@ -122,7 +122,7 @@ class TileRowPanel extends JPanel {
             return "Your team";
         }
         if (tile.isClaimed()) {
-            return TileState.claimingTeamName(tile, board);
+            return TileState.claimingTeamName(tile);
         }
         String progress = TileState.progressText(tile, tracked);
         if (!progress.isEmpty()) {

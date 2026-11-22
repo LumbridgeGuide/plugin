@@ -2,6 +2,7 @@ package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
+import com.lumbridgeguide.bingo.data.PluginTeamSummary;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.SwatchIcon;
 import com.lumbridgeguide.ui.Theme;
@@ -21,6 +22,7 @@ public class BoardHeaderPanel extends JPanel {
 
     private final WrapText titleLabel;
     private final JLabel metaLabel;
+    private final JLabel summaryLabel;
     private final JPanel codeHeader;
     private final VerificationCodePanel codePanel;
 
@@ -34,6 +36,9 @@ public class BoardHeaderPanel extends JPanel {
         metaLabel.setIconTextGap(6);
         metaLabel.setAlignmentX(LEFT_ALIGNMENT);
 
+        summaryLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        summaryLabel.setAlignmentX(LEFT_ALIGNMENT);
+
         codePanel = new VerificationCodePanel();
         codePanel.setAlignmentX(LEFT_ALIGNMENT);
         codePanel.setToolTipText("Show this code in every proof screenshot. Click to copy.");
@@ -44,6 +49,8 @@ public class BoardHeaderPanel extends JPanel {
         add(titleRow(navigator));
         add(Box.createVerticalStrut(4));
         add(metaLabel);
+        add(Box.createVerticalStrut(2));
+        add(summaryLabel);
         add(Box.createVerticalStrut(14));
         add(codeHeader);
         add(Box.createVerticalStrut(8));
@@ -66,6 +73,7 @@ public class BoardHeaderPanel extends JPanel {
         if (board == null) {
             titleLabel.setText("");
             metaLabel.setText("");
+            summaryLabel.setVisible(false);
             codePanel.setCode(null);
             codeHeader.setVisible(false);
             return;
@@ -79,6 +87,10 @@ public class BoardHeaderPanel extends JPanel {
         metaLabel.setText(timing.isEmpty() ? teamName : teamName + "  ·  " + timing);
         metaLabel.setIcon(hasTeam ? new SwatchIcon(Theme.parseTeamColor(team.getColor())) : null);
 
+        PluginTeamSummary summary = board.getTeamSummary();
+        summaryLabel.setVisible(summary != null);
+        summaryLabel.setText(summary == null ? "" : summaryText(summary, board.isTilePointsEnabled()));
+
         boolean hasCode = board.getVerificationCode() != null && !board.getVerificationCode().isEmpty();
         codeHeader.setVisible(hasCode);
         codePanel.setCode(board.getVerificationCode());
@@ -90,6 +102,29 @@ public class BoardHeaderPanel extends JPanel {
     @Override
     public Dimension getMaximumSize() {
         return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+    }
+
+    private static String summaryText(PluginTeamSummary summary, boolean points) {
+        if (summary.getRank() == null) return summary.getTeamCount() + " teams  ·  no score yet";
+
+        String unit = points ? " pts" : summary.getScore() == 1 ? " tile" : " tiles";
+        return ordinal(summary.getRank()) + " of " + summary.getTeamCount() + "  ·  " + summary.getScore() + unit;
+    }
+
+    private static String ordinal(int place) {
+        int lastTwo = place % 100;
+        if (lastTwo >= 11 && lastTwo <= 13) return place + "th";
+
+        switch (place % 10) {
+            case 1:
+                return place + "st";
+            case 2:
+                return place + "nd";
+            case 3:
+                return place + "rd";
+            default:
+                return place + "th";
+        }
     }
 
     private static String formatTiming(String endsAt) {

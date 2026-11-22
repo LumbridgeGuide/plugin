@@ -105,7 +105,7 @@ public class SidebarPanel extends PluginPanel {
         display.add(bingoTab, BINGO_TAB);
         display.add(gearTab, GEAR_TAB);
 
-        TabBar tabBar = new TabBar(List.of(BINGO_TAB, GEAR_TAB), TabBar.Style.UNDERLINE,
+        TabBar tabBar = new TabBar(List.of(BINGO_TAB, GEAR_TAB),
                 name -> tabCards.show(display, name));
         tabBar.setBorder(new EmptyBorder(0, 0, 10, 0));
 

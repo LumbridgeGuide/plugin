@@ -194,7 +194,7 @@ public class TileDetailPanel extends JPanel {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         row.setOpaque(false);
         row.setBorder(new EmptyBorder(0, -6, 0, 0));
-        JLabel name = Components.label(mine ? team.getName() : TileState.claimingTeamName(tile, board), 12f,
+        JLabel name = Components.label(mine ? team.getName() : TileState.claimingTeamName(tile), 12f,
                 Font.PLAIN, Theme.TEXT_PRIMARY);
         if (mine) {
             name.setIcon(new SwatchIcon(Theme.parseTeamColor(team.getColor())));

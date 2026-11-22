@@ -2,24 +2,17 @@ package com.lumbridgeguide.ui;
 
 import javax.swing.Box;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 
 public class EmptyState extends Section {
 
     public EmptyState(String title, String message, JButton... actions) {
         super(16);
-
-        EmptyGrid grid = new EmptyGrid();
-        grid.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel titleLabel = Components.label(title, 14f, Font.BOLD, Theme.TEXT_PRIMARY);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -29,8 +22,6 @@ public class EmptyState extends Section {
         messageText.setAlignmentX(Component.CENTER_ALIGNMENT);
         messageText.setCentred(true);
 
-        add(grid);
-        add(Box.createVerticalStrut(10));
         add(titleLabel);
         add(Box.createVerticalStrut(4));
         add(messageText);
@@ -44,40 +35,6 @@ public class EmptyState extends Section {
             actionRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, actionRow.getPreferredSize().height));
             add(Box.createVerticalStrut(12));
             add(actionRow);
-        }
-    }
-
-    private static final class EmptyGrid extends JComponent {
-
-        private static final int CELL = 16;
-        private static final int GAP = 3;
-        private static final int SIZE = CELL * 3 + GAP * 2;
-
-        @Override
-        public Dimension getPreferredSize() {
-            return new Dimension(SIZE, SIZE);
-        }
-
-        @Override
-        public Dimension getMaximumSize() {
-            return getPreferredSize();
-        }
-
-        @Override
-        protected void paintComponent(Graphics graphics) {
-            Graphics2D canvas = (Graphics2D) graphics.create();
-            canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            for (int row = 0; row < 3; row++) {
-                for (int column = 0; column < 3; column++) {
-                    int x = (getWidth() - SIZE) / 2 + column * (CELL + GAP);
-                    int y = row * (CELL + GAP);
-                    canvas.setColor(Theme.SURFACE_INSET);
-                    canvas.fillRoundRect(x, y, CELL, CELL, Theme.ARC, Theme.ARC);
-                    canvas.setColor(Theme.BORDER);
-                    canvas.drawRoundRect(x, y, CELL - 1, CELL - 1, Theme.ARC, Theme.ARC);
-                }
-            }
-            canvas.dispose();
         }
     }
 }
