@@ -1,6 +1,7 @@
 package com.lumbridgeguide.bingo;
 
 import com.google.gson.Gson;
+import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
@@ -23,6 +24,8 @@ public class BoardDataService {
     private final LumbridgeGuideClient apiClient;
     private final Gson gson;
 
+    private final LumbridgeGuideConfig config;
+
     private volatile PluginSyncResponse cachedData;
 
     public List<PluginBoardData> getBoards() {
@@ -30,6 +33,12 @@ public class BoardDataService {
             return Collections.emptyList();
         }
         return Collections.unmodifiableList(cachedData.getBoards());
+    }
+
+    public PluginBoardData getSelectedBoard() {
+        List<PluginBoardData> boards = getBoards();
+        return boards.stream().filter(board -> config.selectedBoardId().equals(board.getId())).findFirst()
+                .orElse(boards.isEmpty() ? null : boards.get(0));
     }
 
     public List<PluginBoardData> getRunningBoards() {

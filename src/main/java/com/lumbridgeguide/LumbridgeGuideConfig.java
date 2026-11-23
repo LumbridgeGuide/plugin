@@ -103,6 +103,14 @@ public interface LumbridgeGuideConfig extends Config {
         return 5;
     }
 
+    @ConfigItem(keyName = "selectedBoardId", name = "", description = "", hidden = true)
+    default String selectedBoardId() {
+        return "";
+    }
+
+    @ConfigItem(keyName = "selectedBoardId", name = "", description = "")
+    void setSelectedBoardId(String boardId);
+
     @ConfigSection(
             name = "Gear",
             description = "Bank tag tabs made from gear configs",

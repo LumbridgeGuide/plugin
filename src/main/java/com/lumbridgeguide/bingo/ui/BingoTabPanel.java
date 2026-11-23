@@ -158,7 +158,7 @@ public class BingoTabPanel extends JPanel {
 
     public void refresh() {
         List<PluginBoardData> boards = boardDataService.getBoards();
-        currentIndex = boards.isEmpty() ? 0 : Math.min(currentIndex, boards.size() - 1);
+        currentIndex = Math.max(0, boards.indexOf(boardDataService.getSelectedBoard()));
 
         boolean hasBoards = !boards.isEmpty();
         emptyState.getParent().setVisible(!hasBoards);
@@ -187,6 +187,7 @@ public class BingoTabPanel extends JPanel {
 
     private void displayBoard(List<PluginBoardData> boards) {
         PluginBoardData board = boards.get(currentIndex);
+        config.setSelectedBoardId(board.getId());
         navigator.update(currentIndex, boards.size());
         headerPanel.update(board);
         tileList.update(board, config.unclaimedFirst(), tile -> openDetail(tile, board));

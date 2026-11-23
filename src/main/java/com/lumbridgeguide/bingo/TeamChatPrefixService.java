@@ -17,7 +17,6 @@ import net.runelite.client.util.Text;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 @Singleton
@@ -34,6 +33,8 @@ public class TeamChatPrefixService {
     private final Client client;
     private final LumbridgeGuideConfig config;
     private final BoardDataService boardDataService;
+
+    private String shownPrefix;
 
     @Subscribe
     public void onChatMessage(ChatMessage chatMessage) {
@@ -57,13 +58,14 @@ public class TeamChatPrefixService {
         if (chatboxInput == null || client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null)
             return;
 
-        String prefix = ownTeamPrefix();
-        if (prefix == null) return;
-
-        String playerName = client.getLocalPlayer().getName();
         String currentText = chatboxInput.getText();
-        if (currentText != null && currentText.contains(playerName) && !currentText.contains(prefix)) {
-            chatboxInput.setText(currentText.replace(playerName + ":", prefix + playerName + ":"));
+        if (currentText == null) return;
+
+        String prefix = ownTeamPrefix();
+        String updatedText = withPrefix(currentText, client.getLocalPlayer().getName(), shownPrefix, prefix);
+        shownPrefix = prefix;
+        if (!updatedText.equals(currentText)) {
+            chatboxInput.setText(updatedText);
         }
     }
 
@@ -71,9 +73,15 @@ public class TeamChatPrefixService {
         return localName != null && chatName != null && Text.sanitize(localName).equals(Text.sanitize(chatName));
     }
 
+    public static String withPrefix(String text, String playerName, String oldPrefix, String newPrefix) {
+        String label = playerName + ":";
+        String plain = oldPrefix == null ? text : text.replace(oldPrefix + label, label);
+        return newPrefix == null ? plain : plain.replace(label, newPrefix + label);
+    }
+
     private String ownTeamPrefix() {
-        List<PluginBoardData> boards = boardDataService.getBoards();
-        PluginTeamData team = boards.isEmpty() ? null : boards.get(0).getMyTeam();
+        PluginBoardData board = boardDataService.getSelectedBoard();
+        PluginTeamData team = board == null ? null : board.getMyTeam();
         return team == null || team.getName() == null ? null : TeamChatPrefix.of(team.getName(), team.getColor());
     }
 }

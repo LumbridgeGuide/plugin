@@ -124,6 +124,10 @@ public class LumbridgeGuideClientTest {
             public String apiKey() {
                 return apiKey;
             }
+
+            @Override
+            public void setSelectedBoardId(String boardId) {
+            }
         };
         return new LumbridgeGuideClient(new OkHttpClient(), new Gson(), config);
     }
