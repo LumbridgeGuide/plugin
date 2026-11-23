@@ -59,10 +59,9 @@ public class BoardDataService {
         }
     }
 
+    /** True once a sync has listed the boards, even none, and false while the API key is missing or rejected */
     public boolean hasCachedData() {
-        return cachedData != null
-                && cachedData.getBoards() != null
-                && !cachedData.getBoards().isEmpty();
+        return cachedData != null && cachedData.getBoards() != null;
     }
 
     public void refresh() {

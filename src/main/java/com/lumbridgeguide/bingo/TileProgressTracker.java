@@ -66,7 +66,7 @@ public class TileProgressTracker {
         this.config = config;
         this.boardDataService = boardDataService;
         this.apiClient = apiClient;
-        this.counter = new TileProgressCounter(new TileProgressCounter.BaselineStore() {
+        this.counter = new TileProgressCounter(new BaselineStore() {
             @Override
             public Map<String, Long> load(String boardId) {
                 String json = configManager.getRSProfileConfiguration(LumbridgeGuideConfig.CONFIG_GROUP,
@@ -84,7 +84,7 @@ public class TileProgressTracker {
     }
 
     /** Called on the client thread when tracked progress first reaches a tile's target */
-    public void setOnTargetReached(BiConsumer<PluginBoardData, PluginTileData> listener) {
+    public void setOnTargetReached(BiConsumer<Map.Entry<PluginBoardData, PluginTileData>, Detection> listener) {
         counter.setOnTargetReached(listener);
     }
 
@@ -94,7 +94,7 @@ public class TileProgressTracker {
 
     /** Gained is null when tracking never took a baseline for the tile */
     public Optional<XpReading> xpReading(PluginBoardData board, PluginTileData tile) {
-        return TileProgressCounter.skillOf(tile).map(skill -> {
+        return tile.skill().map(skill -> {
             long total = client.getSkillExperience(skill);
             return new XpReading(skill, counter.xpGained(board.getId(), tile.getId(), total), total);
         });
@@ -122,7 +122,7 @@ public class TileProgressTracker {
                 || !config.trackTileProgress()) {
             return;
         }
-        TileProgressCounter.parseKillCount(event.getMessage())
+        KillCount.parse(event.getMessage())
                 .ifPresent(killCount -> counter.killCountSeen(boardDataService.getRunningBoards(), killCount));
     }
 

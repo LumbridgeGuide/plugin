@@ -19,5 +19,9 @@ public class PluginBoardData {
     private List<PluginTileData> tiles;
     /** Null when the player has no team or the board hides standings during play */
     private PluginTeamSummary teamSummary;
+
+    public List<PluginTileData> tiles() {
+        return tiles == null ? List.of() : tiles;
+    }
 }
 

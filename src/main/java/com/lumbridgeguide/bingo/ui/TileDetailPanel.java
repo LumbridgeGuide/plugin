@@ -5,7 +5,9 @@ import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginProgressData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
+import com.lumbridgeguide.bingo.data.ProofStatus;
 import com.lumbridgeguide.bingo.data.TileItemEntry;
+import com.lumbridgeguide.bingo.data.TileType;
 import com.lumbridgeguide.ui.Badge;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.IconWell;
@@ -112,11 +114,11 @@ public class TileDetailPanel extends JPanel {
     }
 
     private void addProgress(PluginTileData tile) {
-        long target = TileState.target(tile);
+        long target = tile.target();
         if (target <= 0) {
             return;
         }
-        boolean killCount = "kill_count".equals(tile.getType());
+        boolean killCount = tile.getType() == TileType.KILL_COUNT;
         List<PluginProgressData> team = tile.getProgress() == null ? List.of() : tile.getProgress();
         OptionalLong tracked = progressTracker == null ? OptionalLong.empty() : progressTracker.progressFor(tile.getId());
         long mine = TileState.myProgress(tile, tracked);
@@ -208,16 +210,16 @@ public class TileDetailPanel extends JPanel {
     }
 
     private void addProof(PluginTileData tile, PluginBoardData board) {
-        String status = tile.getProofStatus();
+        ProofStatus status = tile.getProofStatus();
         if (status == null) {
             return;
         }
         Badge badge;
         switch (status) {
-            case "PENDING":
+            case PENDING:
                 badge = Badge.status("Waiting for review", Theme.WARNING);
                 break;
-            case "REJECTED":
+            case REJECTED:
                 badge = Badge.status("Not accepted", Theme.ERROR);
                 break;
             default:

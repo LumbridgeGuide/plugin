@@ -16,7 +16,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -31,6 +30,7 @@ class ProofOfferPanel extends Section {
     private final ProofService proofService;
     private String lastResult;
     private String shownOfferId;
+    private JLabel countLabel;
 
     ProofOfferPanel(ProofService proofService) {
         super(0);
@@ -84,9 +84,8 @@ class ProofOfferPanel extends Section {
     private void addOfferDetails(ProofService.Offer offer, int waiting) {
         PluginBoardData board = offer.getBoard();
         PluginTileData tile = offer.getTile();
-        JLabel count = Components.label(countText(waiting), 11f, Font.PLAIN, Theme.TEXT_MUTED);
-        count.setName("count");
-        add(Components.sectionHeader("Proof to send", count));
+        countLabel = Components.label(countText(waiting), 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        add(Components.sectionHeader("Proof to send", countLabel));
         add(Box.createVerticalStrut(8));
         add(Components.wrapped(offer.getReason(), THUMBNAIL_WIDTH, 12f, Font.BOLD, Theme.TEXT_PRIMARY));
         add(Box.createVerticalStrut(2));
@@ -132,17 +131,8 @@ class ProofOfferPanel extends Section {
     }
 
     private void updateCount(int waiting) {
-        for (Component header : getComponents()) {
-            if (header instanceof JPanel) {
-                for (Component child : ((JPanel) header).getComponents()) {
-                    if ("count".equals(child.getName())) {
-                        ((JLabel) child).setText(countText(waiting));
-                        refresh();
-                        return;
-                    }
-                }
-            }
-        }
+        countLabel.setText(countText(waiting));
+        refresh();
     }
 
     private static String countText(int waiting) {

@@ -29,13 +29,6 @@ class TileState {
         return tile.getPoints() + (tile.getPoints() == 1 ? " point" : " points");
     }
 
-    static long target(PluginTileData tile) {
-        if ("kill_count".equals(tile.getType())) {
-            return tile.getKillCount() == null ? 0 : tile.getKillCount();
-        }
-        return "skill_xp".equals(tile.getType()) ? tile.getXpTarget() : 0;
-    }
-
     static long myProgress(PluginTileData tile, OptionalLong tracked) {
         if (tracked.isPresent()) {
             return tracked.getAsLong();
@@ -48,7 +41,7 @@ class TileState {
     }
 
     static String progressText(PluginTileData tile, OptionalLong tracked) {
-        long target = target(tile);
+        long target = tile.target();
         if (target <= 0) {
             return "";
         }

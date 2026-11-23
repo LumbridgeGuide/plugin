@@ -2,6 +2,7 @@ package com.lumbridgeguide.bingo;
 
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
+import com.lumbridgeguide.bingo.data.TileType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -129,7 +130,7 @@ public class TileProgressCounterTest {
     }
 
     private TileProgressCounter newSession() {
-        TileProgressCounter fresh = new TileProgressCounter(new TileProgressCounter.BaselineStore() {
+        TileProgressCounter fresh = new TileProgressCounter(new BaselineStore() {
             @Override
             public Map<String, Long> load(String boardId) {
                 return new HashMap<>(saved.getOrDefault(boardId, Map.of()));
@@ -140,12 +141,12 @@ public class TileProgressCounterTest {
                 saved.put(boardId, new HashMap<>(baselines));
             }
         });
-        fresh.setOnTargetReached((board, tile) -> reached.add(tile.getId()));
+        fresh.setOnTargetReached((boardAndTile, detection) -> reached.add(boardAndTile.getValue().getId()));
         return fresh;
     }
 
     private void chat(PluginBoardData board, String message) {
-        TileProgressCounter.parseKillCount(message).ifPresent(kc -> counter.killCountSeen(List.of(board), kc));
+        KillCount.parse(message).ifPresent(kc -> counter.killCountSeen(List.of(board), kc));
     }
 
     private static PluginBoardData board(PluginTileData... tiles) {
@@ -158,7 +159,7 @@ public class TileProgressCounterTest {
     private static PluginTileData killTile(String id, String monster, Integer monsterId, int target) {
         PluginTileData tile = new PluginTileData();
         tile.setId(id);
-        tile.setType("kill_count");
+        tile.setType(TileType.KILL_COUNT);
         tile.setMonsterName(monster);
         tile.setMonsterId(monsterId);
         tile.setKillCount(target);

@@ -9,12 +9,14 @@ import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.bingo.data.SubmissionResultData;
 import com.lumbridgeguide.bingo.data.TileItemEntry;
+import com.lumbridgeguide.bingo.data.TileType;
 import lombok.Setter;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.NPC;
 import net.runelite.api.Skill;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -42,6 +44,10 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -50,6 +56,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -69,8 +76,12 @@ public class ProofService {
         PluginTileData tile;
         String reason;
         BufferedImage screenshot;
+        byte[] png;
+        String imageSha256;
         TileProgressTracker.XpReading xp;
         long accountHash;
+        /** Null for proof the player took by hand */
+        Detection detection;
     }
 
     private static final int PRUNE_EVERY_TICKS = 100;
@@ -124,8 +135,9 @@ public class ProofService {
         this.popup = popup;
         this.executor = executor;
         this.gson = gson;
-        progressTracker.setOnTargetReached((board, tile) -> offer(board, tile,
-                "kill_count".equals(tile.getType()) ? "Kill count reached" : "XP target reached"));
+        progressTracker.setOnTargetReached((boardAndTile, detection) -> offer(boardAndTile.getKey(),
+                boardAndTile.getValue(), boardAndTile.getValue().getType() == TileType.KILL_COUNT
+                        ? "Kill count reached" : "XP target reached", detection));
     }
 
     @Subscribe
@@ -134,17 +146,20 @@ public class ProofService {
         for (ItemStack item : event.getItems()) {
             dropped.add(ItemVariationMapping.map(itemManager.canonicalize(item.getId())));
         }
+        NPC npc = event.getNpc();
         for (PluginBoardData board : boardDataService.getRunningBoards()) {
-            for (PluginTileData tile : board.getTiles() == null ? List.<PluginTileData>of() : board.getTiles()) {
-                if ("item_drop".equals(tile.getType()) && matches(tile, dropped)) {
-                    offer(board, tile, "Drop matched a tile");
+            for (PluginTileData tile : board.tiles()) {
+                Integer itemId = matchedItem(tile, dropped);
+                if (tile.getType() == TileType.ITEM_DROP && itemId != null) {
+                    offer(board, tile, "Drop matched a tile",
+                            Detection.drop(itemId, npc == null ? null : npc.getId(), npc == null ? null : npc.getName()));
                 }
             }
         }
     }
 
     public void captureManually(PluginBoardData board, PluginTileData tile) {
-        clientThread.invoke(() -> capture(board, tile, "Proof for this tile"));
+        clientThread.invoke(() -> capture(board, tile, "Proof for this tile", null));
     }
 
     public List<Offer> getQueue() {
@@ -166,8 +181,7 @@ public class ProofService {
         if (++ticksSincePrune >= PRUNE_EVERY_TICKS) {
             ticksSincePrune = 0;
             rearmRejected();
-            queue.stream().filter(offer -> current(offer.getBoard().getId(), offer.getTile().getId()).isEmpty())
-                    .forEach(this::remove);
+            queue.stream().filter(this::isEnded).forEach(this::remove);
         }
     }
 
@@ -181,9 +195,15 @@ public class ProofService {
         }
     }
 
+    /** Whether the offer's board has ended or its tile is done, never while the boards are unknown */
+    public boolean isEnded(Offer offer) {
+        return boardDataService.hasCachedData()
+                && current(offer.getBoard().getId(), offer.getTile().getId()).isEmpty();
+    }
+
     private void rearmRejected() {
         for (PluginBoardData board : boardDataService.getRunningBoards()) {
-            for (PluginTileData tile : board.getTiles() == null ? List.<PluginTileData>of() : board.getTiles()) {
+            for (PluginTileData tile : board.tiles()) {
                 String key = board.getId() + tile.getId();
                 boolean queued = queue.stream().anyMatch(offer -> offer.getTile().getId().equals(tile.getId()));
                 if (tile.isProofRejected() && !queued && offeredTiles.remove(key)) {
@@ -202,8 +222,11 @@ public class ProofService {
                     boardAndTile.getValue(),
                     saved.getReason(),
                     loaded.getScreenshot(),
+                    loaded.getPng(),
+                    saved.getImageSha256(),
                     xpOf(saved),
-                    saved.getAccountHash()));
+                    saved.getAccountHash(),
+                    saved.getDetection()));
             if (offer.isEmpty() || queue.stream().anyMatch(queued -> queued.getId().equals(saved.getId()))) {
                 if (offer.isEmpty()) {
                     store.delete(accountHash, saved.getId());
@@ -233,7 +256,7 @@ public class ProofService {
         return boardDataService.getRunningBoards().stream()
                 .filter(board -> board.getId().equals(boardId))
                 .findFirst()
-                .flatMap(board -> (board.getTiles() == null ? List.<PluginTileData>of() : board.getTiles()).stream()
+                .flatMap(board -> board.tiles().stream()
                         .filter(tile -> tile.getId().equals(tileId) && isOpenForMyTeam(board, tile))
                         .findFirst()
                         .map(tile -> Map.entry(board, tile)));
@@ -254,21 +277,12 @@ public class ProofService {
         executor.execute(() -> store.delete(offer.getAccountHash(), offer.getId()));
     }
 
-    /** Encodes and sends the screenshot off the calling thread */
+    /** Sends the screenshot off the calling thread */
     public void submit(Offer offer, Consumer<String> onDone) {
         executor.execute(() -> send(offer, onDone));
     }
 
     private void send(Offer offer, Consumer<String> onDone) {
-        byte[] png;
-        try {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            ImageIO.write(offer.getScreenshot(), "png", buffer);
-            png = buffer.toByteArray();
-        } catch (IOException exception) {
-            onDone.accept("Couldn't save the screenshot");
-            return;
-        }
         Map<String, String> fields = new HashMap<>();
         fields.put("tileId", offer.getTile().getId());
         fields.put("verificationCode", offer.getBoard().getVerificationCode());
@@ -281,7 +295,21 @@ public class ProofService {
                 fields.put("accountHash", String.valueOf(offer.getAccountHash()));
             }
         }
-        apiClient.postImage("/plugin/bingo/" + offer.getBoard().getId() + "/submissions", fields, "image", png,
+        Detection detection = offer.getDetection();
+        fields.put("source", (detection == null ? ProofSource.MANUAL : ProofSource.DETECTED).name());
+        if (detection != null) {
+            fields.put("detectedEvent", detection.getEvent().name());
+            fields.put("detectedItemId", Objects.toString(detection.getItemId(), null));
+            fields.put("detectedNpcId", Objects.toString(detection.getNpcId(), null));
+            fields.put("detectedNpcName", detection.getNpcName());
+            fields.put("detectedKillCount", Objects.toString(detection.getKillCount(), null));
+            fields.put("detectedAt", detection.getDetectedAt());
+            fields.put("imageSha256", offer.getImageSha256());
+        }
+        fields.values().removeIf(Objects::isNull);
+
+        apiClient.postImage("/plugin/bingo/" + offer.getBoard().getId() + "/submissions", fields, "image",
+                offer.getPng(),
                 response -> {
                     SubmissionResultData result = gson.fromJson(response.getBody(), SubmissionResultData.class);
                     boardDataService.refresh();
@@ -303,13 +331,13 @@ public class ProofService {
         }
     }
 
-    private void offer(PluginBoardData board, PluginTileData tile, String reason) {
+    private void offer(PluginBoardData board, PluginTileData tile, String reason, Detection detection) {
         if (!config.offerProof() || !isOpenForMyTeam(board, tile) || tile.isProofPending()
                 || !offeredTiles.add(board.getId() + tile.getId())) {
             return;
         }
         popup.show("Bingo tile complete!", Text.escapeJagex(tile.getTitle()) + "<br>"
-                + Text.escapeJagex(board.getTitle()), () -> capture(board, tile, reason));
+                + Text.escapeJagex(board.getTitle()), () -> capture(board, tile, reason, detection));
         chatMessageManager.queue(QueuedMessage.builder()
                 .type(ChatMessageType.CONSOLE)
                 .runeLiteFormattedMessage("Lumbridge Guide: " + Text.escapeJagex(tile.getTitle())
@@ -317,11 +345,11 @@ public class ProofService {
                 .build());
     }
 
-    private void capture(PluginBoardData board, PluginTileData tile, String reason) {
+    private void capture(PluginBoardData board, PluginTileData tile, String reason, Detection detection) {
         if (board.getVerificationCode() == null || client.getGameState() != GameState.LOGGED_IN) {
             return;
         }
-        TileProgressTracker.XpReading xp = "skill_xp".equals(tile.getType())
+        TileProgressTracker.XpReading xp = tile.getType() == TileType.SKILL_XP
                 ? progressTracker.xpReading(board, tile).orElse(null)
                 : null;
         long accountHash = client.getAccountHash();
@@ -331,19 +359,43 @@ public class ProofService {
             if (xp != null) {
                 drawXpCard(screenshot, xp, tile.getXpTarget(), icon);
             }
-            Offer offer = new Offer(UUID.randomUUID().toString(), board, tile, reason, screenshot, xp, accountHash);
-            enqueue(offer);
-            executor.execute(() -> store.save(new ProofOfferStore.Saved(
-                    offer.getId(),
-                    board.getId(),
-                    tile.getId(),
-                    reason,
-                    xp == null ? null : xp.getSkill().name(),
-                    xp == null ? null : xp.getGained(),
-                    xp == null ? null : xp.getTotal(),
-                    accountHash,
-                    System.currentTimeMillis()), screenshot));
+            executor.execute(() -> {
+                byte[] png = png(screenshot);
+                Offer offer = new Offer(UUID.randomUUID().toString(), board, tile, reason, screenshot, png,
+                        sha256(png), xp, accountHash, detection);
+                enqueue(offer);
+                store.save(new ProofOfferStore.Saved(
+                        offer.getId(),
+                        board.getId(),
+                        tile.getId(),
+                        reason,
+                        xp == null ? null : xp.getSkill().name(),
+                        xp == null ? null : xp.getGained(),
+                        xp == null ? null : xp.getTotal(),
+                        accountHash,
+                        System.currentTimeMillis(),
+                        offer.getImageSha256(),
+                        detection), png);
+            });
         });
+    }
+
+    private static byte[] png(BufferedImage image) {
+        try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", buffer);
+            return buffer.toByteArray();
+        } catch (IOException exception) {
+            throw new UncheckedIOException(exception);
+        }
+    }
+
+    private static String sha256(byte[] bytes) {
+        try {
+            return String.format("%064x", new BigInteger(1, MessageDigest.getInstance("SHA-256").digest(bytes)));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 
     static void drawXpCard(BufferedImage image, TileProgressTracker.XpReading xp, long target, BufferedImage icon) {
@@ -411,16 +463,18 @@ public class ProofService {
         return image;
     }
 
-    private boolean matches(PluginTileData tile, Set<Integer> dropped) {
+    /** The tile's item that dropped, or null when none did */
+    private Integer matchedItem(PluginTileData tile, Set<Integer> dropped) {
         if (tile.getItems() == null) {
-            return false;
+            return null;
         }
+
         for (TileItemEntry item : tile.getItems()) {
             if (dropped.contains(ItemVariationMapping.map(item.getId()))) {
-                return true;
+                return item.getId();
             }
         }
-        return false;
+        return null;
     }
 
     private static boolean isOpenForMyTeam(PluginBoardData board, PluginTileData tile) {

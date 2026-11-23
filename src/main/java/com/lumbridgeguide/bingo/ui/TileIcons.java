@@ -1,12 +1,12 @@
 package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.bingo.data.PluginTileData;
+import com.lumbridgeguide.bingo.data.TileType;
 import net.runelite.api.Skill;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 
 import java.awt.image.BufferedImage;
-import java.util.Locale;
 
 class TileIcons {
 
@@ -19,18 +19,17 @@ class TileIcons {
     }
 
     BufferedImage imageFor(PluginTileData tile) {
-        if ("item_drop".equals(tile.getType()) && tile.getItems() != null && !tile.getItems().isEmpty()
+        if (tile.getType() == TileType.ITEM_DROP && tile.getItems() != null && !tile.getItems().isEmpty()
                 && itemManager != null) {
             return itemManager.getImage(tile.getItems().get(0).getId());
         }
         if (skillIconManager == null) {
             return null;
         }
-        if ("skill_xp".equals(tile.getType())) {
-            Skill skill = parseSkill(tile.getSkill());
-            return skill == null ? null : skillIconManager.getSkillImage(skill, false);
+        if (tile.getType() == TileType.SKILL_XP) {
+            return tile.skill().map(skill -> skillIconManager.getSkillImage(skill, false)).orElse(null);
         }
-        if ("kill_count".equals(tile.getType())) {
+        if (tile.getType() == TileType.KILL_COUNT) {
             return skillIconManager.getSkillImage(Skill.SLAYER, false);
         }
         return null;
@@ -38,16 +37,5 @@ class TileIcons {
 
     BufferedImage itemImage(int itemId) {
         return itemManager == null ? null : itemManager.getImage(itemId);
-    }
-
-    static Skill parseSkill(String skillName) {
-        if (skillName == null) {
-            return null;
-        }
-        try {
-            return Skill.valueOf(skillName.toUpperCase(Locale.ROOT).replace(' ', '_'));
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
     }
 }

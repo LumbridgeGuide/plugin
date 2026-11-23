@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,12 +36,15 @@ class ProofOfferStore {
         Long xpTotal;
         long accountHash;
         long takenAt;
+        String imageSha256;
+        Detection detection;
     }
 
     @Value
     static class Loaded {
         Saved saved;
         BufferedImage screenshot;
+        byte[] png;
     }
 
     private final Gson gson;
@@ -50,11 +54,11 @@ class ProofOfferStore {
         this.gson = gson;
     }
 
-    void save(Saved saved, BufferedImage screenshot) {
+    void save(Saved saved, byte[] png) {
         File folder = folder(saved.getAccountHash());
         try {
             Files.createDirectories(folder.toPath());
-            ImageIO.write(screenshot, "png", new File(folder, saved.getId() + ".png"));
+            Files.write(new File(folder, saved.getId() + ".png").toPath(), png);
             Files.write(new File(folder, saved.getId() + ".json").toPath(),
                     gson.toJson(saved).getBytes(StandardCharsets.UTF_8));
         } catch (IOException exception) {
@@ -80,9 +84,10 @@ class ProofOfferStore {
         List<Loaded> loaded = new ArrayList<>();
         for (Saved saved : readAll(folder)) {
             try {
-                BufferedImage screenshot = ImageIO.read(new File(folder, saved.getId() + ".png"));
+                byte[] png = Files.readAllBytes(new File(folder, saved.getId() + ".png").toPath());
+                BufferedImage screenshot = ImageIO.read(new ByteArrayInputStream(png));
                 if (screenshot != null) {
-                    loaded.add(new Loaded(saved, screenshot));
+                    loaded.add(new Loaded(saved, screenshot, png));
                     continue;
                 }
             } catch (IOException exception) {
