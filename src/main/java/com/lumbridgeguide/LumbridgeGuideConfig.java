@@ -1,11 +1,10 @@
 package com.lumbridgeguide;
 
+import com.lumbridgeguide.bingo.ClaimMessages;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
-import net.runelite.client.config.Range;
-import net.runelite.client.config.Units;
 
 import java.awt.Color;
 
@@ -89,18 +88,15 @@ public interface LumbridgeGuideConfig extends Config {
         return true;
     }
 
-    @Range(max = 60)
-    @Units(Units.MINUTES)
     @ConfigItem(
-            keyName = "boardRefreshMinutes",
-            name = "Refresh boards every",
-            description = "How often to fetch your boards while logged in, so claims made on the website show up. "
-                    + "0 turns it off",
+            keyName = "claimMessages",
+            name = "Claim messages",
+            description = "Which teams' tile claims to announce in chat, with the board name in front",
             section = bingoSection,
             position = 2
     )
-    default int boardRefreshMinutes() {
-        return 5;
+    default ClaimMessages claimMessages() {
+        return ClaimMessages.ALL_TEAMS;
     }
 
     @ConfigItem(keyName = "selectedBoardId", name = "", description = "", hidden = true)

@@ -5,15 +5,22 @@ import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
-import com.lumbridgeguide.bingo.data.PluginSyncResponse;
+import com.lumbridgeguide.bingo.data.PluginPollRequest;
+import com.lumbridgeguide.bingo.data.PluginPollResponse;
+import com.lumbridgeguide.bingo.data.PluginProofResult;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -21,24 +28,32 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class BoardDataService {
 
+    private static final long DEFAULT_POLL_SECONDS = 150;
+
     private final LumbridgeGuideClient apiClient;
     private final Gson gson;
-
     private final LumbridgeGuideConfig config;
+    private final BingoChatAnnouncer announcer;
 
-    private volatile PluginSyncResponse cachedData;
+    private final Map<String, PluginBoardData> boards = new LinkedHashMap<>();
+    private final Map<String, Long> versions = new HashMap<>();
+    private final List<Long> unacknowledged = new ArrayList<>();
+    private final List<Runnable> waiting = new ArrayList<>();
+    private Long cursor;
+    private boolean loaded;
+    private boolean polling;
 
-    public List<PluginBoardData> getBoards() {
-        if (cachedData == null || cachedData.getBoards() == null) {
-            return Collections.emptyList();
-        }
-        return Collections.unmodifiableList(cachedData.getBoards());
+    @Getter
+    private volatile long nextPollSeconds = DEFAULT_POLL_SECONDS;
+
+    public synchronized List<PluginBoardData> getBoards() {
+        return Collections.unmodifiableList(new ArrayList<>(boards.values()));
     }
 
     public PluginBoardData getSelectedBoard() {
-        List<PluginBoardData> boards = getBoards();
-        return boards.stream().filter(board -> config.selectedBoardId().equals(board.getId())).findFirst()
-                .orElse(boards.isEmpty() ? null : boards.get(0));
+        List<PluginBoardData> current = getBoards();
+        return current.stream().filter(board -> config.selectedBoardId().equals(board.getId())).findFirst()
+                .orElse(current.isEmpty() ? null : current.get(0));
     }
 
     public List<PluginBoardData> getRunningBoards() {
@@ -59,9 +74,16 @@ public class BoardDataService {
         }
     }
 
-    /** True once a sync has listed the boards, even none, and false while the API key is missing or rejected */
-    public boolean hasCachedData() {
-        return cachedData != null && cachedData.getBoards() != null;
+    public synchronized boolean hasCachedData() {
+        return loaded;
+    }
+
+    public synchronized void clear() {
+        boards.clear();
+        versions.clear();
+        unacknowledged.clear();
+        cursor = null;
+        loaded = false;
     }
 
     public void refresh() {
@@ -71,45 +93,74 @@ public class BoardDataService {
     public void refresh(Runnable onFinished) {
         Runnable done = onFinished == null ? () -> { } : onFinished;
         if (!apiClient.hasApiKey()) {
-            log.debug("Skipping board sync, no API key configured");
-            cachedData = null;
+            clear();
             done.run();
             return;
         }
 
-        apiClient.get("/plugin/sync",
-                response ->
-                {
-                    handleSyncSuccess(response);
-                    done.run();
-                },
-                response ->
-                {
-                    handleSyncFailure(response);
-                    done.run();
-                });
-    }
-
-    private void handleSyncSuccess(ApiResponse response) {
-        try {
-            PluginSyncResponse syncResponse = gson.fromJson(response.getBody(), PluginSyncResponse.class);
-            if (syncResponse != null) {
-                cachedData = syncResponse;
-                int boardCount = syncResponse.getBoards() != null ? syncResponse.getBoards().size() : 0;
-                log.debug("Board data synced: {} active board(s)", boardCount);
+        PluginPollRequest request;
+        synchronized (this) {
+            waiting.add(done);
+            if (polling) {
+                return;
             }
-        } catch (Exception exception) {
-            log.warn("Failed to parse board sync response", exception);
+            polling = true;
+            request = new PluginPollRequest(new HashMap<>(versions), cursor, List.copyOf(unacknowledged));
         }
+        apiClient.post("/plugin/poll", request, this::handlePoll, this::handleFailure);
     }
 
-    private void handleSyncFailure(ApiResponse response) {
-        if (response.getStatusCode() == 401) {
-            log.warn("Board sync rejected the API key, clearing boards");
-            cachedData = null;
+    private void handlePoll(ApiResponse response) {
+        PluginPollResponse poll = gson.fromJson(response.getBody(), PluginPollResponse.class);
+        boolean firstPoll;
+        List<PluginBoardData> current;
+        synchronized (this) {
+            firstPoll = cursor == null;
+            merge(poll);
+            current = List.copyOf(boards.values());
+        }
+
+        announcer.announce(poll, firstPoll, current);
+        finish();
+    }
+
+    private void merge(PluginPollResponse poll) {
+        loaded = true;
+        cursor = poll.getCursor();
+        nextPollSeconds = poll.getNextPollSeconds() > 0 ? poll.getNextPollSeconds() : DEFAULT_POLL_SECONDS;
+        unacknowledged.clear();
+        if (!poll.isChanged()) {
             return;
         }
-        log.warn("Board sync failed (status {})", response.getStatusCode());
+
+        versions.clear();
+        versions.putAll(poll.getVersions() == null ? Map.of() : poll.getVersions());
+        if (poll.getBoards() != null) {
+            poll.getBoards().forEach(board -> boards.put(board.getId(), board));
+        }
+        boards.keySet().retainAll(versions.keySet());
+        if (poll.getResults() != null) {
+            poll.getResults().stream().map(PluginProofResult::getId).forEach(unacknowledged::add);
+        }
+    }
+
+    private void handleFailure(ApiResponse response) {
+        if (response.getStatusCode() == 401) {
+            log.warn("Board poll rejected the plugin key, clearing boards");
+            clear();
+        } else {
+            log.warn("Board poll failed (status {})", response.getStatusCode());
+        }
+        finish();
+    }
+
+    private void finish() {
+        List<Runnable> callbacks;
+        synchronized (this) {
+            polling = false;
+            callbacks = List.copyOf(waiting);
+            waiting.clear();
+        }
+        callbacks.forEach(Runnable::run);
     }
 }
-

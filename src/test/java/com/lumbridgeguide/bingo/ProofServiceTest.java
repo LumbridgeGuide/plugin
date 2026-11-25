@@ -27,11 +27,13 @@ public class ProofServiceTest {
         }
 
         @Override
-        public void get(String path, Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
+        public void post(String path, Object body, Consumer<ApiResponse> onSuccess,
+                         Consumer<ApiResponse> onFailure) {
             (syncResponse.getStatusCode() == 200 ? onSuccess : onFailure).accept(syncResponse);
         }
     };
-    private final BoardDataService boards = new BoardDataService(client, new Gson(), null);
+    private final BoardDataService boards = new BoardDataService(client, new Gson(), null,
+            new BingoChatAnnouncer(null, null));
     private final ProofService proofService = new ProofService(null, boards, client, null, null, null,
             new TileProgressTracker(null, null, null, null, null, null), null, null, null, null, null, null,
             new Gson());
@@ -40,7 +42,8 @@ public class ProofServiceTest {
     public void keepsQueuedProofWhenTheApiKeyIsRejected() {
         PluginBoardData board = runningBoard();
         ProofService.Offer offer = offer(board);
-        sync(200, "{\"boards\":[" + new Gson().toJson(board) + "]}");
+        sync(200, "{\"changed\":true,\"cursor\":1,\"versions\":{\"board\":1},\"boards\":["
+                + new Gson().toJson(board) + "]}");
 
         sync(401, "");
 
@@ -51,7 +54,7 @@ public class ProofServiceTest {
     public void dropsQueuedProofOnceItsBoardHasEnded() {
         ProofService.Offer offer = offer(runningBoard());
 
-        sync(200, "{\"boards\":[]}");
+        sync(200, "{\"changed\":true,\"cursor\":1,\"versions\":{},\"boards\":[]}");
 
         assertTrue(proofService.isEnded(offer));
     }

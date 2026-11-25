@@ -79,15 +79,15 @@ public class SidebarController {
         }
         panel.refresh();
         if (LumbridgeGuideConfig.API_KEY_KEY.equals(event.getKey())) {
+            boardDataService.clear();
             boardDataService.refresh(this::refreshPanel);
         }
     }
 
     @Subscribe
     public void onGameTick(GameTick tick) {
-        int minutes = config.boardRefreshMinutes();
-        if (panel == null || minutes <= 0
-                || Duration.between(lastBoardRefresh, Instant.now()).toMinutes() < minutes) {
+        if (panel == null
+                || Duration.between(lastBoardRefresh, Instant.now()).getSeconds() < boardDataService.getNextPollSeconds()) {
             return;
         }
         lastBoardRefresh = Instant.now();
@@ -105,6 +105,7 @@ public class SidebarController {
     public void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.LOGIN_SCREEN && panel != null) {
             panel.setBankOpen(false);
+            lastBoardRefresh = Instant.EPOCH;
         }
     }
 
