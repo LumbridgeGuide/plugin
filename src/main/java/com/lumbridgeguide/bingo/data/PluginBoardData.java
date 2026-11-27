@@ -21,4 +21,3 @@ public class PluginBoardData {
         return tiles == null ? List.of() : tiles;
     }
 }
-

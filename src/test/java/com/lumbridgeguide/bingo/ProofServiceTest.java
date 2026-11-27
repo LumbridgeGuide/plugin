@@ -32,7 +32,9 @@ public class ProofServiceTest {
             (syncResponse.getStatusCode() == 200 ? onSuccess : onFailure).accept(syncResponse);
         }
     };
+
     private final BoardDataService boards = new BoardDataService(client, null, new BingoChatAnnouncer(null, null));
+
     private final ProofService proofService = new ProofService(null, boards, client, null, null, null,
             new TileProgressTracker(null, null, null, null, null, null), null, null, null, null, null, null);
 

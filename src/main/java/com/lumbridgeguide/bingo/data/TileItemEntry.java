@@ -7,4 +7,3 @@ public class TileItemEntry {
     private int id;
     private String name;
 }
-

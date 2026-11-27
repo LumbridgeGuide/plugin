@@ -8,4 +8,3 @@ public class PluginTeamData {
     private String name;
     private String color;
 }
-
