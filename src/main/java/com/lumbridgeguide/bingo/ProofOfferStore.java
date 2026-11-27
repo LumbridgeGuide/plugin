@@ -1,7 +1,8 @@
 package com.lumbridgeguide.bingo;
 
 import com.google.gson.Gson;
-import lombok.Value;
+import com.google.gson.JsonParseException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
 
@@ -9,6 +10,7 @@ import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -19,70 +21,47 @@ import java.util.List;
 
 @Slf4j
 @Singleton
-class ProofOfferStore {
+@RequiredArgsConstructor(onConstructor_ = @Inject)
+public class ProofOfferStore {
 
-    static final int MAX_SAVED = 10;
+    public static final int MAX_SAVED = 10;
     private static final File ROOT = new File(new File(RuneLite.RUNELITE_DIR, "lumbridge-guide"), "proof");
-
-    @Value
-    static class Saved {
-        String id;
-        String boardId;
-        String tileId;
-        String reason;
-        String xpSkill;
-        Long xpGained;
-        Long xpTotal;
-        long accountHash;
-        long takenAt;
-    }
-
-    @Value
-    static class Loaded {
-        Saved saved;
-        BufferedImage screenshot;
-    }
 
     private final Gson gson;
 
-    @Inject
-    ProofOfferStore(Gson gson) {
-        this.gson = gson;
-    }
-
-    void save(Saved saved, BufferedImage screenshot) {
+    public void save(SavedProof saved, byte[] png) {
         File folder = folder(saved.getAccountHash());
         try {
             Files.createDirectories(folder.toPath());
-            ImageIO.write(screenshot, "png", new File(folder, saved.getId() + ".png"));
+            Files.write(new File(folder, saved.getId() + ".png").toPath(), png);
             Files.write(new File(folder, saved.getId() + ".json").toPath(),
                     gson.toJson(saved).getBytes(StandardCharsets.UTF_8));
         } catch (IOException exception) {
             log.warn("Couldn't save proof for later", exception);
             return;
         }
-        List<Saved> all = readAll(folder);
+        List<SavedProof> all = readAll(folder);
         all.stream()
-                .sorted(Comparator.comparingLong(Saved::getTakenAt).reversed())
+                .sorted(Comparator.comparingLong(SavedProof::getTakenAt).reversed())
                 .skip(MAX_SAVED)
                 .forEach(old -> delete(old.getAccountHash(), old.getId()));
     }
 
-    void delete(long accountHash, String id) {
+    public void delete(long accountHash, String id) {
         File folder = folder(accountHash);
         new File(folder, id + ".png").delete();
         new File(folder, id + ".json").delete();
     }
 
-    /** The account's saved offers, oldest first, deleting any that cannot be read */
-    List<Loaded> load(long accountHash) {
+    public List<LoadedProof> load(long accountHash) {
         File folder = folder(accountHash);
-        List<Loaded> loaded = new ArrayList<>();
-        for (Saved saved : readAll(folder)) {
+        List<LoadedProof> loaded = new ArrayList<>();
+        for (SavedProof saved : readAll(folder)) {
             try {
-                BufferedImage screenshot = ImageIO.read(new File(folder, saved.getId() + ".png"));
+                byte[] png = Files.readAllBytes(new File(folder, saved.getId() + ".png").toPath());
+                BufferedImage screenshot = ImageIO.read(new ByteArrayInputStream(png));
                 if (screenshot != null) {
-                    loaded.add(new Loaded(saved, screenshot));
+                    loaded.add(new LoadedProof(saved, screenshot, png));
                     continue;
                 }
             } catch (IOException exception) {
@@ -94,20 +73,20 @@ class ProofOfferStore {
         return loaded;
     }
 
-    private List<Saved> readAll(File folder) {
+    private List<SavedProof> readAll(File folder) {
         File[] files = folder.listFiles((directory, name) -> name.endsWith(".json"));
-        List<Saved> all = new ArrayList<>();
+        List<SavedProof> all = new ArrayList<>();
         if (files == null) {
             return all;
         }
         for (File file : files) {
             try {
-                Saved saved = gson.fromJson(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8),
-                        Saved.class);
+                SavedProof saved = gson.fromJson(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8),
+                        SavedProof.class);
                 if (saved != null && saved.getId() != null) {
                     all.add(saved);
                 }
-            } catch (IOException | RuntimeException exception) {
+            } catch (IOException | JsonParseException exception) {
                 file.delete();
             }
         }

@@ -18,14 +18,13 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Font;
+import java.awt.GridBagLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.OptionalLong;
 
-class TileRowPanel extends JPanel {
+public class TileRowPanel extends JPanel {
 
-    TileRowPanel(PluginTileData tile, PluginBoardData board, TileIcons icons, OptionalLong tracked, Runnable onClick) {
+    public TileRowPanel(PluginTileData tile, PluginBoardData board, TileIcons icons, Long tracked, Runnable onClick) {
         super(new BorderLayout(8, 0));
         setBackground(Theme.SURFACE_RAISED);
         setOpaque(false);
@@ -33,13 +32,13 @@ class TileRowPanel extends JPanel {
         setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_SUBTLE), new EmptyBorder(6, 2, 6, 4)));
 
-        boolean mine = TileState.isMine(tile, board);
+        boolean mine = tile.isClaimedBy(board.getMyTeam());
         boolean takenByOther = tile.isClaimed() && !mine;
-        Color teamColor = mine ? Theme.parseTeamColor(board.getMyTeam().getColor()) : null;
+        Color teamColour = mine ? Theme.parseTeamColour(board.getMyTeam().getColor()) : null;
 
         add(iconHolder(tile, icons, takenByOther), BorderLayout.WEST);
-        add(textColumn(tile, board, tracked, mine, takenByOther, teamColor), BorderLayout.CENTER);
-        add(trailing(tile, mine, teamColor), BorderLayout.EAST);
+        add(textColumn(tile, board, tracked, mine, takenByOther, teamColour), BorderLayout.CENTER);
+        add(trailing(tile, mine, teamColour), BorderLayout.EAST);
         installHover(onClick);
     }
 
@@ -60,17 +59,17 @@ class TileRowPanel extends JPanel {
         return iconHolder;
     }
 
-    private static JPanel textColumn(PluginTileData tile, PluginBoardData board, OptionalLong tracked, boolean mine,
-                                     boolean takenByOther, Color teamColor) {
+    private static JPanel textColumn(PluginTileData tile, PluginBoardData board, Long tracked, boolean mine,
+                                     boolean takenByOther, Color teamColour) {
         JPanel textColumn = new JPanel();
         textColumn.setLayout(new BoxLayout(textColumn, BoxLayout.Y_AXIS));
         textColumn.setOpaque(false);
-        JLabel title = Components.label(tile.getTitle(), 12f, Font.PLAIN,
+        JLabel title = Components.label(tile.getTitle(), Components.REGULAR,
                 takenByOther ? Theme.TEXT_SECONDARY : Theme.TEXT_PRIMARY);
         title.setToolTipText(tile.getTitle());
         textColumn.add(title);
-        JLabel meta = Components.label(metaText(tile, board, mine, tracked), 11f, Font.PLAIN,
-                mine ? teamColor : Theme.TEXT_MUTED);
+        JLabel meta = Components.label(metaText(tile, board, mine, tracked), Components.SMALL,
+                mine ? teamColour : Theme.TEXT_MUTED);
         meta.setBorder(new EmptyBorder(1, 0, 0, 0));
         textColumn.add(meta);
         return textColumn;
@@ -97,32 +96,32 @@ class TileRowPanel extends JPanel {
         });
     }
 
-    private static JComponent trailing(PluginTileData tile, boolean mine, Color teamColor) {
+    private static JComponent trailing(PluginTileData tile, boolean mine, Color teamColour) {
         JPanel holder = new JPanel(new BorderLayout());
         holder.setOpaque(false);
         JComponent end;
         if (mine) {
-            end = new JLabel(new CheckIcon(teamColor));
+            end = new JLabel(new CheckIcon(teamColour));
         } else if (!tile.isClaimed() && tile.isProofPending()) {
             end = Badge.status("Pending", Theme.WARNING);
         } else if (!tile.isClaimed() && tile.isProofRejected()) {
             end = Badge.status("Not accepted", Theme.ERROR);
         } else {
-            end = Components.label("›", 13f, Font.PLAIN, Theme.TEXT_MUTED);
+            end = Components.label("›", Components.REGULAR, Theme.TEXT_MUTED);
         }
-        JPanel centre = new JPanel(new java.awt.GridBagLayout());
+        JPanel centre = new JPanel(new GridBagLayout());
         centre.setOpaque(false);
         centre.add(end);
         holder.add(centre, BorderLayout.CENTER);
         return holder;
     }
 
-    private static String metaText(PluginTileData tile, PluginBoardData board, boolean mine, OptionalLong tracked) {
+    private static String metaText(PluginTileData tile, PluginBoardData board, boolean mine, Long tracked) {
         if (mine) {
             return "Your team";
         }
         if (tile.isClaimed()) {
-            return TileState.claimingTeamName(tile, board);
+            return TileState.claimingTeamName(tile);
         }
         String progress = TileState.progressText(tile, tracked);
         if (!progress.isEmpty()) {

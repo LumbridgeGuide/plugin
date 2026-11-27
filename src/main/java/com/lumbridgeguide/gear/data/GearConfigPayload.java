@@ -1,38 +1,17 @@
 package com.lumbridgeguide.gear.data;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.util.List;
 
-@Value
+@Data
+@AllArgsConstructor
 public class GearConfigPayload {
-    String name;
-    boolean includeEquipment;
-    boolean includeInventory;
-    List<EquipmentEntry> equipment;
-    List<InventoryEntry> inventory;
-    List<RunePouchEntry> runePouch;
-
-    @Value
-    public static class EquipmentEntry {
-        String slot;
-        int itemId;
-        String name;
-        int quantity;
-    }
-
-    @Value
-    public static class InventoryEntry {
-        int slot;
-        int itemId;
-        String name;
-        int quantity;
-    }
-
-    @Value
-    public static class RunePouchEntry {
-        int itemId;
-        String name;
-        int quantity;
-    }
+    private String name;
+    private boolean includeEquipment;
+    private boolean includeInventory;
+    private List<EquipmentEntry> equipment;
+    private List<InventoryEntry> inventory;
+    private List<RunePouchEntry> runePouch;
 }

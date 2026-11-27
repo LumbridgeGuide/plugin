@@ -1,46 +1,37 @@
 package com.lumbridgeguide.account;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import lombok.Value;
+import lombok.experimental.UtilityClass;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class AccountStatusText {
+@UtilityClass
+public class AccountStatusText {
 
-    public enum Tone {
-        SUCCESS,
-        WARNING,
-        ERROR,
-        MUTED
-    }
+    public static final StatusLine LOGGED_OUT =
+            new StatusLine("Log in to sync this account", "", StatusTone.MUTED, AccountAction.NONE);
 
-    @Value
-    static class Line {
-        String text;
-        Tone tone;
-    }
-
-    static Line forStatus(String status) {
+    public static StatusLine forStatus(String status) {
         if (status == null) {
-            return new Line("Checking link status...", Tone.MUTED);
+            return new StatusLine("Link not checked", "", StatusTone.MUTED, AccountAction.REFRESH);
         }
         switch (status) {
             case "LINKED":
-                return new Line("Linked to your Lumbridge Guide account", Tone.SUCCESS);
+                return new StatusLine("Linked", "", StatusTone.SUCCESS, AccountAction.SYNC);
             case "NOT_LINKED":
-                return new Line("Not linked. Press Sync now to link this account.", Tone.MUTED);
+                return new StatusLine("Not linked", "", StatusTone.MUTED, AccountAction.LINK);
             case "LIMIT_REACHED":
-                return new Line("Account limit reached. Manage your accounts on the website.", Tone.WARNING);
+                return new StatusLine("Account limit reached", "Manage your accounts on the website",
+                        StatusTone.WARNING, AccountAction.REFRESH);
             case "LOCKED":
-                return new Line("Locked on your current plan. Manage it on the website.", Tone.WARNING);
+                return new StatusLine("Account locked", "Over your plan's account limit. Manage it on the website",
+                        StatusTone.WARNING, AccountAction.REFRESH);
             case "LINKED_ELSEWHERE":
-                return new Line("Linked to another Lumbridge Guide user.", Tone.ERROR);
+                return new StatusLine("Linked elsewhere", "This account is linked to another Lumbridge Guide user",
+                        StatusTone.ERROR, AccountAction.REFRESH);
             default:
-                return new Line("Unknown link status", Tone.MUTED);
+                return new StatusLine("Unknown link status", "", StatusTone.MUTED, AccountAction.REFRESH);
         }
     }
 
-    static String impliedLinkStatus(String errorCode) {
+    public static String impliedLinkStatus(String errorCode) {
         if (errorCode == null) {
             return null;
         }
@@ -55,52 +46,6 @@ public final class AccountStatusText {
                 return "NOT_LINKED";
             default:
                 return null;
-        }
-    }
-
-    static String accountTypeLabel(String accountType) {
-        if (accountType == null) {
-            return "";
-        }
-        switch (accountType) {
-            case "IRONMAN":
-                return "Ironman";
-            case "ULTIMATE_IRONMAN":
-                return "Ultimate ironman";
-            case "HARDCORE_IRONMAN":
-                return "Hardcore ironman";
-            case "GROUP_IRONMAN":
-                return "Group ironman";
-            case "HARDCORE_GROUP_IRONMAN":
-                return "Hardcore group ironman";
-            case "UNRANKED_GROUP_IRONMAN":
-                return "Unranked group ironman";
-            default:
-                return "Main";
-        }
-    }
-
-    /** A short badge for the link status, or an empty string while it is unknown */
-    static String statusBadge(String status) {
-        return status == null ? "" : status.replace('_', ' ');
-    }
-
-    static String accountTypeForIronmanVarbit(int ironmanVarbit) {
-        switch (ironmanVarbit) {
-            case 1:
-                return "IRONMAN";
-            case 2:
-                return "ULTIMATE_IRONMAN";
-            case 3:
-                return "HARDCORE_IRONMAN";
-            case 4:
-                return "GROUP_IRONMAN";
-            case 5:
-                return "HARDCORE_GROUP_IRONMAN";
-            case 6:
-                return "UNRANKED_GROUP_IRONMAN";
-            default:
-                return "MAIN";
         }
     }
 }

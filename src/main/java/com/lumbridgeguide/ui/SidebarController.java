@@ -2,14 +2,8 @@ package com.lumbridgeguide.ui;
 
 import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.LumbridgeGuidePlugin;
-import com.lumbridgeguide.account.AccountSyncService;
-import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.BoardDataService;
-import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
-import com.lumbridgeguide.gear.GearConfigExportService;
-import com.lumbridgeguide.gear.GearTagService;
-import com.lumbridgeguide.gear.TripCheckService;
 import lombok.RequiredArgsConstructor;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
@@ -19,13 +13,12 @@ import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
 import java.time.Duration;
@@ -38,19 +31,12 @@ public class SidebarController {
     private final LumbridgeGuideConfig config;
     private final ClientToolbar clientToolbar;
     private final BoardDataService boardDataService;
-    private final TileProgressTracker tileProgressTracker;
-    private final ProofService proofService;
-    private final GearTagService gearTagService;
-    private final GearConfigExportService gearConfigExportService;
-    private final TripCheckService tripCheckService;
-    private final AccountSyncService accountSyncService;
-    private final ItemManager itemManager;
-    private final SkillIconManager skillIconManager;
-    private final LumbridgeGuideClient apiClient;
+    private final Provider<SidebarPanel> panelProvider;
 
     private SidebarPanel panel;
     private NavigationButton navigationButton;
     private Instant lastBoardRefresh = Instant.now();
+    private boolean bankOpen;
 
     public void startUp() {
         Theme.setAccent(config.accentColour());
@@ -71,6 +57,7 @@ public class SidebarController {
                 || event.getKey().startsWith(TileProgressTracker.BASELINE_KEY_PREFIX)) {
             return;
         }
+
         if (LumbridgeGuideConfig.ACCENT_COLOUR_KEY.equals(event.getKey())) {
             Theme.setAccent(config.accentColour());
             SwingUtilities.invokeLater(() -> {
@@ -79,19 +66,21 @@ public class SidebarController {
             });
             return;
         }
+
         panel.refresh();
         if (LumbridgeGuideConfig.API_KEY_KEY.equals(event.getKey())) {
+            boardDataService.clear();
             boardDataService.refresh(this::refreshPanel);
         }
     }
 
     @Subscribe
     public void onGameTick(GameTick tick) {
-        int minutes = config.boardRefreshMinutes();
-        if (panel == null || minutes <= 0
-                || Duration.between(lastBoardRefresh, Instant.now()).toMinutes() < minutes) {
+        if (panel == null
+                || Duration.between(lastBoardRefresh, Instant.now()).getSeconds() < boardDataService.getNextPollSeconds()) {
             return;
         }
+
         lastBoardRefresh = Instant.now();
         boardDataService.refresh(this::refreshPanel);
     }
@@ -105,28 +94,36 @@ public class SidebarController {
 
     @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
-        if (event.getGameState() == GameState.LOGIN_SCREEN && panel != null) {
-            panel.setBankOpen(false);
+        if (event.getGameState() == GameState.LOGIN_SCREEN) {
+            setBankOpen(false);
+            lastBoardRefresh = Instant.EPOCH;
         }
     }
 
     @Subscribe
     public void onWidgetLoaded(WidgetLoaded event) {
-        if (event.getGroupId() == InterfaceID.BANKMAIN && panel != null) {
-            panel.setBankOpen(true);
+        if (event.getGroupId() == InterfaceID.BANKMAIN) {
+            setBankOpen(true);
         }
     }
 
     @Subscribe
     public void onWidgetClosed(WidgetClosed event) {
-        if (event.getGroupId() == InterfaceID.BANKMAIN && panel != null) {
-            panel.setBankOpen(false);
+        if (event.getGroupId() == InterfaceID.BANKMAIN) {
+            setBankOpen(false);
+        }
+    }
+
+    private void setBankOpen(boolean open) {
+        bankOpen = open;
+        if (panel != null) {
+            panel.setBankOpen(open);
         }
     }
 
     private void addPanel() {
-        panel = new SidebarPanel(boardDataService, tileProgressTracker, proofService, gearTagService,
-                gearConfigExportService, tripCheckService, accountSyncService, itemManager, skillIconManager, config, apiClient::hasApiKey);
+        panel = panelProvider.get();
+        panel.setBankOpen(bankOpen);
         navigationButton = NavigationButton.builder()
                 .tooltip("Lumbridge Guide")
                 .icon(ImageUtil.loadImageResource(LumbridgeGuidePlugin.class, "icon.png"))

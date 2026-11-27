@@ -10,10 +10,10 @@ import java.util.Map;
 @UtilityClass
 public class GearBankLayout {
 
-    public static final int COLUMNS = 8;
-    public static final int PADDING_ROWS = 1;
+    private static final int COLUMNS = 8;
+    private static final int PADDING_ROWS = 1;
     private static final int CONTENT_ROWS = 7;
-    public static final int ROWS = CONTENT_ROWS + 2 * PADDING_ROWS;
+    private static final int ROWS = CONTENT_ROWS + 2 * PADDING_ROWS;
 
     private static final int INVENTORY_COLUMN = 4;
     private static final int INVENTORY_WIDTH = 4;
@@ -33,7 +33,6 @@ public class GearBankLayout {
             Map.entry("feet", new int[] {4, 1}),
             Map.entry("ring", new int[] {4, 2}));
 
-    /** Item ids by bank position, row by row, -1 where empty, leaving out unknown slots and overflow */
     public static int[] positions(PluginGearData gear) {
         int[] layout = new int[COLUMNS * ROWS];
         Arrays.fill(layout, -1);
@@ -70,7 +69,6 @@ public class GearBankLayout {
         return layout;
     }
 
-    /** The row is counted within the setup, below the padding row */
     private static void place(int[] layout, int row, int column, int itemId) {
         layout[(row + PADDING_ROWS) * COLUMNS + column] = itemId;
     }

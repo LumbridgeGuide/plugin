@@ -8,8 +8,6 @@ import java.util.List;
 public class PluginBoardData {
     private String id;
     private String title;
-    private String description;
-    private int gridSize;
     private String startsAt;
     private String endsAt;
     private String verificationCode;
@@ -17,9 +15,9 @@ public class PluginBoardData {
     private String webUrl;
     private PluginTeamData myTeam;
     private List<PluginTileData> tiles;
-    /** Null while a hidden board keeps other teams' claims secret */
-    private List<PluginStandingData> standings;
-    /** Newest first, or null while a hidden board keeps them secret */
-    private List<PluginClaimData> recentClaims;
-}
+    private PluginTeamSummary teamSummary;
 
+    public List<PluginTileData> tiles() {
+        return tiles == null ? List.of() : tiles;
+    }
+}

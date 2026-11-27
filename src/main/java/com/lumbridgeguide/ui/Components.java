@@ -13,6 +13,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -21,8 +22,6 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Insets;
 import java.util.Locale;
 
 @UtilityClass
@@ -30,20 +29,14 @@ public class Components {
 
     public static final int CONTENT_WIDTH = 188;
 
-    public static Font font(float size, int style) {
-        if (style == Font.BOLD) {
-            return FontManager.getRunescapeBoldFont();
-        }
-        if (size <= 11f) {
-            return FontManager.getRunescapeSmallFont();
-        }
-        return FontManager.getRunescapeFont();
-    }
+    public static final Font SMALL = FontManager.getRunescapeSmallFont();
+    public static final Font REGULAR = FontManager.getRunescapeFont();
+    public static final Font BOLD = FontManager.getRunescapeBoldFont();
 
-    public static JLabel label(String text, float size, int style, Color color) {
+    public static JLabel label(String text, Font font, Color colour) {
         JLabel label = new JLabel(text);
-        label.setFont(font(size, style));
-        label.setForeground(color);
+        label.setFont(font);
+        label.setForeground(colour);
         return label;
     }
 
@@ -52,16 +45,19 @@ public class Components {
         header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
         header.setOpaque(false);
         header.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JLabel label = label(text.toUpperCase(Locale.ROOT), 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
+
+        JLabel label = label(text.toUpperCase(Locale.ROOT), SMALL, Theme.TEXT_SECONDARY);
         label.setAlignmentY(Component.CENTER_ALIGNMENT);
         header.add(label);
         header.add(Box.createHorizontalStrut(8));
         header.add(new Rule());
+
         if (trailing != null) {
             trailing.setAlignmentY(Component.CENTER_ALIGNMENT);
             header.add(Box.createHorizontalStrut(8));
             header.add(trailing);
         }
+
         header.setMaximumSize(new Dimension(Integer.MAX_VALUE, header.getPreferredSize().height));
         return header;
     }
@@ -72,45 +68,38 @@ public class Components {
 
     public static JButton textLink(String text) {
         JButton button = linkButton(text);
-        button.setFont(FontManager.getRunescapeSmallFont());
+        button.setFont(SMALL);
         button.setForeground(Theme.accentText());
         return button;
     }
 
-    public static JButton smallButton(String text, boolean primary) {
-        ActionButton button = new ActionButton(text, primary ? ActionButton.Kind.PRIMARY : ActionButton.Kind.SECONDARY);
-        button.setFont(FontManager.getRunescapeSmallFont());
-        button.setBorder(new EmptyBorder(3, 8, 3, 8));
-        return button;
-    }
-
-    public static JLabel statusLine(String text, Color dotColor, Color textColor) {
-        JLabel label = label(text, 12f, Font.PLAIN, textColor);
-        label.setIcon(new DotIcon(dotColor));
+    public static JLabel statusLine(String text, Color dotColour, Color textColour) {
+        JLabel label = label(text, REGULAR, textColour);
+        label.setIcon(new DotIcon(dotColour));
         label.setIconTextGap(6);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         return label;
     }
 
-    public static WrapText wrapped(String text, int width, float size, int style, Color color) {
+    public static WrapText wrapped(String text, int width, Font font, Color colour) {
         WrapText wrapText = new WrapText(width);
-        wrapText.setFont(font(size, style));
-        wrapText.setForeground(color);
+        wrapText.setFont(font);
+        wrapText.setForeground(colour);
         wrapText.setText(text);
         return wrapText;
     }
 
     public static JButton primaryButton(String text) {
-        return new ActionButton(text, ActionButton.Kind.PRIMARY);
+        return new ActionButton(text, true);
     }
 
     public static JButton secondaryButton(String text) {
-        return new ActionButton(text, ActionButton.Kind.SECONDARY);
+        return new ActionButton(text, false);
     }
 
     public static JButton linkButton(String text) {
         JButton button = new JButton(text);
-        button.setFont(FontManager.getRunescapeBoldFont());
+        button.setFont(BOLD);
         button.setForeground(Theme.accentText());
         button.setBorder(new EmptyBorder(0, 0, 0, 0));
         button.setContentAreaFilled(false);
@@ -138,11 +127,10 @@ public class Components {
         return scroll;
     }
 
-    /** Shows the tooltip as faded placeholder text while the field is empty */
     public static JTextField textField(String tooltip) {
         JTextField field = new PlaceholderField(tooltip);
         field.setToolTipText(tooltip);
-        field.setFont(FontManager.getRunescapeFont());
+        field.setFont(REGULAR);
         field.setOpaque(false);
         field.setBackground(Theme.SURFACE_OVERLAY);
         field.setForeground(Theme.TEXT_PRIMARY);
@@ -154,9 +142,24 @@ public class Components {
         return field;
     }
 
+    public static JToggleButton toggleChip(String text) {
+        JToggleButton chip = new JToggleButton(text, true);
+        chip.setFont(REGULAR);
+        chip.setIcon(new CheckIcon(new Color(0, 0, 0, 0)));
+        chip.setSelectedIcon(new CheckIcon(Theme.accent()));
+        chip.setIconTextGap(6);
+        chip.setBorder(new CompoundBorder(new RoundedBorder(Theme.BORDER), new EmptyBorder(6, 8, 6, 8)));
+        chip.setContentAreaFilled(false);
+        chip.setFocusPainted(false);
+        chip.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        chip.setForeground(Theme.TEXT_PRIMARY);
+        chip.addItemListener(event -> chip.setForeground(chip.isSelected() ? Theme.TEXT_PRIMARY : Theme.TEXT_MUTED));
+        return chip;
+    }
+
     public static JCheckBox checkBox(String text) {
         JCheckBox box = new JCheckBox(text, true);
-        box.setFont(font(12f, Font.PLAIN));
+        box.setFont(REGULAR);
         box.setForeground(Theme.TEXT_PRIMARY);
         box.setIcon(new CheckBoxIcon(false));
         box.setSelectedIcon(new CheckBoxIcon(true));
@@ -166,27 +169,5 @@ public class Components {
         box.setFocusPainted(false);
         box.setAlignmentX(Component.LEFT_ALIGNMENT);
         return box;
-    }
-
-    private static final class PlaceholderField extends JTextField {
-
-        private final String placeholder;
-
-        PlaceholderField(String placeholder) {
-            this.placeholder = placeholder;
-        }
-
-        @Override
-        protected void paintComponent(Graphics graphics) {
-            graphics.setColor(Theme.SURFACE_OVERLAY);
-            graphics.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.ARC, Theme.ARC);
-            super.paintComponent(graphics);
-            if (getText().isEmpty() && !isFocusOwner()) {
-                Insets insets = getInsets();
-                graphics.setFont(getFont());
-                graphics.setColor(Theme.TEXT_MUTED);
-                graphics.drawString(placeholder, insets.left, insets.top + graphics.getFontMetrics().getAscent());
-            }
-        }
     }
 }

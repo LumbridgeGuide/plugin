@@ -1,22 +1,23 @@
 package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.LumbridgeGuideConfig;
+import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.BoardDataService;
+import com.lumbridgeguide.bingo.ProofOffer;
 import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.TileProgressTracker;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
-import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.EmptyState;
-import com.lumbridgeguide.ui.TabBar;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.util.LinkBrowser;
 
+import javax.inject.Inject;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
@@ -24,16 +25,12 @@ import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.GridLayout;
-import java.util.Arrays;
 import java.util.List;
 
 public class BingoTabPanel extends JPanel {
 
     private static final String OVERVIEW_CARD = "overview";
     private static final String DETAIL_CARD = "detail";
-    private static final String TILES_VIEW = "Tiles";
-    private static final String STANDINGS_VIEW = "Standings";
-    private static final String CLAIMS_VIEW = "Claims";
 
     private final BoardDataService boardDataService;
     private final LumbridgeGuideConfig config;
@@ -49,13 +46,12 @@ public class BingoTabPanel extends JPanel {
     private final JPanel buttonBar;
     private final JButton openButton;
     private final JButton refreshButton;
-    private final TabBar viewTabs;
-    private final StandingsPanel standingsPanel;
-    private final StandingsPanel claimsPanel;
 
     private int currentIndex;
     private int shownOffers;
+    private String openTileId;
 
+    @Inject
     public BingoTabPanel(
             BoardDataService boardDataService,
             TileProgressTracker tileProgressTracker,
@@ -85,21 +81,13 @@ public class BingoTabPanel extends JPanel {
         refreshButton.addActionListener(event -> onRefreshClicked());
         buttonBar = buttonBar();
 
-        standingsPanel = new StandingsPanel(StandingsPanel.Mode.STANDINGS);
-        claimsPanel = new StandingsPanel(StandingsPanel.Mode.CLAIMS);
-        CardLayout viewCards = new CardLayout();
-        JPanel views = views(viewCards);
-        viewTabs = new TabBar(Arrays.asList(TILES_VIEW, STANDINGS_VIEW, CLAIMS_VIEW), TabBar.Style.PILL,
-                name -> viewCards.show(views, name));
-        viewTabs.setBorder(new EmptyBorder(14, 0, 10, 0));
-
         JPanel overviewRoot = new JPanel(new BorderLayout());
         overviewRoot.setOpaque(false);
-        ProofOfferPanel proofOffer = new ProofOfferPanel(proofService);
+        ProofOfferPanel proofOffer = new ProofOfferPanel(proofService, this::onRefreshClicked);
         overviewRoot.add(overviewTop(proofOffer), BorderLayout.NORTH);
         proofService.setOnQueueChanged(queue ->
                 SwingUtilities.invokeLater(() -> onProofQueueChanged(proofOffer, queue)));
-        overviewRoot.add(views, BorderLayout.CENTER);
+        overviewRoot.add(tilesView(), BorderLayout.CENTER);
 
         detailPanel = new TileDetailPanel(icons, tileProgressTracker, this::closeDetail,
                 (tile, board) -> {
@@ -110,6 +98,7 @@ public class BingoTabPanel extends JPanel {
         add(overviewRoot, OVERVIEW_CARD);
         add(Components.scrolling(detailPanel), DETAIL_CARD);
         cards.show(this, OVERVIEW_CARD);
+        onProofQueueChanged(proofOffer, proofService.getQueue());
     }
 
     private static EmptyState emptyState(JButton refresh) {
@@ -140,18 +129,13 @@ public class BingoTabPanel extends JPanel {
         return bar;
     }
 
-    private JPanel views(CardLayout viewCards) {
-        JPanel overview = new JPanel(new BorderLayout());
-        overview.setOpaque(false);
-        overview.add(listScroll, BorderLayout.CENTER);
-        overview.add(buttonBar, BorderLayout.SOUTH);
+    private JPanel tilesView() {
+        JPanel tilesView = new JPanel(new BorderLayout());
+        tilesView.setOpaque(false);
+        tilesView.add(listScroll, BorderLayout.CENTER);
+        tilesView.add(buttonBar, BorderLayout.SOUTH);
 
-        JPanel views = new JPanel(viewCards);
-        views.setOpaque(false);
-        views.add(overview, TILES_VIEW);
-        views.add(Components.scrolling(topAligned(standingsPanel)), STANDINGS_VIEW);
-        views.add(Components.scrolling(topAligned(claimsPanel)), CLAIMS_VIEW);
-        return views;
+        return tilesView;
     }
 
     private JPanel overviewTop(ProofOfferPanel proofOffer) {
@@ -160,42 +144,42 @@ public class BingoTabPanel extends JPanel {
         overviewTop.setOpaque(false);
         proofOffer.setAlignmentX(LEFT_ALIGNMENT);
         headerPanel.setAlignmentX(LEFT_ALIGNMENT);
-        viewTabs.setAlignmentX(LEFT_ALIGNMENT);
+
         overviewTop.add(proofOffer);
         overviewTop.add(headerPanel);
-        overviewTop.add(viewTabs);
+        overviewTop.add(Box.createVerticalStrut(12));
+
         return overviewTop;
     }
 
-    private void onProofQueueChanged(ProofOfferPanel proofOffer, List<ProofService.Offer> queue) {
+    private void onProofQueueChanged(ProofOfferPanel proofOffer, List<ProofOffer> queue) {
         boolean grew = queue.size() > shownOffers;
         shownOffers = queue.size();
         proofOffer.showQueue(queue);
         if (grew) {
-            cards.show(this, OVERVIEW_CARD);
+            closeDetail();
         }
     }
 
     public void refresh() {
         List<PluginBoardData> boards = boardDataService.getBoards();
-        currentIndex = boards.isEmpty() ? 0 : Math.min(currentIndex, boards.size() - 1);
+        currentIndex = Math.max(0, boards.indexOf(boardDataService.getSelectedBoard()));
 
         boolean hasBoards = !boards.isEmpty();
         emptyState.getParent().setVisible(!hasBoards);
         tileList.setVisible(hasBoards);
         headerPanel.setVisible(hasBoards);
         buttonBar.setVisible(hasBoards);
-        viewTabs.setVisible(hasBoards);
         openButton.setEnabled(false);
 
         if (hasBoards) {
             displayBoard(boards);
+            reopenDetail(boards.get(currentIndex));
         } else {
             navigator.update(0, 0);
             headerPanel.update((PluginBoardData) null);
             tileList.update(null, false, tile -> { });
-            viewTabs.select(TILES_VIEW);
-            cards.show(this, OVERVIEW_CARD);
+            closeDetail();
         }
     }
 
@@ -204,37 +188,44 @@ public class BingoTabPanel extends JPanel {
         if (boards.isEmpty()) {
             return;
         }
+
         currentIndex = (currentIndex + direction + boards.size()) % boards.size();
         displayBoard(boards);
+        closeDetail();
+        listScroll.getVerticalScrollBar().setValue(0);
     }
 
     private void displayBoard(List<PluginBoardData> boards) {
         PluginBoardData board = boards.get(currentIndex);
+        config.setSelectedBoardId(board.getId());
         navigator.update(currentIndex, boards.size());
         headerPanel.update(board);
         tileList.update(board, config.unclaimedFirst(), tile -> openDetail(tile, board));
-        standingsPanel.update(board);
-        claimsPanel.update(board);
         openButton.setEnabled(board.getWebUrl() != null && !board.getWebUrl().isEmpty());
-        cards.show(this, OVERVIEW_CARD);
-        listScroll.getVerticalScrollBar().setValue(0);
         revalidate();
         repaint();
     }
 
-    private static JPanel topAligned(JComponent content) {
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
-        wrapper.add(content, BorderLayout.NORTH);
-        return wrapper;
+    private void reopenDetail(PluginBoardData board) {
+        PluginTileData tile = board.tiles().stream()
+                .filter(candidate -> candidate.getId().equals(openTileId))
+                .findFirst()
+                .orElse(null);
+        if (tile == null) {
+            closeDetail();
+        } else {
+            detailPanel.show(tile, board);
+        }
     }
 
     private void openDetail(PluginTileData tile, PluginBoardData board) {
+        openTileId = tile.getId();
         detailPanel.show(tile, board);
         cards.show(this, DETAIL_CARD);
     }
 
     private void closeDetail() {
+        openTileId = null;
         cards.show(this, OVERVIEW_CARD);
     }
 
@@ -243,6 +234,7 @@ public class BingoTabPanel extends JPanel {
         if (boards.isEmpty()) {
             return;
         }
+
         String webUrl = boards.get(currentIndex).getWebUrl();
         if (webUrl != null && !webUrl.isEmpty()) {
             LinkBrowser.browse(webUrl);
@@ -251,8 +243,7 @@ public class BingoTabPanel extends JPanel {
 
     private void onRefreshClicked() {
         setRefreshing(true);
-        boardDataService.refresh(() -> SwingUtilities.invokeLater(() ->
-        {
+        boardDataService.refresh(() -> SwingUtilities.invokeLater(() -> {
             setRefreshing(false);
             refresh();
         }));

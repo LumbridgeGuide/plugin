@@ -4,7 +4,7 @@ import javax.swing.JComponent;
 import java.awt.Dimension;
 import java.awt.Graphics;
 
-class Rule extends JComponent {
+public class Rule extends JComponent {
 
     @Override
     public Dimension getPreferredSize() {

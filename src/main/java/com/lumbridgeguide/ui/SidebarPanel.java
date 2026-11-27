@@ -1,20 +1,12 @@
 package com.lumbridgeguide.ui;
 
-import com.lumbridgeguide.LumbridgeGuideConfig;
-import com.lumbridgeguide.account.AccountSyncService;
-import com.lumbridgeguide.account.ui.AccountTabPanel;
-import com.lumbridgeguide.bingo.BoardDataService;
-import com.lumbridgeguide.bingo.ProofService;
-import com.lumbridgeguide.bingo.TileProgressTracker;
+import com.lumbridgeguide.account.ui.AccountFooter;
+import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.ui.BingoTabPanel;
-import com.lumbridgeguide.gear.GearConfigExportService;
-import com.lumbridgeguide.gear.GearTagService;
-import com.lumbridgeguide.gear.TripCheckService;
 import com.lumbridgeguide.gear.ui.GearTabPanel;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.PluginPanel;
 
+import javax.inject.Inject;
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -23,10 +15,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.util.List;
-import java.util.function.BooleanSupplier;
 
 public class SidebarPanel extends PluginPanel {
 
@@ -34,46 +24,36 @@ public class SidebarPanel extends PluginPanel {
     private static final String TABS_CARD = "tabs";
     private static final String BINGO_TAB = "Bingo";
     private static final String GEAR_TAB = "Gear";
-    private static final String ACCOUNT_TAB = "Account";
 
-    private final BooleanSupplier hasApiKey;
+    private final LumbridgeGuideClient apiClient;
     private final JPanel centerPanel;
     private final BingoTabPanel bingoTab;
     private final GearTabPanel gearTab;
+    private final AccountFooter accountFooter;
 
-    public SidebarPanel(
-            BoardDataService boardDataService,
-            TileProgressTracker tileProgressTracker,
-            ProofService proofService,
-            GearTagService gearTagService,
-            GearConfigExportService gearConfigExportService,
-            TripCheckService tripCheckService,
-            AccountSyncService accountSyncService,
-            ItemManager itemManager,
-            SkillIconManager skillIconManager,
-            LumbridgeGuideConfig config,
-            BooleanSupplier hasApiKey) {
+    @Inject
+    public SidebarPanel(BingoTabPanel bingoTab, GearTabPanel gearTab, AccountFooter accountFooter,
+                        LumbridgeGuideClient apiClient) {
         super(false);
-        this.hasApiKey = hasApiKey;
+        this.bingoTab = bingoTab;
+        this.gearTab = gearTab;
+        this.accountFooter = accountFooter;
+        this.apiClient = apiClient;
 
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(8, 8, 8, 8));
         setBackground(Theme.PANEL_BACKGROUND);
 
-        JLabel pluginTitle = Components.label("Lumbridge Guide", 16f, Font.BOLD, Theme.TEXT_PRIMARY);
+        JLabel pluginTitle = Components.label("Lumbridge Guide", Components.BOLD, Theme.TEXT_PRIMARY);
         pluginTitle.setBorder(new EmptyBorder(2, 0, 10, 0));
         add(pluginTitle, BorderLayout.NORTH);
-
-        bingoTab = new BingoTabPanel(boardDataService, tileProgressTracker, proofService, config, itemManager,
-                skillIconManager);
-        gearTab = new GearTabPanel(gearTagService, gearConfigExportService, tripCheckService,
-                config.includeMissingItems());
 
         centerPanel = new JPanel(new CardLayout());
         centerPanel.setOpaque(false);
         centerPanel.add(buildNoKeyCard(), NO_KEY_CARD);
-        centerPanel.add(buildTabsCard(new AccountTabPanel(accountSyncService)), TABS_CARD);
+        centerPanel.add(buildTabsCard(), TABS_CARD);
         add(centerPanel, BorderLayout.CENTER);
+        add(accountFooter, BorderLayout.SOUTH);
 
         refresh();
     }
@@ -83,11 +63,11 @@ public class SidebarPanel extends PluginPanel {
     }
 
     public void refresh() {
-        SwingUtilities.invokeLater(() ->
-        {
-            boolean hasKey = hasApiKey.getAsBoolean();
+        SwingUtilities.invokeLater(() -> {
+            boolean hasKey = apiClient.hasApiKey();
 
             ((CardLayout) centerPanel.getLayout()).show(centerPanel, hasKey ? TABS_CARD : NO_KEY_CARD);
+            accountFooter.setAccountVisible(hasKey);
 
             if (hasKey) {
                 bingoTab.refresh();
@@ -98,15 +78,14 @@ public class SidebarPanel extends PluginPanel {
         });
     }
 
-    private JPanel buildTabsCard(AccountTabPanel accountTab) {
+    private JPanel buildTabsCard() {
         CardLayout tabCards = new CardLayout();
         JPanel display = new JPanel(tabCards);
         display.setOpaque(false);
         display.add(bingoTab, BINGO_TAB);
         display.add(gearTab, GEAR_TAB);
-        display.add(accountTab, ACCOUNT_TAB);
 
-        TabBar tabBar = new TabBar(List.of(BINGO_TAB, GEAR_TAB, ACCOUNT_TAB), TabBar.Style.UNDERLINE,
+        TabBar tabBar = new TabBar(List.of(BINGO_TAB, GEAR_TAB),
                 name -> tabCards.show(display, name));
         tabBar.setBorder(new EmptyBorder(0, 0, 10, 0));
 
@@ -120,12 +99,12 @@ public class SidebarPanel extends PluginPanel {
     private static JPanel buildNoKeyCard() {
         Section card = new Section(0);
 
-        JLabel title = Components.label("API key needed", 15f, Font.BOLD, Theme.TEXT_PRIMARY);
+        JLabel title = Components.label("Plugin key needed", Components.BOLD, Theme.TEXT_PRIMARY);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(title);
         card.add(Box.createVerticalStrut(6));
-        WrapText message = Components.wrapped("Set your API key in the plugin settings to get started.",
-                Components.CONTENT_WIDTH - 12, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        WrapText message = Components.wrapped("Add your plugin key in the plugin settings",
+                Components.CONTENT_WIDTH - 12, Components.REGULAR, Theme.TEXT_SECONDARY);
         message.setCentred(true);
         message.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(message);
@@ -138,7 +117,7 @@ public class SidebarPanel extends PluginPanel {
         };
         for (int index = 0; index < steps.length; index++) {
             WrapText step = Components.wrapped((index + 1) + ".  " + steps[index], Components.CONTENT_WIDTH - 12,
-                    11f, Font.PLAIN, Theme.TEXT_MUTED);
+                    Components.SMALL, Theme.TEXT_MUTED);
             step.setAlignmentX(Component.CENTER_ALIGNMENT);
             card.add(step);
             card.add(Box.createVerticalStrut(3));

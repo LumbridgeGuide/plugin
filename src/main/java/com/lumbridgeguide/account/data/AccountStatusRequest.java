@@ -1,8 +1,10 @@
 package com.lumbridgeguide.account.data;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@Value
+@Data
+@AllArgsConstructor
 public class AccountStatusRequest {
-    long accountHash;
+    private long accountHash;
 }

@@ -13,6 +13,7 @@ import java.util.List;
 public class WrapText extends JComponent {
 
     private final int wrapWidth;
+    private int laidOutWidth;
     private List<String> lines = new ArrayList<>();
     private boolean centred;
     private String text = "";
@@ -48,7 +49,22 @@ public class WrapText extends JComponent {
 
     @Override
     public Dimension getMaximumSize() {
-        return getPreferredSize();
+        return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+    }
+
+    @Override
+    public void setBounds(int x, int y, int width, int height) {
+        super.setBounds(x, y, width, height);
+        if (width <= 0 || width == laidOutWidth) {
+            return;
+        }
+
+        laidOutWidth = width;
+        int lineCount = lines.size();
+        lines = wrapLines();
+        if (lines.size() != lineCount) {
+            revalidate();
+        }
     }
 
     @Override
@@ -60,7 +76,7 @@ public class WrapText extends JComponent {
         FontMetrics metrics = canvas.getFontMetrics();
         int baseline = metrics.getAscent();
         for (String line : lines) {
-            int lineX = centred ? (wrapWidth - metrics.stringWidth(line)) / 2 : 0;
+            int lineX = centred ? (getWidth() - metrics.stringWidth(line)) / 2 : 0;
             canvas.drawString(line, lineX, baseline);
             baseline += metrics.getHeight();
         }
@@ -70,13 +86,16 @@ public class WrapText extends JComponent {
     private List<String> wrapLines() {
         List<String> wrappedLines = new ArrayList<>();
         FontMetrics metrics = getFontMetrics(getFont());
+        int width = laidOutWidth > 0 ? laidOutWidth : wrapWidth;
+
         StringBuilder current = new StringBuilder();
         for (String word : text.split("\\s+")) {
             if (word.isEmpty()) {
                 continue;
             }
+
             String candidate = current.length() == 0 ? word : current + " " + word;
-            if (current.length() > 0 && metrics.stringWidth(candidate) > wrapWidth) {
+            if (current.length() > 0 && metrics.stringWidth(candidate) > width) {
                 wrappedLines.add(current.toString());
                 current = new StringBuilder(word);
             } else {

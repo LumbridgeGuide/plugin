@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+set -e
+cd "$(dirname "$0")/.."
+
+if ! ./gradlew -q spotlessCheck checkstyleMain checkstyleTest; then
+    echo "Pre-commit checks failed. Run ./gradlew spotlessApply, fix any Checkstyle warnings, stage and commit again."
+    exit 1
+fi

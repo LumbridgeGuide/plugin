@@ -17,7 +17,6 @@ import net.runelite.client.util.Text;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 @Singleton
@@ -35,15 +34,20 @@ public class TeamChatPrefixService {
     private final LumbridgeGuideConfig config;
     private final BoardDataService boardDataService;
 
+    private String shownPrefix;
+
     @Subscribe
     public void onChatMessage(ChatMessage chatMessage) {
         if (!config.showTeamPrefix() || !PREFIXED_TYPES.contains(chatMessage.getType())
-                || client.getLocalPlayer() == null) return;
-
-        if (!isOwnName(client.getLocalPlayer().getName(), chatMessage.getName())) return;
+                || client.getLocalPlayer() == null
+                || !isOwnName(client.getLocalPlayer().getName(), chatMessage.getName())) {
+            return;
+        }
 
         String prefix = ownTeamPrefix();
-        if (prefix == null) return;
+        if (prefix == null) {
+            return;
+        }
 
         MessageNode messageNode = chatMessage.getMessageNode();
         messageNode.setName(prefix + messageNode.getName());
@@ -51,29 +55,34 @@ public class TeamChatPrefixService {
 
     @Subscribe
     public void onGameTick(GameTick tick) {
-        if (!config.showTeamPrefix()) return;
-
         Widget chatboxInput = client.getWidget(InterfaceID.Chatbox.INPUT);
-        if (chatboxInput == null || client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null)
+        if (!config.showTeamPrefix() || chatboxInput == null || chatboxInput.getText() == null
+                || client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null) {
             return;
+        }
 
-        String prefix = ownTeamPrefix();
-        if (prefix == null) return;
-
-        String playerName = client.getLocalPlayer().getName();
         String currentText = chatboxInput.getText();
-        if (currentText != null && currentText.contains(playerName) && !currentText.contains(prefix)) {
-            chatboxInput.setText(currentText.replace(playerName + ":", prefix + playerName + ":"));
+        String prefix = ownTeamPrefix();
+        String updatedText = withPrefix(currentText, client.getLocalPlayer().getName(), shownPrefix, prefix);
+        shownPrefix = prefix;
+        if (!updatedText.equals(currentText)) {
+            chatboxInput.setText(updatedText);
         }
     }
 
-    static boolean isOwnName(String localName, String chatName) {
+    private static boolean isOwnName(String localName, String chatName) {
         return localName != null && chatName != null && Text.sanitize(localName).equals(Text.sanitize(chatName));
     }
 
+    private static String withPrefix(String text, String playerName, String oldPrefix, String newPrefix) {
+        String label = playerName + ":";
+        String plain = oldPrefix == null ? text : text.replace(oldPrefix + label, label);
+        return newPrefix == null ? plain : plain.replace(label, newPrefix + label);
+    }
+
     private String ownTeamPrefix() {
-        List<PluginBoardData> boards = boardDataService.getBoards();
-        PluginTeamData team = boards.isEmpty() ? null : boards.get(0).getMyTeam();
+        PluginBoardData board = boardDataService.getSelectedBoard();
+        PluginTeamData team = board == null ? null : board.getMyTeam();
         return team == null || team.getName() == null ? null : TeamChatPrefix.of(team.getName(), team.getColor());
     }
 }

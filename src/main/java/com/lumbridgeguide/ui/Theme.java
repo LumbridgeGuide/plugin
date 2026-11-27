@@ -69,7 +69,7 @@ public class Theme {
                 Math.round(colour.getBlue() * 0.88f));
     }
 
-    public static Color parseTeamColor(String hex) {
+    public static Color parseTeamColour(String hex) {
         if (hex == null || hex.isEmpty()) {
             return TEXT_MUTED;
         }

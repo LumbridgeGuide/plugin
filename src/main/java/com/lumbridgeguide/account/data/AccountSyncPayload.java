@@ -1,33 +1,22 @@
 package com.lumbridgeguide.account.data;
 
 import lombok.Builder;
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.util.List;
 import java.util.Set;
 
-@Value
+@Data
+@AllArgsConstructor
 @Builder(toBuilder = true)
 public class AccountSyncPayload {
-    long accountHash;
-    String displayName;
-    String accountType;
-    Set<String> worldTypes;
-    boolean manual;
-    List<SkillEntry> skills;
-    Integer questPoints;
-    List<QuestEntry> quests;
-
-    @Value
-    public static class SkillEntry {
-        String skill;
-        int level;
-        int experience;
-    }
-
-    @Value
-    public static class QuestEntry {
-        String name;
-        String state;
-    }
+    private long accountHash;
+    private String displayName;
+    private String accountType;
+    private Set<String> worldTypes;
+    private boolean manual;
+    private List<SkillEntry> skills;
+    private Integer questPoints;
+    private List<QuestEntry> quests;
 }

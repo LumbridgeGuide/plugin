@@ -6,10 +6,9 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ApiResponse {
-    private final int statusCode;
-    private final String body;
 
-    public static ApiResponse error(int statusCode, String message) {
-        return new ApiResponse(statusCode, message);
-    }
+    public static final int NETWORK_ERROR = -1;
+
+    private int statusCode;
+    private String body;
 }

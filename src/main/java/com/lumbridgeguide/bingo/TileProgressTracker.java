@@ -3,16 +3,15 @@ package com.lumbridgeguide.bingo;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lumbridgeguide.LumbridgeGuideConfig;
+import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.NPC;
-import net.runelite.api.Skill;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -30,8 +29,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -42,13 +41,6 @@ public class TileProgressTracker {
     public static final String BASELINE_KEY_PREFIX = "tileProgressBaseline.";
     private static final Duration REPORT_INTERVAL = Duration.ofMinutes(1);
     private static final Type BASELINE_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
-
-    @Value
-    public static class XpReading {
-        Skill skill;
-        Long gained;
-        long total;
-    }
 
     private final Client client;
     private final LumbridgeGuideConfig config;
@@ -66,7 +58,7 @@ public class TileProgressTracker {
         this.config = config;
         this.boardDataService = boardDataService;
         this.apiClient = apiClient;
-        this.counter = new TileProgressCounter(new TileProgressCounter.BaselineStore() {
+        this.counter = new TileProgressCounter(new BaselineStore() {
             @Override
             public Map<String, Long> load(String boardId) {
                 String json = configManager.getRSProfileConfiguration(LumbridgeGuideConfig.CONFIG_GROUP,
@@ -83,24 +75,21 @@ public class TileProgressTracker {
         });
     }
 
-    /** Called on the client thread when tracked progress first reaches a tile's target */
-    public void setOnTargetReached(BiConsumer<PluginBoardData, PluginTileData> listener) {
+    public void setOnTargetReached(BiConsumer<Map.Entry<PluginBoardData, PluginTileData>, Detection> listener) {
         counter.setOnTargetReached(listener);
     }
 
-    public OptionalLong progressFor(String tileId) {
+    public Long progressFor(String tileId) {
         return counter.progressFor(tileId);
     }
 
-    /** Gained is null when tracking never took a baseline for the tile */
     public Optional<XpReading> xpReading(PluginBoardData board, PluginTileData tile) {
-        return TileProgressCounter.skillOf(tile).map(skill -> {
+        return tile.skill().map(skill -> {
             long total = client.getSkillExperience(skill);
             return new XpReading(skill, counter.xpGained(board.getId(), tile.getId(), total), total);
         });
     }
 
-    /** Forgets that a tile's target was reached, so the next reading at or past it completes it again */
     public void rearm(String tileId) {
         counter.rearm(tileId);
     }
@@ -122,7 +111,7 @@ public class TileProgressTracker {
                 || !config.trackTileProgress()) {
             return;
         }
-        TileProgressCounter.parseKillCount(event.getMessage())
+        KillCount.parse(event.getMessage())
                 .ifPresent(killCount -> counter.killCountSeen(boardDataService.getRunningBoards(), killCount));
     }
 
@@ -149,14 +138,14 @@ public class TileProgressTracker {
             for (String tileId : tileIds) {
                 Map<String, Object> entry = new HashMap<>();
                 entry.put("tileId", tileId);
-                entry.put("progress", counter.progressFor(tileId).orElse(0L));
+                entry.put("progress", Objects.requireNonNullElse(counter.progressFor(tileId), 0L));
                 entries.add(entry);
             }
             apiClient.post("/plugin/bingo/" + boardId + "/progress", Map.of("entries", entries),
                     response -> { },
                     response -> {
                         log.debug("Progress report failed with status {}", response.getStatusCode());
-                        if (response.getStatusCode() == -1 || response.getStatusCode() >= 500) {
+                        if (response.getStatusCode() == ApiResponse.NETWORK_ERROR || response.getStatusCode() >= 500) {
                             counter.markChanged(boardId, tileIds);
                         }
                     });

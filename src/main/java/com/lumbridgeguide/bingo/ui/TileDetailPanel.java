@@ -5,7 +5,9 @@ import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginProgressData;
 import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
+import com.lumbridgeguide.bingo.data.ProofStatus;
 import com.lumbridgeguide.bingo.data.TileItemEntry;
+import com.lumbridgeguide.bingo.data.TileType;
 import com.lumbridgeguide.ui.Badge;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.IconWell;
@@ -25,9 +27,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
+import java.awt.image.BufferedImage;
 import java.util.List;
-import java.util.OptionalLong;
 import java.util.function.BiConsumer;
 
 public class TileDetailPanel extends JPanel {
@@ -39,7 +40,7 @@ public class TileDetailPanel extends JPanel {
     private final BiConsumer<PluginTileData, PluginBoardData> onSendProof;
     private final Section content;
 
-    TileDetailPanel(TileIcons icons, TileProgressTracker progressTracker, Runnable onClose,
+    public TileDetailPanel(TileIcons icons, TileProgressTracker progressTracker, Runnable onClose,
                     BiConsumer<PluginTileData, PluginBoardData> onSendProof) {
         super(new BorderLayout(0, 10));
         this.icons = icons;
@@ -49,7 +50,7 @@ public class TileDetailPanel extends JPanel {
 
         JButton closeButton = Components.linkButton("‹  Tiles");
         closeButton.setForeground(Theme.TEXT_SECONDARY);
-        closeButton.setFont(Components.font(12f, Font.PLAIN));
+        closeButton.setFont(Components.REGULAR);
         closeButton.addActionListener(event -> onClose.run());
 
         content = new Section(0);
@@ -67,12 +68,12 @@ public class TileDetailPanel extends JPanel {
 
         addHeader(tile, board);
         if (tile.getDescription() != null && !tile.getDescription().isEmpty()) {
-            addRow(Components.wrapped(tile.getDescription(), TEXT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_SECONDARY), 10);
+            addRow(Components.wrapped(tile.getDescription(), TEXT_WIDTH, Components.REGULAR, Theme.TEXT_SECONDARY), 10);
         }
         addProgress(tile);
         addGoal(tile);
         addClaimedBy(tile, board);
-        addProof(tile, board);
+        addProof(tile);
         addActions(tile, board);
 
         revalidate();
@@ -89,7 +90,7 @@ public class TileDetailPanel extends JPanel {
         JPanel text = new JPanel();
         text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
         text.setOpaque(false);
-        JComponent title = Components.wrapped(tile.getTitle(), TEXT_WIDTH - 50, 14f, Font.BOLD, Theme.TEXT_PRIMARY);
+        JComponent title = Components.wrapped(tile.getTitle(), TEXT_WIDTH - 50, Components.BOLD, Theme.TEXT_PRIMARY);
         title.setAlignmentX(LEFT_ALIGNMENT);
         text.add(title);
         text.add(Box.createVerticalStrut(5));
@@ -112,15 +113,15 @@ public class TileDetailPanel extends JPanel {
     }
 
     private void addProgress(PluginTileData tile) {
-        long target = TileState.target(tile);
+        long target = tile.target();
         if (target <= 0) {
             return;
         }
-        boolean killCount = "kill_count".equals(tile.getType());
+        boolean killCount = tile.getType() == TileType.KILL_COUNT;
         List<PluginProgressData> team = tile.getProgress() == null ? List.of() : tile.getProgress();
-        OptionalLong tracked = progressTracker == null ? OptionalLong.empty() : progressTracker.progressFor(tile.getId());
+        Long tracked = progressTracker.progressFor(tile.getId());
         long mine = TileState.myProgress(tile, tracked);
-        boolean tracking = progressTracker != null && progressTracker.isTracking();
+        boolean tracking = progressTracker.isTracking();
 
         addRow(Components.sectionHeader("Your progress"), 16);
 
@@ -128,9 +129,8 @@ public class TileDetailPanel extends JPanel {
         ((FlowLayout) count.getLayout()).setAlignOnBaseline(true);
         count.setOpaque(false);
         count.setBorder(new EmptyBorder(0, -6, 0, 0));
-        count.add(Components.label(String.format("%,d", mine), 22f, Font.BOLD, Theme.TEXT_PRIMARY));
-        count.add(Components.label("of " + String.format("%,d", target) + (killCount ? " kills" : " XP"), 12f,
-                Font.PLAIN, Theme.TEXT_SECONDARY));
+        count.add(Components.label(String.format("%,d", mine), Components.BOLD, Theme.TEXT_PRIMARY));
+        count.add(Components.label("of " + String.format("%,d", target) + (killCount ? " kills" : " XP"), Components.REGULAR, Theme.TEXT_SECONDARY));
         addRow(count, 8);
 
         ProgressBar bar = new ProgressBar();
@@ -138,7 +138,7 @@ public class TileDetailPanel extends JPanel {
         addRow(bar, 6);
         if (!tracking) {
             addRow(Components.wrapped("Turn on Track tile progress in the plugin settings to count this.",
-                    TEXT_WIDTH, 11f, Font.PLAIN, Theme.TEXT_MUTED), 6);
+                    TEXT_WIDTH, Components.SMALL, Theme.TEXT_MUTED), 6);
         }
 
         if (team.size() > 1) {
@@ -146,11 +146,11 @@ public class TileDetailPanel extends JPanel {
             for (PluginProgressData teammate : team) {
                 JPanel row = new JPanel(new BorderLayout());
                 row.setOpaque(false);
-                row.add(Components.label(teammate.isMine() ? "You" : teammate.getName(), 12f,
-                        teammate.isMine() ? Font.BOLD : Font.PLAIN,
+                row.add(Components.label(teammate.isMine() ? "You" : teammate.getName(),
+                        teammate.isMine() ? Components.BOLD : Components.REGULAR,
                         teammate.isMine() ? Theme.TEXT_PRIMARY : Theme.TEXT_SECONDARY), BorderLayout.WEST);
                 row.add(Components.label(String.format("%,d", teammate.isMine() ? mine : teammate.getProgress()),
-                        11f, Font.PLAIN, Theme.TEXT_SECONDARY), BorderLayout.EAST);
+                        Components.SMALL, Theme.TEXT_SECONDARY), BorderLayout.EAST);
                 addRow(row, 6);
             }
         }
@@ -166,7 +166,7 @@ public class TileDetailPanel extends JPanel {
         }
     }
 
-    private static JPanel iconRow(java.awt.image.BufferedImage image, String text) {
+    private static JPanel iconRow(BufferedImage image, String text) {
         IconWell icon = new IconWell(24);
         icon.setImage(image);
         JPanel holder = new JPanel(new BorderLayout());
@@ -178,7 +178,7 @@ public class TileDetailPanel extends JPanel {
         JPanel textHolder = new JPanel(new BorderLayout());
         textHolder.setOpaque(false);
         textHolder.setBorder(new EmptyBorder(4, 0, 0, 0));
-        textHolder.add(Components.wrapped(text, TEXT_WIDTH - 34, 12f, Font.PLAIN, Theme.TEXT_PRIMARY),
+        textHolder.add(Components.wrapped(text, TEXT_WIDTH - 34, Components.REGULAR, Theme.TEXT_PRIMARY),
                 BorderLayout.NORTH);
         row.add(textHolder, BorderLayout.CENTER);
         return row;
@@ -189,15 +189,15 @@ public class TileDetailPanel extends JPanel {
             return;
         }
         addRow(Components.sectionHeader("Claimed by"), 16);
-        boolean mine = TileState.isMine(tile, board);
+        boolean mine = tile.isClaimedBy(board.getMyTeam());
         PluginTeamData team = board.getMyTeam();
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         row.setOpaque(false);
         row.setBorder(new EmptyBorder(0, -6, 0, 0));
-        JLabel name = Components.label(mine ? team.getName() : TileState.claimingTeamName(tile, board), 12f,
-                Font.PLAIN, Theme.TEXT_PRIMARY);
+        JLabel name = Components.label(mine ? team.getName() : TileState.claimingTeamName(tile),
+                Components.REGULAR, Theme.TEXT_PRIMARY);
         if (mine) {
-            name.setIcon(new SwatchIcon(Theme.parseTeamColor(team.getColor())));
+            name.setIcon(new SwatchIcon(Theme.parseTeamColour(team.getColor())));
             name.setIconTextGap(6);
         }
         row.add(name);
@@ -207,17 +207,17 @@ public class TileDetailPanel extends JPanel {
         addRow(row, 8);
     }
 
-    private void addProof(PluginTileData tile, PluginBoardData board) {
-        String status = tile.getProofStatus();
+    private void addProof(PluginTileData tile) {
+        ProofStatus status = tile.getProofStatus();
         if (status == null) {
             return;
         }
         Badge badge;
         switch (status) {
-            case "PENDING":
+            case PENDING:
                 badge = Badge.status("Waiting for review", Theme.WARNING);
                 break;
-            case "REJECTED":
+            case REJECTED:
                 badge = Badge.status("Not accepted", Theme.ERROR);
                 break;
             default:
@@ -233,14 +233,14 @@ public class TileDetailPanel extends JPanel {
 
     private void addActions(PluginTileData tile, PluginBoardData board) {
         PluginTeamData team = board.getMyTeam();
-        boolean mine = TileState.isMine(tile, board);
-        if (team != null && !mine && board.getVerificationCode() != null) {
+        boolean mine = tile.isClaimedBy(board.getMyTeam());
+        if (team != null && !mine && !tile.isProofPending() && board.getVerificationCode() != null) {
             JButton sendProof = Components.fullWidthButton("Send proof");
             sendProof.addActionListener(event -> onSendProof.accept(tile, board));
             addRow(sendProof, 18);
         }
         if (board.getWebUrl() != null && !board.getWebUrl().isEmpty()) {
-            JButton open = Components.secondaryButton(mine ? "Open proof on the website" : "Open on the website");
+            JButton open = Components.secondaryButton("Open on the website");
             open.setMaximumSize(new Dimension(Integer.MAX_VALUE, open.getPreferredSize().height));
             open.addActionListener(event -> LinkBrowser.browse(board.getWebUrl() + "?tile=" + tile.getId()));
             addRow(open, mine ? 18 : 6);

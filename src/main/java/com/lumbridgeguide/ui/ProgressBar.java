@@ -11,7 +11,7 @@ public class ProgressBar extends JComponent {
 
     private final int height;
     private double fraction;
-    private Color color;
+    private Color colour;
 
     public ProgressBar() {
         this(4);
@@ -22,9 +22,9 @@ public class ProgressBar extends JComponent {
         setAlignmentX(LEFT_ALIGNMENT);
     }
 
-    public void setProgress(double newFraction, Color newColor) {
+    public void setProgress(double newFraction, Color newColour) {
         fraction = Math.max(0, Math.min(1, newFraction));
-        color = newColor;
+        colour = newColour;
         repaint();
     }
 
@@ -45,8 +45,8 @@ public class ProgressBar extends JComponent {
         canvas.setColor(Theme.BORDER_SUBTLE);
         canvas.fillRoundRect(0, 0, getWidth(), height, Theme.ARC, Theme.ARC);
         int filled = (int) Math.round(getWidth() * fraction);
-        if (filled > 0 && color != null) {
-            canvas.setColor(color);
+        if (filled > 0 && colour != null) {
+            canvas.setColor(colour);
             canvas.fillRoundRect(0, 0, filled, height, Theme.ARC, Theme.ARC);
         }
         canvas.dispose();
