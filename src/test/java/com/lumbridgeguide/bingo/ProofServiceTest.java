@@ -32,16 +32,14 @@ public class ProofServiceTest {
             (syncResponse.getStatusCode() == 200 ? onSuccess : onFailure).accept(syncResponse);
         }
     };
-    private final BoardDataService boards = new BoardDataService(client, new Gson(), null,
-            new BingoChatAnnouncer(null, null));
+    private final BoardDataService boards = new BoardDataService(client, null, new BingoChatAnnouncer(null, null));
     private final ProofService proofService = new ProofService(null, boards, client, null, null, null,
-            new TileProgressTracker(null, null, null, null, null, null), null, null, null, null, null, null,
-            new Gson());
+            new TileProgressTracker(null, null, null, null, null, null), null, null, null, null, null, null);
 
     @Test
     public void keepsQueuedProofWhenTheApiKeyIsRejected() {
         PluginBoardData board = runningBoard();
-        ProofService.Offer offer = offer(board);
+        ProofOffer offer = offer(board);
         sync(200, "{\"changed\":true,\"cursor\":1,\"versions\":{\"board\":1},\"boards\":["
                 + new Gson().toJson(board) + "]}");
 
@@ -52,7 +50,7 @@ public class ProofServiceTest {
 
     @Test
     public void dropsQueuedProofOnceItsBoardHasEnded() {
-        ProofService.Offer offer = offer(runningBoard());
+        ProofOffer offer = offer(runningBoard());
 
         sync(200, "{\"changed\":true,\"cursor\":1,\"versions\":{},\"boards\":[]}");
 
@@ -78,8 +76,8 @@ public class ProofServiceTest {
         return board;
     }
 
-    private static ProofService.Offer offer(PluginBoardData board) {
-        return new ProofService.Offer("offer", board, board.getTiles().get(0), "Drop matched a tile", null, null,
+    private static ProofOffer offer(PluginBoardData board) {
+        return new ProofOffer("offer", board, board.getTiles().get(0), "Drop received", null, null,
                 null, null, -1, null);
     }
 }

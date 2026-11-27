@@ -8,8 +8,6 @@ import java.util.List;
 public class PluginBoardData {
     private String id;
     private String title;
-    private String description;
-    private int gridSize;
     private String startsAt;
     private String endsAt;
     private String verificationCode;
@@ -17,7 +15,6 @@ public class PluginBoardData {
     private String webUrl;
     private PluginTeamData myTeam;
     private List<PluginTileData> tiles;
-    /** Null when the player has no team or the board hides standings during play */
     private PluginTeamSummary teamSummary;
 
     public List<PluginTileData> tiles() {

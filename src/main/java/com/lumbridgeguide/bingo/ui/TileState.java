@@ -2,7 +2,6 @@ package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginProgressData;
-import com.lumbridgeguide.bingo.data.PluginTeamData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import lombok.experimental.UtilityClass;
 
@@ -10,26 +9,20 @@ import java.util.Locale;
 import java.util.OptionalLong;
 
 @UtilityClass
-class TileState {
+public class TileState {
 
-    static boolean isMine(PluginTileData tile, PluginBoardData board) {
-        PluginTeamData team = board.getMyTeam();
-        return tile.isClaimed() && team != null && team.getId() != null
-                && team.getId().equals(tile.getClaimedByTeamId());
-    }
-
-    static String claimingTeamName(PluginTileData tile) {
+    public static String claimingTeamName(PluginTileData tile) {
         return tile.getClaimedByTeamName() != null ? tile.getClaimedByTeamName() : "another team";
     }
 
-    static String pointsLabel(PluginTileData tile, PluginBoardData board) {
+    public static String pointsLabel(PluginTileData tile, PluginBoardData board) {
         if (!board.isTilePointsEnabled() || tile.getPoints() <= 0) {
             return null;
         }
         return tile.getPoints() + (tile.getPoints() == 1 ? " point" : " points");
     }
 
-    static long myProgress(PluginTileData tile, OptionalLong tracked) {
+    public static long myProgress(PluginTileData tile, OptionalLong tracked) {
         if (tracked.isPresent()) {
             return tracked.getAsLong();
         }
@@ -40,7 +33,7 @@ class TileState {
                 .mapToLong(PluginProgressData::getProgress).findFirst().orElse(0);
     }
 
-    static String progressText(PluginTileData tile, OptionalLong tracked) {
+    public static String progressText(PluginTileData tile, OptionalLong tracked) {
         long target = tile.target();
         if (target <= 0) {
             return "";
@@ -48,7 +41,7 @@ class TileState {
         return compact(myProgress(tile, tracked)) + " / " + compact(target);
     }
 
-    static String compact(long value) {
+    public static String compact(long value) {
         if (value >= 1_000_000) {
             return trim(value / 1_000_000.0) + "m";
         }

@@ -7,17 +7,16 @@ import javax.swing.JPanel;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 
 public class EmptyState extends Section {
 
     public EmptyState(String title, String message, JButton... actions) {
         super(16);
 
-        JLabel titleLabel = Components.label(title, 14f, Font.BOLD, Theme.TEXT_PRIMARY);
+        JLabel titleLabel = Components.label(title, Components.BOLD, Theme.TEXT_PRIMARY);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        WrapText messageText = Components.wrapped(message, Components.CONTENT_WIDTH - 40, 12f, Font.PLAIN,
+        WrapText messageText = Components.wrapped(message, Components.CONTENT_WIDTH - 40, Components.REGULAR,
                 Theme.TEXT_SECONDARY);
         messageText.setAlignmentX(Component.CENTER_ALIGNMENT);
         messageText.setCentred(true);

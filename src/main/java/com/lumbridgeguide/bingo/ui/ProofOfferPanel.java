@@ -1,5 +1,6 @@
 package com.lumbridgeguide.bingo.ui;
 
+import com.lumbridgeguide.bingo.ProofOffer;
 import com.lumbridgeguide.bingo.ProofService;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
@@ -23,24 +24,25 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
-class ProofOfferPanel extends Section {
+public class ProofOfferPanel extends Section {
 
     private static final int THUMBNAIL_WIDTH = Components.CONTENT_WIDTH - 2;
 
     private final ProofService proofService;
+    private final Runnable onSent;
     private String lastResult;
     private String shownOfferId;
     private JLabel countLabel;
 
-    ProofOfferPanel(ProofService proofService) {
+    public ProofOfferPanel(ProofService proofService, Runnable onSent) {
         super(0);
         setBorder(new EmptyBorder(0, 0, 14, 0));
         this.proofService = proofService;
+        this.onSent = onSent;
         setVisible(false);
     }
 
-    /** Called on the Swing thread whenever the queue changes */
-    void showQueue(List<ProofService.Offer> queue) {
+    public void showQueue(List<ProofOffer> queue) {
         if (queue.isEmpty()) {
             shownOfferId = null;
             removeAll();
@@ -54,7 +56,7 @@ class ProofOfferPanel extends Section {
             refresh();
             return;
         }
-        ProofService.Offer offer = queue.get(0);
+        ProofOffer offer = queue.get(0);
         if (offer.getId().equals(shownOfferId)) {
             updateCount(queue.size());
             return;
@@ -63,7 +65,7 @@ class ProofOfferPanel extends Section {
         render(offer, queue.size());
     }
 
-    private void render(ProofService.Offer offer, int waiting) {
+    private void render(ProofOffer offer, int waiting) {
         removeAll();
         if (lastResult != null) {
             add(result(lastResult));
@@ -72,7 +74,7 @@ class ProofOfferPanel extends Section {
         }
 
         addOfferDetails(offer, waiting);
-        WrapText status = Components.wrapped(" ", THUMBNAIL_WIDTH, 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        WrapText status = Components.wrapped(" ", THUMBNAIL_WIDTH, Components.SMALL, Theme.TEXT_MUTED);
         add(buttons(offer, status));
         add(Box.createVerticalStrut(6));
         add(status);
@@ -81,27 +83,27 @@ class ProofOfferPanel extends Section {
         refresh();
     }
 
-    private void addOfferDetails(ProofService.Offer offer, int waiting) {
+    private void addOfferDetails(ProofOffer offer, int waiting) {
         PluginBoardData board = offer.getBoard();
         PluginTileData tile = offer.getTile();
-        countLabel = Components.label(countText(waiting), 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        countLabel = Components.label(countText(waiting), Components.SMALL, Theme.TEXT_MUTED);
         add(Components.sectionHeader("Proof to send", countLabel));
         add(Box.createVerticalStrut(8));
-        add(Components.wrapped(offer.getReason(), THUMBNAIL_WIDTH, 12f, Font.BOLD, Theme.TEXT_PRIMARY));
+        add(Components.wrapped(offer.getReason(), THUMBNAIL_WIDTH, Components.BOLD, Theme.TEXT_PRIMARY));
         add(Box.createVerticalStrut(2));
         String points = board.isTilePointsEnabled() && tile.getPoints() > 0 ? "  ·  " + tile.getPoints() + " pts" : "";
-        add(Components.wrapped(tile.getTitle() + points + "  ·  " + board.getTitle(), THUMBNAIL_WIDTH, 11f,
-                Font.PLAIN, Theme.TEXT_SECONDARY));
+        add(Components.wrapped(tile.getTitle() + points + "  ·  " + board.getTitle(), THUMBNAIL_WIDTH,
+                Components.SMALL, Theme.TEXT_SECONDARY));
         add(Box.createVerticalStrut(8));
         add(thumbnail(offer.getScreenshot()));
         add(Box.createVerticalStrut(10));
     }
 
-    private JPanel buttons(ProofService.Offer offer, WrapText status) {
+    private JPanel buttons(ProofOffer offer, WrapText status) {
         JButton submit = Components.primaryButton("Send proof");
         JButton dismiss = Components.secondaryButton("Not now");
         submit.addActionListener(event -> send(offer, submit, dismiss, status));
-        dismiss.addActionListener(event -> proofService.dismiss(offer));
+        dismiss.addActionListener(event -> proofService.remove(offer));
 
         JPanel buttons = new JPanel(new GridLayout(1, 2, 6, 0));
         buttons.setOpaque(false);
@@ -112,16 +114,19 @@ class ProofOfferPanel extends Section {
         return buttons;
     }
 
-    private void send(ProofService.Offer offer, JButton submit, JButton dismiss, WrapText status) {
+    private void send(ProofOffer offer, JButton submit, JButton dismiss, WrapText status) {
         submit.setEnabled(false);
         dismiss.setEnabled(false);
         submit.setText("Sending...");
         proofService.submit(offer, message -> SwingUtilities.invokeLater(() -> {
             if (proofService.getQueue().stream().noneMatch(queued -> queued.getId().equals(offer.getId()))) {
                 lastResult = offer.getTile().getTitle() + ": " + message;
+                shownOfferId = null;
                 showQueue(proofService.getQueue());
+                onSent.run();
                 return;
             }
+
             status.setText(message);
             submit.setText("Try again");
             submit.setEnabled(true);
@@ -140,7 +145,7 @@ class ProofOfferPanel extends Section {
     }
 
     private static WrapText result(String text) {
-        return Components.wrapped(text, THUMBNAIL_WIDTH, 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        return Components.wrapped(text, THUMBNAIL_WIDTH, Components.SMALL, Theme.TEXT_SECONDARY);
     }
 
     private void refresh() {

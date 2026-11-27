@@ -1,53 +1,37 @@
 package com.lumbridgeguide.account;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import lombok.Value;
+import lombok.experimental.UtilityClass;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class AccountStatusText {
+@UtilityClass
+public class AccountStatusText {
 
-    public enum Tone {
-        SUCCESS,
-        WARNING,
-        ERROR,
-        MUTED
-    }
+    public static final StatusLine LOGGED_OUT =
+            new StatusLine("Log in to sync this account", "", StatusTone.MUTED, AccountAction.NONE);
 
-    @Value
-    static class Line {
-        String headline;
-        String detail;
-        Tone tone;
-        AccountAction action;
-    }
-
-    static final Line LOGGED_OUT = new Line("Log in to sync this account", "", Tone.MUTED, AccountAction.NONE);
-
-    static Line forStatus(String status) {
+    public static StatusLine forStatus(String status) {
         if (status == null) {
-            return new Line("Checking link status...", "", Tone.MUTED, AccountAction.NONE);
+            return new StatusLine("Link not checked", "", StatusTone.MUTED, AccountAction.REFRESH);
         }
         switch (status) {
             case "LINKED":
-                return new Line("Linked", "", Tone.SUCCESS, AccountAction.SYNC);
+                return new StatusLine("Linked", "", StatusTone.SUCCESS, AccountAction.SYNC);
             case "NOT_LINKED":
-                return new Line("Not linked", "", Tone.MUTED, AccountAction.LINK);
+                return new StatusLine("Not linked", "", StatusTone.MUTED, AccountAction.LINK);
             case "LIMIT_REACHED":
-                return new Line("Account limit reached", "Manage your accounts on the website.", Tone.WARNING,
-                        AccountAction.REFRESH);
+                return new StatusLine("Account limit reached", "Manage your accounts on the website",
+                        StatusTone.WARNING, AccountAction.REFRESH);
             case "LOCKED":
-                return new Line("Account locked", "Locked on your current plan. Manage it on the website.",
-                        Tone.WARNING, AccountAction.REFRESH);
+                return new StatusLine("Account locked", "Over your plan's account limit. Manage it on the website",
+                        StatusTone.WARNING, AccountAction.REFRESH);
             case "LINKED_ELSEWHERE":
-                return new Line("Linked elsewhere", "This account is linked to another Lumbridge Guide user.",
-                        Tone.ERROR, AccountAction.REFRESH);
+                return new StatusLine("Linked elsewhere", "This account is linked to another Lumbridge Guide user",
+                        StatusTone.ERROR, AccountAction.REFRESH);
             default:
-                return new Line("Unknown link status", "", Tone.MUTED, AccountAction.REFRESH);
+                return new StatusLine("Unknown link status", "", StatusTone.MUTED, AccountAction.REFRESH);
         }
     }
 
-    static String impliedLinkStatus(String errorCode) {
+    public static String impliedLinkStatus(String errorCode) {
         if (errorCode == null) {
             return null;
         }
@@ -62,25 +46,6 @@ public final class AccountStatusText {
                 return "NOT_LINKED";
             default:
                 return null;
-        }
-    }
-
-    static String accountTypeForIronmanVarbit(int ironmanVarbit) {
-        switch (ironmanVarbit) {
-            case 1:
-                return "IRONMAN";
-            case 2:
-                return "ULTIMATE_IRONMAN";
-            case 3:
-                return "HARDCORE_IRONMAN";
-            case 4:
-                return "GROUP_IRONMAN";
-            case 5:
-                return "HARDCORE_GROUP_IRONMAN";
-            case 6:
-                return "UNRANKED_GROUP_IRONMAN";
-            default:
-                return "MAIN";
         }
     }
 }

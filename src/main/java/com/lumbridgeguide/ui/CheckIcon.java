@@ -12,17 +12,17 @@ public class CheckIcon implements Icon {
 
     private static final int SIZE = 14;
 
-    private final Color color;
+    private final Color colour;
 
-    public CheckIcon(Color color) {
-        this.color = color;
+    public CheckIcon(Color colour) {
+        this.colour = colour;
     }
 
     @Override
     public void paintIcon(Component component, Graphics graphics, int x, int y) {
         Graphics2D canvas = (Graphics2D) graphics.create();
         canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        canvas.setColor(color);
+        canvas.setColor(colour);
         canvas.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         canvas.drawLine(x + 2, y + 7, x + 6, y + 11);
         canvas.drawLine(x + 6, y + 11, x + 12, y + 3);

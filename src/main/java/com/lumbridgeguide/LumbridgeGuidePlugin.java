@@ -46,6 +46,7 @@ public class LumbridgeGuidePlugin extends Plugin {
     protected void startUp() {
         log.debug("Lumbridge Guide started");
         accountSyncService.startUp();
+        proofService.startUp();
         eventSubscribers().forEach(eventBus::register);
         sidebarController.startUp();
     }
@@ -64,7 +65,7 @@ public class LumbridgeGuidePlugin extends Plugin {
     }
 
     @Provides
-    LumbridgeGuideConfig provideConfig(ConfigManager configManager) {
+    public LumbridgeGuideConfig provideConfig(ConfigManager configManager) {
         return configManager.getConfig(LumbridgeGuideConfig.class);
     }
 }

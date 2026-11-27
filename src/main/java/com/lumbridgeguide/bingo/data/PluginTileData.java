@@ -35,6 +35,10 @@ public class PluginTileData {
         return proofStatus == ProofStatus.REJECTED;
     }
 
+    public boolean isClaimedBy(PluginTeamData team) {
+        return claimed && team != null && team.getId() != null && team.getId().equals(claimedByTeamId);
+    }
+
     public long target() {
         if (type == TileType.KILL_COUNT) {
             return killCount == null ? 0 : killCount;

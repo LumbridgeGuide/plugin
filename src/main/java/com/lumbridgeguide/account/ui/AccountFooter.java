@@ -1,8 +1,9 @@
 package com.lumbridgeguide.account.ui;
 
 import com.lumbridgeguide.account.AccountAction;
-import com.lumbridgeguide.account.AccountStatusText;
 import com.lumbridgeguide.account.AccountSyncService;
+import com.lumbridgeguide.account.AccountView;
+import com.lumbridgeguide.account.StatusTone;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.DotIcon;
@@ -11,6 +12,7 @@ import com.lumbridgeguide.ui.Theme;
 import com.lumbridgeguide.ui.WrapText;
 import net.runelite.client.util.LinkBrowser;
 
+import javax.inject.Inject;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -24,7 +26,6 @@ import javax.swing.border.MatteBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 
 public class AccountFooter extends JPanel {
 
@@ -37,9 +38,10 @@ public class AccountFooter extends JPanel {
     private final JButton actionLink;
     private final WrapText detailText;
     private final JLabel syncedLabel;
-    private AccountSyncService.AccountView view;
+    private AccountView view;
     private boolean linking;
 
+    @Inject
     public AccountFooter(AccountSyncService accountSyncService) {
         this.accountSyncService = accountSyncService;
 
@@ -47,7 +49,7 @@ public class AccountFooter extends JPanel {
         setOpaque(false);
         setBorder(new CompoundBorder(new MatteBorder(1, 0, 0, 0, Theme.BORDER_SUBTLE), new EmptyBorder(8, 0, 0, 0)));
 
-        linkIntro = Components.wrapped(" ", Components.CONTENT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        linkIntro = Components.wrapped(" ", Components.CONTENT_WIDTH, Components.REGULAR, Theme.TEXT_SECONDARY);
         linkSyncButton = Components.fullWidthButton("Sync now");
         linkSyncButton.addActionListener(event -> accountSyncService.syncNow());
         linkPanel = linkPanel();
@@ -55,7 +57,7 @@ public class AccountFooter extends JPanel {
         statusLabel = Components.statusLine(" ", Theme.TEXT_MUTED, Theme.TEXT_SECONDARY);
         actionLink = Components.textLink(" ");
         actionLink.addActionListener(event -> onAction());
-        detailText = Components.wrapped(" ", Components.CONTENT_WIDTH, 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        detailText = Components.wrapped(" ", Components.CONTENT_WIDTH, Components.SMALL, Theme.TEXT_MUTED);
 
         accountPart = new JPanel();
         accountPart.setLayout(new BoxLayout(accountPart, BoxLayout.Y_AXIS));
@@ -69,7 +71,7 @@ public class AccountFooter extends JPanel {
         JButton privacy = Components.textLink("Privacy policy");
         privacy.setForeground(Theme.TEXT_MUTED);
         privacy.addActionListener(event -> LinkBrowser.browse(LumbridgeGuideClient.websiteUrl() + "/privacy"));
-        syncedLabel = Components.label(" ", 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        syncedLabel = Components.label(" ", Components.SMALL, Theme.TEXT_MUTED);
 
         add(accountPart);
         add(row(privacy, syncedLabel));
@@ -104,15 +106,17 @@ public class AccountFooter extends JPanel {
         panel.add(Box.createVerticalStrut(6));
         panel.add(linkSyncButton);
         panel.add(Box.createVerticalStrut(6));
-        panel.add(Components.wrapped("Logging in also sends the account's ID to check whether it is linked.",
-                Components.CONTENT_WIDTH, 11f, Font.PLAIN, Theme.TEXT_MUTED));
+        panel.add(Components.wrapped("Also sends the account hash, the number RuneLite uses to tell accounts apart",
+                Components.CONTENT_WIDTH, Components.SMALL, Theme.TEXT_MUTED));
         panel.add(Box.createVerticalStrut(12));
 
         return panel;
     }
 
     private void onAction() {
-        if (view == null) return;
+        if (view == null) {
+            return;
+        }
 
         switch (view.getAction()) {
             case SYNC:
@@ -130,8 +134,10 @@ public class AccountFooter extends JPanel {
         }
     }
 
-    private void show(AccountSyncService.AccountView update) {
-        if (update == null) return;
+    private void show(AccountView update) {
+        if (update == null) {
+            return;
+        }
 
         view = update;
         AccountAction action = update.getAction();
@@ -142,9 +148,9 @@ public class AccountFooter extends JPanel {
         linkSyncButton.setEnabled(!update.isBusy());
         linkSyncButton.setText(update.isBusy() ? "Syncing..." : "Sync now");
 
-        Color tone = color(update.getTone());
-        boolean problem = update.getTone() == AccountStatusText.Tone.WARNING
-                || update.getTone() == AccountStatusText.Tone.ERROR;
+        Color tone = colour(update.getTone());
+        boolean problem = update.getTone() == StatusTone.WARNING
+                || update.getTone() == StatusTone.ERROR;
         statusLabel.setText(action == AccountAction.SYNC ? "Linked as " + update.getDisplayName() : update.getHeadline());
         statusLabel.setIcon(new DotIcon(tone));
         statusLabel.setForeground(problem ? tone : Theme.TEXT_SECONDARY);
@@ -153,10 +159,10 @@ public class AccountFooter extends JPanel {
         actionLink.setEnabled(!update.isBusy());
         actionLink.setText(update.isBusy() ? "Syncing..." : actionText(action));
 
-        boolean showMessage = update.getMessage() != null && update.getMessageTone() != AccountStatusText.Tone.SUCCESS;
+        boolean showMessage = update.getMessage() != null && update.getMessageTone() != StatusTone.SUCCESS;
         String detail = showMessage ? update.getMessage() : update.getDetail();
         detailText.setText(detail.isEmpty() ? " " : detail);
-        detailText.setForeground(showMessage ? color(update.getMessageTone()) : Theme.TEXT_MUTED);
+        detailText.setForeground(showMessage ? colour(update.getMessageTone()) : Theme.TEXT_MUTED);
         detailText.setVisible(!detail.isEmpty());
 
         syncedLabel.setText(update.getLastSynced() == null ? " " : "Synced at " + update.getLastSynced());
@@ -188,7 +194,7 @@ public class AccountFooter extends JPanel {
         return row;
     }
 
-    private static Color color(AccountStatusText.Tone tone) {
+    private static Color colour(StatusTone tone) {
         switch (tone) {
             case SUCCESS:
                 return Theme.SUCCESS;

@@ -48,7 +48,6 @@ public class LumbridgeGuideClient {
         this.apiBaseUrl = HttpUrl.get(System.getProperty(API_BASE_PROPERTY, DEFAULT_API_BASE_URL));
     }
 
-    /** The website's home page, overridable like the API base for local development */
     public static String websiteUrl() {
         return System.getProperty(WEB_BASE_PROPERTY, DEFAULT_WEB_BASE_URL);
     }
@@ -91,13 +90,12 @@ public class LumbridgeGuideClient {
         return gson.fromJson(json, clazz);
     }
 
-    /** What to tell the player about a failed request, or the fallback when the backend gives no message */
     public String failureMessage(ApiResponse response, String fallback) {
-        if (response.getStatusCode() == -1) {
-            return "Could not reach Lumbridge Guide";
+        if (response.getStatusCode() == ApiResponse.NETWORK_ERROR) {
+            return "Couldn't reach Lumbridge Guide";
         }
         if (response.getStatusCode() == 401) {
-            return "Check your API key in the plugin settings";
+            return "Check your plugin key in the plugin settings";
         }
         ApiErrorData error = parseError(response);
         return error != null && error.getMessage() != null
@@ -105,7 +103,6 @@ public class LumbridgeGuideClient {
                 : fallback + " (" + response.getStatusCode() + ")";
     }
 
-    /** The backend's error body, or null when the body is not one */
     public ApiErrorData parseError(ApiResponse response) {
         try {
             return deserialize(response.getBody(), ApiErrorData.class);
@@ -133,9 +130,8 @@ public class LumbridgeGuideClient {
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@Nonnull Call call, @Nonnull IOException exception) {
-                if (onFailure != null) {
-                    onFailure.accept(ApiResponse.error(-1, "Network error: " + exception.getMessage()));
-                }
+                log.debug("Request to {} failed", request.url().encodedPath(), exception);
+                onFailure.accept(new ApiResponse(ApiResponse.NETWORK_ERROR, ""));
             }
 
             @Override
@@ -152,25 +148,18 @@ public class LumbridgeGuideClient {
         }
     }
 
-    /** A success callback that throws ends in the failure callback */
     private static void deliver(ApiResponse response, boolean successful, String path,
                                 Consumer<ApiResponse> onSuccess, Consumer<ApiResponse> onFailure) {
         if (!successful) {
-            if (onFailure != null) {
-                onFailure.accept(response);
-            }
+            onFailure.accept(response);
             return;
         }
-        if (onSuccess == null) {
-            return;
-        }
+
         try {
             onSuccess.accept(response);
         } catch (RuntimeException exception) {
-            log.warn("Could not handle the response from {}", path, exception);
-            if (onFailure != null) {
-                onFailure.accept(ApiResponse.error(response.getStatusCode(), ""));
-            }
+            log.warn("Couldn't handle the response from {}", path, exception);
+            onFailure.accept(new ApiResponse(response.getStatusCode(), ""));
         }
     }
 }

@@ -7,16 +7,17 @@ import com.lumbridgeguide.ui.Components;
 import com.lumbridgeguide.ui.SwatchIcon;
 import com.lumbridgeguide.ui.Theme;
 import com.lumbridgeguide.ui.WrapText;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.time.Duration;
-import java.time.Instant;
+
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
 public class BoardHeaderPanel extends JPanel {
 
@@ -26,22 +27,21 @@ public class BoardHeaderPanel extends JPanel {
     private final JPanel codeHeader;
     private final VerificationCodePanel codePanel;
 
-    BoardHeaderPanel(BoardNavigatorPanel navigator) {
+    public BoardHeaderPanel(BoardNavigatorPanel navigator) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(false);
 
-        titleLabel = Components.wrapped("", Components.CONTENT_WIDTH - 40, 14f, Font.BOLD, Theme.TEXT_PRIMARY);
+        titleLabel = Components.wrapped("", Components.CONTENT_WIDTH - 40, Components.BOLD, Theme.TEXT_PRIMARY);
 
-        metaLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        metaLabel = Components.label("", Components.SMALL, Theme.TEXT_SECONDARY);
         metaLabel.setIconTextGap(6);
         metaLabel.setAlignmentX(LEFT_ALIGNMENT);
 
-        summaryLabel = Components.label("", 11f, Font.PLAIN, Theme.TEXT_MUTED);
+        summaryLabel = Components.label("", Components.SMALL, Theme.TEXT_MUTED);
         summaryLabel.setAlignmentX(LEFT_ALIGNMENT);
 
         codePanel = new VerificationCodePanel();
         codePanel.setAlignmentX(LEFT_ALIGNMENT);
-        codePanel.setToolTipText("Show this code in every proof screenshot. Click to copy.");
         JButton copy = Components.textLink("Copy");
         copy.addActionListener(event -> codePanel.copy());
         codeHeader = Components.sectionHeader("Board code", copy);
@@ -85,7 +85,7 @@ public class BoardHeaderPanel extends JPanel {
         String timing = formatTiming(board.getEndsAt());
         String teamName = hasTeam ? team.getName() : "No team yet";
         metaLabel.setText(timing.isEmpty() ? teamName : teamName + "  ·  " + timing);
-        metaLabel.setIcon(hasTeam ? new SwatchIcon(Theme.parseTeamColor(team.getColor())) : null);
+        metaLabel.setIcon(hasTeam ? new SwatchIcon(Theme.parseTeamColour(team.getColor())) : null);
 
         PluginTeamSummary summary = board.getTeamSummary();
         summaryLabel.setVisible(summary != null);
@@ -105,7 +105,9 @@ public class BoardHeaderPanel extends JPanel {
     }
 
     private static String summaryText(PluginTeamSummary summary, boolean points) {
-        if (summary.getRank() == null) return summary.getTeamCount() + " teams  ·  no score yet";
+        if (summary.getRank() == null) {
+            return summary.getTeamCount() + " teams  ·  no score yet";
+        }
 
         String unit = points ? " pts" : summary.getScore() == 1 ? " tile" : " tiles";
         return ordinal(summary.getRank()) + " of " + summary.getTeamCount() + "  ·  " + summary.getScore() + unit;
@@ -113,7 +115,9 @@ public class BoardHeaderPanel extends JPanel {
 
     private static String ordinal(int place) {
         int lastTwo = place % 100;
-        if (lastTwo >= 11 && lastTwo <= 13) return place + "th";
+        if (lastTwo >= 11 && lastTwo <= 13) {
+            return place + "th";
+        }
 
         switch (place % 10) {
             case 1:
@@ -149,7 +153,7 @@ public class BoardHeaderPanel extends JPanel {
                 return "ends in " + hours + "h " + minutes + "m";
             }
             return "ends in " + minutes + "m";
-        } catch (Exception ignored) {
+        } catch (DateTimeParseException ignored) {
             return "";
         }
     }

@@ -1,7 +1,5 @@
 package com.lumbridgeguide.ui;
 
-import net.runelite.client.ui.FontManager;
-
 import javax.swing.JButton;
 import javax.swing.border.EmptyBorder;
 import java.awt.AlphaComposite;
@@ -14,21 +12,16 @@ import java.awt.event.MouseEvent;
 
 public class ActionButton extends JButton {
 
-    public enum Kind {
-        PRIMARY,
-        SECONDARY
-    }
-
     private static final float DISABLED_ALPHA = 0.45f;
 
-    private final Kind kind;
+    private final boolean primary;
     private boolean hovered;
 
-    public ActionButton(String text, Kind kind) {
+    public ActionButton(String text, boolean primary) {
         super(text);
-        this.kind = kind;
-        setFont(FontManager.getRunescapeBoldFont());
-        setForeground(kind == Kind.PRIMARY ? Theme.TEXT_INVERSE : Theme.TEXT_PRIMARY);
+        this.primary = primary;
+        setFont(Components.BOLD);
+        setForeground(primary ? Theme.TEXT_INVERSE : Theme.TEXT_PRIMARY);
         setBorder(new EmptyBorder(7, 8, 7, 8));
         setContentAreaFilled(false);
         setFocusPainted(false);
@@ -58,7 +51,7 @@ public class ActionButton extends JButton {
         }
         boolean active = hovered && isEnabled();
         int arc = Theme.ARC;
-        if (kind == Kind.PRIMARY) {
+        if (primary) {
             canvas.setColor(active ? Theme.accentHover() : Theme.accent());
             canvas.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
         } else {

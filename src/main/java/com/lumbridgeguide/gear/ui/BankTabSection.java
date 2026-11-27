@@ -15,9 +15,9 @@ import java.awt.Color;
 import java.util.List;
 import java.util.Optional;
 
-class BankTabSection extends Section {
+public class BankTabSection extends Section {
 
-    private static final String BANK_CLOSED_HINT = "Open your bank to generate.";
+    private static final String BANK_CLOSED_HINT = "Open your bank to make the tab";
 
     private final GearTagService gearTagService;
     private final JCheckBox includeMissingBox;
@@ -29,17 +29,16 @@ class BankTabSection extends Section {
     private boolean generating;
     private boolean showingBankHint = true;
 
-    BankTabSection(GearTagService gearTagService, boolean includeMissingByDefault) {
+    public BankTabSection(GearTagService gearTagService) {
         super(0);
         this.gearTagService = gearTagService;
 
-        includeMissingBox = GearForm.checkBox("Include missing items");
-        includeMissingBox.setSelected(includeMissingByDefault);
+        includeMissingBox = Components.checkBox("Include missing items");
 
-        codeField = GearForm.textField("Gear code or link");
+        codeField = Components.textField("Setup code or link");
         codeField.addActionListener(event -> onGenerateClicked());
 
-        generateButton = GearForm.actionButton("Generate");
+        generateButton = Components.primaryButton("Make tab");
         generateButton.setEnabled(false);
         generateButton.addActionListener(event -> onGenerateClicked());
 
@@ -61,8 +60,7 @@ class BankTabSection extends Section {
         add(missingPanel);
     }
 
-    /** Called on the Swing thread when the bank opens or closes */
-    void setBankOpen(boolean open) {
+    public void setBankOpen(boolean open) {
         bankOpen = open;
         generateButton.setEnabled(open && !generating);
         if (!generating && !open) {
@@ -79,21 +77,20 @@ class BankTabSection extends Section {
         }
         Optional<String> code = GearTagService.extractCode(codeField.getText());
         if (code.isEmpty()) {
-            showStatus("Enter a valid gear code", Theme.ERROR);
+            showStatus("Enter a valid setup code", Theme.ERROR);
             return;
         }
 
         generating = true;
         generateButton.setEnabled(false);
-        generateButton.setText("Generating...");
-        showStatus("Fetching gear set...", Theme.TEXT_MUTED);
+        generateButton.setText("Making...");
+        showStatus("Fetching the setup...", Theme.TEXT_MUTED);
         showMissing(List.of());
 
-        gearTagService.generate(code.get(), includeMissingBox.isSelected(), result -> SwingUtilities.invokeLater(() ->
-        {
+        gearTagService.generate(code.get(), includeMissingBox.isSelected(), result -> SwingUtilities.invokeLater(() -> {
             generating = false;
             generateButton.setEnabled(bankOpen);
-            generateButton.setText("Generate");
+            generateButton.setText("Make tab");
             showStatus(result.getMessage(), result.isSuccess() ? Theme.SUCCESS : Theme.ERROR);
             showMissing(result.getMissingItems());
         }));
@@ -103,7 +100,7 @@ class BankTabSection extends Section {
         missingPanel.removeAll();
         if (!names.isEmpty()) {
             missingPanel.add(Components.sectionHeader("Missing items", Components.label(String.valueOf(names.size()),
-                    11f, java.awt.Font.PLAIN, Theme.TEXT_MUTED)));
+                    Components.SMALL, Theme.TEXT_MUTED)));
             missingPanel.add(Box.createVerticalStrut(6));
             for (String name : names) {
                 missingPanel.add(Components.statusLine(name, Theme.WARNING, Theme.TEXT_PRIMARY));
@@ -115,9 +112,9 @@ class BankTabSection extends Section {
         repaint();
     }
 
-    private void showStatus(String message, Color color) {
+    private void showStatus(String message, Color colour) {
         showingBankHint = false;
         statusLabel.setText(message);
-        statusLabel.setForeground(color);
+        statusLabel.setForeground(colour);
     }
 }

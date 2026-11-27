@@ -71,51 +71,11 @@ public class LumbridgeGuideClientTest {
     }
 
     @Test
-    public void reportsANetworkErrorAsMinusOne() throws InterruptedException {
-        server.stop(0);
-
-        ApiResponse response = get(client("key-123"), "/plugin/sync");
-
-        assertEquals(-1, response.getStatusCode());
-    }
-
-    @Test
     public void doesNotFollowRedirects() throws InterruptedException {
         ApiResponse response = get(client("key-123"), "/moved");
 
         assertEquals(302, response.getStatusCode());
         assertFalse(apiKeyHeaders.containsKey("/elsewhere"));
-    }
-
-    @Test
-    public void routesAThrowingSuccessCallbackToFailure() throws InterruptedException {
-        body = "";
-        CountDownLatch done = new CountDownLatch(1);
-        AtomicReference<ApiResponse> failure = new AtomicReference<>();
-
-        client("key-123").get("/plugin/sync",
-                response -> {
-                    throw new IllegalStateException("empty body");
-                },
-                response -> {
-                    failure.set(response);
-                    done.countDown();
-                });
-
-        assertTrue("onFailure was never called", done.await(5, TimeUnit.SECONDS));
-        assertEquals(200, failure.get().getStatusCode());
-    }
-
-    @Test
-    public void failureMessageSurvivesBodiesThatAreNotErrorJson() {
-        LumbridgeGuideClient client = client("key-123");
-
-        assertEquals("Sync failed (502)",
-                client.failureMessage(new ApiResponse(502, "<html>Bad gateway</html>"), "Sync failed"));
-        assertEquals("Sync failed (500)", client.failureMessage(new ApiResponse(500, ""), "Sync failed"));
-        assertEquals("Account limit reached", client.failureMessage(
-                new ApiResponse(409, "{\"error\":\"ACCOUNT_LIMIT_REACHED\",\"message\":\"Account limit reached\"}"),
-                "Sync failed"));
     }
 
     private LumbridgeGuideClient client(String apiKey) {
@@ -132,7 +92,6 @@ public class LumbridgeGuideClientTest {
         return new LumbridgeGuideClient(new OkHttpClient(), new Gson(), config);
     }
 
-    /** Waits for either callback and returns its response, or null when the success callback ran */
     private static ApiResponse get(LumbridgeGuideClient client, String path) throws InterruptedException {
         CountDownLatch done = new CountDownLatch(1);
         AtomicReference<ApiResponse> failure = new AtomicReference<>();

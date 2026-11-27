@@ -5,11 +5,12 @@ import com.lumbridgeguide.account.data.AccountStatusData;
 import com.lumbridgeguide.account.data.AccountStatusRequest;
 import com.lumbridgeguide.account.data.AccountSyncPayload;
 import com.lumbridgeguide.account.data.AccountSyncResultData;
+import com.lumbridgeguide.account.data.QuestEntry;
+import com.lumbridgeguide.account.data.SkillEntry;
 import com.lumbridgeguide.api.ApiErrorData;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Quest;
@@ -40,7 +41,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class AccountSyncService {
 
-    private static final long UNKNOWN_ACCOUNT_HASH = -1L;
+    public static final long UNKNOWN_ACCOUNT_HASH = -1L;
     private static final DateTimeFormatter TIME_FORMAT =
             DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault());
 
@@ -48,11 +49,12 @@ public class AccountSyncService {
     private final ClientThread clientThread;
     private final LumbridgeGuideClient apiClient;
     private final LumbridgeGuideConfig config;
+    private final LoginTracker loginTracker = new LoginTracker();
 
     private volatile AccountSyncPayload latest;
     private volatile String linkStatus;
     private volatile String message;
-    private volatile AccountStatusText.Tone messageTone = AccountStatusText.Tone.MUTED;
+    private volatile StatusTone messageTone = StatusTone.MUTED;
     private volatile String lastSynced;
     private volatile boolean busy;
     private volatile Consumer<AccountView> listener;
@@ -62,20 +64,14 @@ public class AccountSyncService {
         publish();
     }
 
-    private final LoginTracker loginTracker = new LoginTracker();
-
-    /** May be called while the player is already logged in */
     public void startUp() {
         loginTracker.start(client.getGameState() == GameState.LOGGED_IN);
     }
 
     public void reset() {
         listener = null;
-        latest = null;
-        linkStatus = null;
-        message = null;
         busy = false;
-        lastSynced = null;
+        clear();
     }
 
     @Subscribe
@@ -95,20 +91,21 @@ public class AccountSyncService {
     private void onLoggedIn() {
         message = null;
         lastSynced = null;
-        loadAccountOnClientThread(config.syncOnLoginLogout());
+        boolean sync = config.syncOnLoginLogout();
+        loadAccountOnClientThread(sync, sync);
     }
 
     public void refresh() {
         message = null;
-        clientThread.invoke(() -> loadAccountOnClientThread(false));
+        clientThread.invoke(() -> loadAccountOnClientThread(true, false));
     }
 
-    private void loadAccountOnClientThread(boolean syncIfLinked) {
+    private void loadAccountOnClientThread(boolean checkLink, boolean syncIfLinked) {
         AccountSyncPayload snapshot = capture();
         latest = snapshot;
         linkStatus = null;
         publish();
-        if (snapshot == null || !apiClient.hasApiKey()) {
+        if (!checkLink || snapshot == null || !apiClient.hasApiKey()) {
             return;
         }
 
@@ -129,6 +126,10 @@ public class AccountSyncService {
         if (snapshot != null && config.syncOnLoginLogout() && "LINKED".equals(linkStatus)) {
             send(snapshot, false);
         }
+        clear();
+    }
+
+    private void clear() {
         latest = null;
         linkStatus = null;
         message = null;
@@ -139,25 +140,22 @@ public class AccountSyncService {
     @Subscribe
     public void onStatChanged(StatChanged event) {
         AccountSyncPayload snapshot = latest;
-        if (snapshot != null) {
+        if (snapshot != null && config.syncOnLoginLogout()) {
             latest = snapshot.toBuilder().skills(readSkills()).build();
         }
     }
 
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
-        if (event.getVarpId() != VarPlayerID.QP) {
-            return;
-        }
         AccountSyncPayload snapshot = latest;
-        if (snapshot != null) {
+        if (event.getVarpId() == VarPlayerID.QP && snapshot != null && config.syncOnLoginLogout()) {
             latest = snapshot.toBuilder().quests(readQuests()).questPoints(readQuestPoints()).build();
         }
     }
 
     public void syncNow() {
         if (!apiClient.hasApiKey()) {
-            setMessage("Set your API key in the plugin settings first.", AccountStatusText.Tone.ERROR);
+            setMessage("Add your plugin key in the plugin settings first", StatusTone.ERROR);
             return;
         }
 
@@ -167,9 +165,10 @@ public class AccountSyncService {
             AccountSyncPayload snapshot = capture();
             if (snapshot == null) {
                 busy = false;
-                setMessage("Log in to the game to sync.", AccountStatusText.Tone.ERROR);
+                setMessage("Log in to the game to sync", StatusTone.ERROR);
                 return;
             }
+
             latest = snapshot;
             send(snapshot, true);
         });
@@ -185,8 +184,7 @@ public class AccountSyncService {
                     busy = false;
                     linkStatus = result.getStatus();
                     lastSynced = TIME_FORMAT.format(Instant.now());
-                    setMessage(result.isNewlyLinked() ? "Account linked and synced." : "Synced.",
-                            AccountStatusText.Tone.SUCCESS);
+                    setMessage(result.isNewlyLinked() ? "Account linked and synced" : "Synced", StatusTone.SUCCESS);
                 },
                 this::onFailure);
     }
@@ -198,10 +196,10 @@ public class AccountSyncService {
         if (impliedStatus != null) {
             linkStatus = impliedStatus;
         }
-        setMessage(apiClient.failureMessage(response, "Sync failed"), AccountStatusText.Tone.ERROR);
+        setMessage(apiClient.failureMessage(response, "Sync failed"), StatusTone.ERROR);
     }
 
-    private void setMessage(String text, AccountStatusText.Tone tone) {
+    private void setMessage(String text, StatusTone tone) {
         message = text;
         messageTone = tone;
         publish();
@@ -211,6 +209,7 @@ public class AccountSyncService {
         if (client.getGameState() != GameState.LOGGED_IN || client.getLocalPlayer() == null) {
             return null;
         }
+
         long accountHash = client.getAccountHash();
         String displayName = client.getLocalPlayer().getName();
         if (accountHash == UNKNOWN_ACCOUNT_HASH || displayName == null) {
@@ -221,7 +220,7 @@ public class AccountSyncService {
         return AccountSyncPayload.builder()
                 .accountHash(accountHash)
                 .displayName(Text.sanitize(displayName))
-                .accountType(AccountStatusText.accountTypeForIronmanVarbit(client.getVarbitValue(VarbitID.IRONMAN)))
+                .accountType(accountType(client.getVarbitValue(VarbitID.IRONMAN)))
                 .worldTypes(worldTypes)
                 .skills(readSkills())
                 .questPoints(readQuestPoints())
@@ -229,19 +228,19 @@ public class AccountSyncService {
                 .build();
     }
 
-    private List<AccountSyncPayload.SkillEntry> readSkills() {
-        List<AccountSyncPayload.SkillEntry> skills = new ArrayList<>();
+    private List<SkillEntry> readSkills() {
+        List<SkillEntry> skills = new ArrayList<>();
         for (Skill skill : Skill.values()) {
-            int level = Math.max(1, Math.min(99, client.getRealSkillLevel(skill)));
-            skills.add(new AccountSyncPayload.SkillEntry(skill.getName(), level, client.getSkillExperience(skill)));
+            skills.add(new SkillEntry(skill.getName(), client.getRealSkillLevel(skill),
+                    client.getSkillExperience(skill)));
         }
         return skills;
     }
 
-    private List<AccountSyncPayload.QuestEntry> readQuests() {
-        List<AccountSyncPayload.QuestEntry> quests = new ArrayList<>();
+    private List<QuestEntry> readQuests() {
+        List<QuestEntry> quests = new ArrayList<>();
         for (Quest quest : Quest.values()) {
-            quests.add(new AccountSyncPayload.QuestEntry(quest.getName(), quest.getState(client).name()));
+            quests.add(new QuestEntry(quest.getName(), quest.getState(client).name()));
         }
         return quests;
     }
@@ -257,10 +256,7 @@ public class AccountSyncService {
         }
 
         AccountSyncPayload snapshot = latest;
-        AccountStatusText.Line status = snapshot == null
-                ? AccountStatusText.LOGGED_OUT
-                : AccountStatusText.forStatus(linkStatus);
-
+        StatusLine status = snapshot == null ? AccountStatusText.LOGGED_OUT : AccountStatusText.forStatus(linkStatus);
         current.accept(new AccountView(
                 snapshot == null ? null : snapshot.getDisplayName(),
                 status.getHeadline(),
@@ -273,16 +269,22 @@ public class AccountSyncService {
                 busy));
     }
 
-    @Value
-    public static class AccountView {
-        String displayName;
-        String headline;
-        String detail;
-        AccountStatusText.Tone tone;
-        AccountAction action;
-        String message;
-        AccountStatusText.Tone messageTone;
-        String lastSynced;
-        boolean busy;
+    private static String accountType(int ironmanVarbit) {
+        switch (ironmanVarbit) {
+            case 1:
+                return "IRONMAN";
+            case 2:
+                return "ULTIMATE_IRONMAN";
+            case 3:
+                return "HARDCORE_IRONMAN";
+            case 4:
+                return "GROUP_IRONMAN";
+            case 5:
+                return "HARDCORE_GROUP_IRONMAN";
+            case 6:
+                return "UNRANKED_GROUP_IRONMAN";
+            default:
+                return "MAIN";
+        }
     }
 }

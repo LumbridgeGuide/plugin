@@ -6,7 +6,6 @@ import com.lumbridgeguide.ui.WrapText;
 import lombok.experimental.UtilityClass;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -14,38 +13,23 @@ import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridLayout;
 
 @UtilityClass
-class GearForm {
+public class GearForm {
 
-    static final int TEXT_WIDTH = Components.CONTENT_WIDTH;
-
-    static JTextField textField(String placeholder) {
-        return Components.textField(placeholder);
+    public static WrapText status(String text) {
+        return Components.wrapped(text, Components.CONTENT_WIDTH, Components.REGULAR, Theme.TEXT_MUTED);
     }
 
-    static JCheckBox checkBox(String text) {
-        return Components.checkBox(text);
-    }
-
-    static JButton actionButton(String text) {
-        return Components.primaryButton(text);
-    }
-
-    static WrapText status(String text) {
-        return Components.wrapped(text, TEXT_WIDTH, 12f, Font.PLAIN, Theme.TEXT_MUTED);
-    }
-
-    static JComponent note(String text, int indent) {
-        WrapText note = Components.wrapped(text, TEXT_WIDTH - indent, 11f, Font.PLAIN, Theme.TEXT_MUTED);
+    public static JComponent note(String text, int indent) {
+        WrapText note = Components.wrapped(text, Components.CONTENT_WIDTH - indent, Components.SMALL, Theme.TEXT_MUTED);
         note.setBorder(new EmptyBorder(0, indent, 0, 0));
         note.setAlignmentX(Component.LEFT_ALIGNMENT);
         return note;
     }
 
-    static JPanel fieldRow(JTextField field, JButton button) {
+    public static JPanel fieldRow(JTextField field, JButton button) {
         JPanel row = new JPanel(new BorderLayout(6, 0));
         row.setOpaque(false);
         row.add(field, BorderLayout.CENTER);
@@ -53,7 +37,7 @@ class GearForm {
         return fullWidth(row);
     }
 
-    static JPanel sideBySide(JComponent left, JComponent right) {
+    public static JPanel sideBySide(JComponent left, JComponent right) {
         JPanel row = new JPanel(new GridLayout(1, 2, 6, 0));
         row.setOpaque(false);
         row.add(left);

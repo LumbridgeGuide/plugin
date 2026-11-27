@@ -4,9 +4,9 @@ import com.lumbridgeguide.bingo.data.PluginTileData;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-class TileText {
+public class TileText {
 
-    static String typeName(PluginTileData tile) {
+    public static String typeName(PluginTileData tile) {
         if (tile.getType() == null) {
             return "Custom goal";
         }

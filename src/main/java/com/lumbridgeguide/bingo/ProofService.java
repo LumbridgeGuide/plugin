@@ -1,7 +1,7 @@
 package com.lumbridgeguide.bingo;
 
-import com.google.gson.Gson;
 import com.lumbridgeguide.LumbridgeGuideConfig;
+import com.lumbridgeguide.account.AccountSyncService;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
@@ -10,9 +10,8 @@ import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.bingo.data.SubmissionResultData;
 import com.lumbridgeguide.bingo.data.TileItemEntry;
 import com.lumbridgeguide.bingo.data.TileType;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -35,12 +34,6 @@ import net.runelite.client.util.Text;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -48,13 +41,9 @@ import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.NumberFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -65,30 +54,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
-@Slf4j
 @Singleton
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class ProofService {
 
-    @Value
-    public static class Offer {
-        String id;
-        PluginBoardData board;
-        PluginTileData tile;
-        String reason;
-        BufferedImage screenshot;
-        byte[] png;
-        String imageSha256;
-        TileProgressTracker.XpReading xp;
-        long accountHash;
-        /** Null for proof the player took by hand */
-        Detection detection;
-    }
-
     private static final int PRUNE_EVERY_TICKS = 100;
-    private static final DateTimeFormatter STAMP_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-    private static final Color STAMP_BACKGROUND = new Color(0, 0, 0, 190);
-    private static final Color STAMP_ACCENT = new Color(0xE07A3A);
-    private static final Color STAMP_TEXT = new Color(0xE4E4E7);
 
     private final LumbridgeGuideConfig config;
     private final BoardDataService boardDataService;
@@ -100,41 +70,19 @@ public class ProofService {
     private final SkillIconManager skillIconManager;
     private final Client client;
     private final ClientThread clientThread;
-    private final Gson gson;
-
     private final ProofOfferStore store;
     private final TileCompletePopup popup;
     private final ScheduledExecutorService executor;
 
     private final Set<String> offeredTiles = ConcurrentHashMap.newKeySet();
-    private final List<Offer> queue = new CopyOnWriteArrayList<>();
+    private final List<ProofOffer> queue = new CopyOnWriteArrayList<>();
     private boolean restored;
     private int ticksSincePrune;
 
-    /** Receives the waiting offers, oldest first, on any thread whenever the queue changes */
     @Setter
-    private Consumer<List<Offer>> onQueueChanged = offers -> { };
+    private Consumer<List<ProofOffer>> onQueueChanged = offers -> { };
 
-    @Inject
-    public ProofService(LumbridgeGuideConfig config, BoardDataService boardDataService,
-                        LumbridgeGuideClient apiClient, DrawManager drawManager, ItemManager itemManager,
-                        ChatMessageManager chatMessageManager, TileProgressTracker progressTracker,
-                        SkillIconManager skillIconManager, Client client, ClientThread clientThread,
-                        ProofOfferStore store, TileCompletePopup popup, ScheduledExecutorService executor, Gson gson) {
-        this.config = config;
-        this.boardDataService = boardDataService;
-        this.apiClient = apiClient;
-        this.drawManager = drawManager;
-        this.itemManager = itemManager;
-        this.chatMessageManager = chatMessageManager;
-        this.progressTracker = progressTracker;
-        this.skillIconManager = skillIconManager;
-        this.client = client;
-        this.clientThread = clientThread;
-        this.store = store;
-        this.popup = popup;
-        this.executor = executor;
-        this.gson = gson;
+    public void startUp() {
         progressTracker.setOnTargetReached((boardAndTile, detection) -> offer(boardAndTile.getKey(),
                 boardAndTile.getValue(), boardAndTile.getValue().getType() == TileType.KILL_COUNT
                         ? "Kill count reached" : "XP target reached", detection));
@@ -151,7 +99,7 @@ public class ProofService {
             for (PluginTileData tile : board.tiles()) {
                 Integer itemId = matchedItem(tile, dropped);
                 if (tile.getType() == TileType.ITEM_DROP && itemId != null) {
-                    offer(board, tile, "Drop matched a tile",
+                    offer(board, tile, "Drop received",
                             Detection.drop(itemId, npc == null ? null : npc.getId(), npc == null ? null : npc.getName()));
                 }
             }
@@ -162,13 +110,8 @@ public class ProofService {
         clientThread.invoke(() -> capture(board, tile, "Proof for this tile", null));
     }
 
-    public List<Offer> getQueue() {
+    public List<ProofOffer> getQueue() {
         return List.copyOf(queue);
-    }
-
-    /** Drops the offer here and on disk */
-    public void dismiss(Offer offer) {
-        remove(offer);
     }
 
     @Subscribe
@@ -195,8 +138,7 @@ public class ProofService {
         }
     }
 
-    /** Whether the offer's board has ended or its tile is done, never while the boards are unknown */
-    public boolean isEnded(Offer offer) {
+    public boolean isEnded(ProofOffer offer) {
         return boardDataService.hasCachedData()
                 && current(offer.getBoard().getId(), offer.getTile().getId()).isEmpty();
     }
@@ -204,9 +146,8 @@ public class ProofService {
     private void rearmRejected() {
         for (PluginBoardData board : boardDataService.getRunningBoards()) {
             for (PluginTileData tile : board.tiles()) {
-                String key = board.getId() + tile.getId();
                 boolean queued = queue.stream().anyMatch(offer -> offer.getTile().getId().equals(tile.getId()));
-                if (tile.isProofRejected() && !queued && offeredTiles.remove(key)) {
+                if (tile.isProofRejected() && !queued && offeredTiles.remove(key(board.getId(), tile.getId()))) {
                     progressTracker.rearm(tile.getId());
                 }
             }
@@ -214,44 +155,45 @@ public class ProofService {
     }
 
     private void restore(long accountHash) {
-        for (ProofOfferStore.Loaded loaded : store.load(accountHash)) {
-            ProofOfferStore.Saved saved = loaded.getSaved();
-            Optional<Offer> offer = current(saved.getBoardId(), saved.getTileId()).map(boardAndTile -> new Offer(
-                    saved.getId(),
-                    boardAndTile.getKey(),
-                    boardAndTile.getValue(),
-                    saved.getReason(),
-                    loaded.getScreenshot(),
-                    loaded.getPng(),
-                    saved.getImageSha256(),
-                    xpOf(saved),
-                    saved.getAccountHash(),
-                    saved.getDetection()));
+        for (LoadedProof loaded : store.load(accountHash)) {
+            SavedProof saved = loaded.getSaved();
+            Optional<ProofOffer> offer = current(saved.getBoardId(), saved.getTileId())
+                    .map(boardAndTile -> new ProofOffer(
+                            saved.getId(),
+                            boardAndTile.getKey(),
+                            boardAndTile.getValue(),
+                            saved.getReason(),
+                            loaded.getScreenshot(),
+                            loaded.getPng(),
+                            saved.getImageSha256(),
+                            xpOf(saved),
+                            saved.getAccountHash(),
+                            saved.getDetection()));
             if (offer.isEmpty() || queue.stream().anyMatch(queued -> queued.getId().equals(saved.getId()))) {
                 if (offer.isEmpty()) {
                     store.delete(accountHash, saved.getId());
                 }
                 continue;
             }
-            offeredTiles.add(saved.getBoardId() + saved.getTileId());
+
+            offeredTiles.add(key(saved.getBoardId(), saved.getTileId()));
             queue.add(offer.get());
         }
         onQueueChanged.accept(getQueue());
     }
 
-    private static TileProgressTracker.XpReading xpOf(ProofOfferStore.Saved saved) {
+    private static XpReading xpOf(SavedProof saved) {
         if (saved.getXpSkill() == null || saved.getXpTotal() == null) {
             return null;
         }
+
         try {
-            return new TileProgressTracker.XpReading(
-                    Skill.valueOf(saved.getXpSkill()), saved.getXpGained(), saved.getXpTotal());
+            return new XpReading(Skill.valueOf(saved.getXpSkill()), saved.getXpGained(), saved.getXpTotal());
         } catch (IllegalArgumentException unknownSkill) {
             return null;
         }
     }
 
-    /** Empty unless the board is running and the team still needs the tile */
     private Optional<Map.Entry<PluginBoardData, PluginTileData>> current(String boardId, String tileId) {
         return boardDataService.getRunningBoards().stream()
                 .filter(board -> board.getId().equals(boardId))
@@ -262,7 +204,7 @@ public class ProofService {
                         .map(tile -> Map.entry(board, tile)));
     }
 
-    private void enqueue(Offer offer) {
+    private void enqueue(ProofOffer offer) {
         queue.add(offer);
         while (queue.size() > ProofOfferStore.MAX_SAVED) {
             queue.remove(0);
@@ -270,28 +212,25 @@ public class ProofService {
         onQueueChanged.accept(getQueue());
     }
 
-    private void remove(Offer offer) {
+    public void remove(ProofOffer offer) {
         if (queue.removeIf(queued -> queued.getId().equals(offer.getId()))) {
             onQueueChanged.accept(getQueue());
         }
         executor.execute(() -> store.delete(offer.getAccountHash(), offer.getId()));
     }
 
-    /** Sends the screenshot off the calling thread */
-    public void submit(Offer offer, Consumer<String> onDone) {
+    public void submit(ProofOffer offer, Consumer<String> onDone) {
         executor.execute(() -> send(offer, onDone));
     }
 
-    private void send(Offer offer, Consumer<String> onDone) {
+    private void send(ProofOffer offer, Consumer<String> onDone) {
         Map<String, String> fields = new HashMap<>();
         fields.put("tileId", offer.getTile().getId());
         fields.put("verificationCode", offer.getBoard().getVerificationCode());
         if (offer.getXp() != null) {
             fields.put("xpAtSubmit", String.valueOf(offer.getXp().getTotal()));
-            if (offer.getXp().getGained() != null) {
-                fields.put("xpGained", String.valueOf(offer.getXp().getGained()));
-            }
-            if (offer.getAccountHash() != -1) {
+            fields.put("xpGained", Objects.toString(offer.getXp().getGained(), null));
+            if (config.syncOnLoginLogout() && offer.getAccountHash() != AccountSyncService.UNKNOWN_ACCOUNT_HASH) {
                 fields.put("accountHash", String.valueOf(offer.getAccountHash()));
             }
         }
@@ -311,8 +250,7 @@ public class ProofService {
         apiClient.postImage("/plugin/bingo/" + offer.getBoard().getId() + "/submissions", fields, "image",
                 offer.getPng(),
                 response -> {
-                    SubmissionResultData result = gson.fromJson(response.getBody(), SubmissionResultData.class);
-                    boardDataService.refresh();
+                    SubmissionResultData result = apiClient.deserialize(response.getBody(), SubmissionResultData.class);
                     remove(offer);
                     onDone.accept(result == null ? "Sent" : result.getMessage());
                 },
@@ -325,59 +263,64 @@ public class ProofService {
                 return "You need to be on a team on this board";
             case 400:
             case 409:
-                return apiClient.failureMessage(response, "The website turned this proof down");
+                return apiClient.failureMessage(response, "Proof not accepted");
             default:
-                return apiClient.failureMessage(response, "Sending failed");
+                return apiClient.failureMessage(response, "Couldn't send the proof");
         }
     }
 
     private void offer(PluginBoardData board, PluginTileData tile, String reason, Detection detection) {
         if (!config.offerProof() || !isOpenForMyTeam(board, tile) || tile.isProofPending()
-                || !offeredTiles.add(board.getId() + tile.getId())) {
+                || !offeredTiles.add(key(board.getId(), tile.getId()))) {
             return;
         }
-        popup.show("Bingo tile complete!", Text.escapeJagex(tile.getTitle()) + "<br>"
+
+        popup.show("Proof ready to send", Text.escapeJagex(tile.getTitle()) + "<br>"
                 + Text.escapeJagex(board.getTitle()), () -> capture(board, tile, reason, detection));
-        chatMessageManager.queue(QueuedMessage.builder()
-                .type(ChatMessageType.CONSOLE)
-                .runeLiteFormattedMessage("Lumbridge Guide: " + Text.escapeJagex(tile.getTitle())
-                        + " matches a tile. Open the panel to send proof.")
-                .build());
     }
 
     private void capture(PluginBoardData board, PluginTileData tile, String reason, Detection detection) {
         if (board.getVerificationCode() == null || client.getGameState() != GameState.LOGGED_IN) {
             return;
         }
-        TileProgressTracker.XpReading xp = tile.getType() == TileType.SKILL_XP
-                ? progressTracker.xpReading(board, tile).orElse(null)
-                : null;
+
+        XpReading xp = tile.getType() == TileType.SKILL_XP ? progressTracker.xpReading(board, tile).orElse(null) : null;
         long accountHash = client.getAccountHash();
         BufferedImage icon = xp == null ? null : skillIconManager.getSkillImage(xp.getSkill());
         drawManager.requestNextFrameListener(frame -> {
-            BufferedImage screenshot = stamp(frame, board.getVerificationCode());
+            BufferedImage screenshot = ProofImage.stamp(frame, board.getVerificationCode());
             if (xp != null) {
-                drawXpCard(screenshot, xp, tile.getXpTarget(), icon);
+                ProofImage.drawXpCard(screenshot, xp, tile.getXpTarget(), icon);
             }
-            executor.execute(() -> {
-                byte[] png = png(screenshot);
-                Offer offer = new Offer(UUID.randomUUID().toString(), board, tile, reason, screenshot, png,
-                        sha256(png), xp, accountHash, detection);
-                enqueue(offer);
-                store.save(new ProofOfferStore.Saved(
-                        offer.getId(),
-                        board.getId(),
-                        tile.getId(),
-                        reason,
-                        xp == null ? null : xp.getSkill().name(),
-                        xp == null ? null : xp.getGained(),
-                        xp == null ? null : xp.getTotal(),
-                        accountHash,
-                        System.currentTimeMillis(),
-                        offer.getImageSha256(),
-                        detection), png);
-            });
+            executor.execute(() -> save(board, tile, reason, detection, xp, accountHash, screenshot));
         });
+    }
+
+    private void save(PluginBoardData board, PluginTileData tile, String reason, Detection detection, XpReading xp,
+                      long accountHash, BufferedImage screenshot) {
+        byte[] png = png(screenshot);
+        ProofOffer offer = new ProofOffer(UUID.randomUUID().toString(), board, tile, reason, screenshot, png,
+                sha256(png), xp, accountHash, detection);
+        enqueue(offer);
+        if (detection != null) {
+            chatMessageManager.queue(QueuedMessage.builder()
+                    .type(ChatMessageType.CONSOLE)
+                    .runeLiteFormattedMessage("Lumbridge Guide: proof for " + Text.escapeJagex(tile.getTitle())
+                            + " is ready to send from the panel")
+                    .build());
+        }
+        store.save(new SavedProof(
+                offer.getId(),
+                board.getId(),
+                tile.getId(),
+                reason,
+                xp == null ? null : xp.getSkill().name(),
+                xp == null ? null : xp.getGained(),
+                xp == null ? null : xp.getTotal(),
+                accountHash,
+                System.currentTimeMillis(),
+                offer.getImageSha256(),
+                detection), png);
     }
 
     private static byte[] png(BufferedImage image) {
@@ -398,73 +341,7 @@ public class ProofService {
         }
     }
 
-    static void drawXpCard(BufferedImage image, TileProgressTracker.XpReading xp, long target, BufferedImage icon) {
-        NumberFormat numbers = NumberFormat.getIntegerInstance(Locale.UK);
-        String title = xp.getSkill().getName();
-        String gained = xp.getGained() == null
-                ? "XP gain not tracked"
-                : "+" + numbers.format(xp.getGained()) + " XP since the event started";
-        String totals = (target > 0 ? "Target " + numbers.format(target) + "  ·  " : "")
-                + "Total " + numbers.format(xp.getTotal()) + " XP";
-
-        Graphics2D canvas = image.createGraphics();
-        canvas.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        Font titleFont = new Font(Font.SANS_SERIF, Font.BOLD, 20);
-        Font bodyFont = new Font(Font.SANS_SERIF, Font.PLAIN, 16);
-        FontMetrics titleMetrics = canvas.getFontMetrics(titleFont);
-        FontMetrics bodyMetrics = canvas.getFontMetrics(bodyFont);
-        int iconSize = icon == null ? 0 : titleMetrics.getAscent() + 4;
-        int padding = 10;
-        int width = padding * 2 + Math.max(
-                iconSize + (icon == null ? 0 : 8) + titleMetrics.stringWidth(title),
-                Math.max(bodyMetrics.stringWidth(gained), bodyMetrics.stringWidth(totals)));
-        int height = padding * 2 + Math.max(iconSize, titleMetrics.getHeight()) + 4 + bodyMetrics.getHeight() * 2;
-        int x = 10;
-        int y = 10;
-
-        canvas.setColor(STAMP_BACKGROUND);
-        canvas.fillRect(x, y, width, height);
-        int lineTop = y + padding;
-        int textX = x + padding;
-        if (icon != null) {
-            canvas.drawImage(icon, textX, lineTop, iconSize, iconSize, null);
-            textX += iconSize + 8;
-        }
-        canvas.setFont(titleFont);
-        canvas.setColor(STAMP_ACCENT);
-        canvas.drawString(title, textX, lineTop + (Math.max(iconSize, titleMetrics.getHeight()) + titleMetrics.getAscent()
-                - titleMetrics.getDescent()) / 2);
-        canvas.setFont(bodyFont);
-        canvas.setColor(STAMP_TEXT);
-        int bodyTop = lineTop + Math.max(iconSize, titleMetrics.getHeight()) + 4;
-        canvas.drawString(gained, x + padding, bodyTop + bodyMetrics.getAscent());
-        canvas.drawString(totals, x + padding, bodyTop + bodyMetrics.getHeight() + bodyMetrics.getAscent());
-        canvas.dispose();
-    }
-
-    static BufferedImage stamp(Image frame, String code) {
-        BufferedImage image = new BufferedImage(frame.getWidth(null), frame.getHeight(null),
-                BufferedImage.TYPE_INT_RGB);
-        Graphics2D canvas = image.createGraphics();
-        canvas.drawImage(frame, 0, 0, null);
-        canvas.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        canvas.setFont(new Font(Font.MONOSPACED, Font.BOLD, 20));
-        String text = code + "  " + LocalDateTime.now().format(STAMP_TIME);
-        FontMetrics metrics = canvas.getFontMetrics();
-        int width = metrics.stringWidth(text) + 20;
-        int height = metrics.getHeight() + 10;
-        int x = image.getWidth() - width - 10;
-        int y = image.getHeight() - height - 10;
-        canvas.setColor(STAMP_BACKGROUND);
-        canvas.fillRect(x, y, width, height);
-        canvas.setColor(STAMP_ACCENT);
-        canvas.drawString(text, x + 10, y + 5 + metrics.getAscent());
-        canvas.dispose();
-        return image;
-    }
-
-    /** The tile's item that dropped, or null when none did */
-    private Integer matchedItem(PluginTileData tile, Set<Integer> dropped) {
+    private static Integer matchedItem(PluginTileData tile, Set<Integer> dropped) {
         if (tile.getItems() == null) {
             return null;
         }
@@ -479,6 +356,10 @@ public class ProofService {
 
     private static boolean isOpenForMyTeam(PluginBoardData board, PluginTileData tile) {
         PluginTeamData team = board.getMyTeam();
-        return team != null && !(tile.isClaimed() && team.getId().equals(tile.getClaimedByTeamId()));
+        return team != null && !tile.isClaimedBy(team);
+    }
+
+    private static String key(String boardId, String tileId) {
+        return boardId + ":" + tileId;
     }
 }

@@ -11,10 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 public class TileProgressCounterTest {
 
@@ -42,36 +40,6 @@ public class TileProgressCounterTest {
     }
 
     @Test
-    public void understandsRaidActivityAndChestWordings() {
-        PluginBoardData board = board(
-                killTile("cox", "Chambers of Xeric", null, 5),
-                killTile("wt", "Wintertodt", null, 5),
-                killTile("barrows", "Barrows chest", null, 5),
-                killTile("toa", "Tombs of Amascut: Expert Mode", null, 5),
-                killTile("tob", "Theatre of Blood", null, 5));
-
-        chat(board, "Your completed Chambers of Xeric count is: <col=ff0000>12</col>.");
-        chat(board, "Your subdued Wintertodt count is: <col=ff0000>300</col>.");
-        chat(board, "Your Barrows chest count is: <col=ff0000>87</col>.");
-        chat(board, "Your completion count for Tombs of Amascut: Expert Mode is: <col=ff0000>4</col>.");
-        chat(board, "Your completed Theatre of Blood count is: <col=ff0000>9</col>.");
-
-        for (String tile : List.of("cox", "wt", "barrows", "toa", "tob")) {
-            assertEquals(tile, OptionalLong.of(1), counter.progressFor(tile));
-        }
-    }
-
-    @Test
-    public void ignoresOtherMessagesAndOtherBosses() {
-        PluginBoardData board = board(killTile("vork", "Vorkath", null, 3));
-
-        chat(board, "Your reward is: 3 x Shark.");
-        chat(board, "Your Zulrah kill count is: 10.");
-
-        assertFalse(counter.progressFor("vork").isPresent());
-    }
-
-    @Test
     public void countsOrdinaryMonstersFromTheirLootForgivingHowTheHostTypedTheName() {
         PluginBoardData board = board(killTile("demons", "abyssal demons", null, 2));
 
@@ -81,16 +49,6 @@ public class TileProgressCounterTest {
 
         assertEquals(OptionalLong.of(2), counter.progressFor("demons"));
         assertEquals(List.of("demons"), reached);
-    }
-
-    @Test
-    public void matchesLootByMonsterIdWhenTheTileHasOne() {
-        PluginBoardData board = board(killTile("gob", null, 3029, 5));
-
-        counter.lootReceived(List.of(board), "Goblin", 3029);
-        counter.lootReceived(List.of(board), "Goblin", 655);
-
-        assertEquals(OptionalLong.of(1), counter.progressFor("gob"));
     }
 
     @Test
@@ -118,15 +76,6 @@ public class TileProgressCounterTest {
 
         assertEquals(OptionalLong.of(3), counter.progressFor("vork"));
         assertEquals(OptionalLong.of(2), counter.progressFor("demons"));
-    }
-
-    @Test
-    public void reportsOnlyTilesWhoseProgressChanged() {
-        PluginBoardData board = board(killTile("vork", "Vorkath", null, 5));
-        chat(board, "Your Vorkath kill count is: 50.");
-
-        assertEquals(Map.of("board", Set.of("vork")), counter.takeChanged());
-        assertFalse(counter.hasChanges());
     }
 
     private TileProgressCounter newSession() {

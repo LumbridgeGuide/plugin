@@ -39,12 +39,15 @@ public class TeamChatPrefixService {
     @Subscribe
     public void onChatMessage(ChatMessage chatMessage) {
         if (!config.showTeamPrefix() || !PREFIXED_TYPES.contains(chatMessage.getType())
-                || client.getLocalPlayer() == null) return;
-
-        if (!isOwnName(client.getLocalPlayer().getName(), chatMessage.getName())) return;
+                || client.getLocalPlayer() == null
+                || !isOwnName(client.getLocalPlayer().getName(), chatMessage.getName())) {
+            return;
+        }
 
         String prefix = ownTeamPrefix();
-        if (prefix == null) return;
+        if (prefix == null) {
+            return;
+        }
 
         MessageNode messageNode = chatMessage.getMessageNode();
         messageNode.setName(prefix + messageNode.getName());
@@ -52,15 +55,13 @@ public class TeamChatPrefixService {
 
     @Subscribe
     public void onGameTick(GameTick tick) {
-        if (!config.showTeamPrefix()) return;
-
         Widget chatboxInput = client.getWidget(InterfaceID.Chatbox.INPUT);
-        if (chatboxInput == null || client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null)
+        if (!config.showTeamPrefix() || chatboxInput == null || chatboxInput.getText() == null
+                || client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null) {
             return;
+        }
 
         String currentText = chatboxInput.getText();
-        if (currentText == null) return;
-
         String prefix = ownTeamPrefix();
         String updatedText = withPrefix(currentText, client.getLocalPlayer().getName(), shownPrefix, prefix);
         shownPrefix = prefix;
@@ -69,11 +70,11 @@ public class TeamChatPrefixService {
         }
     }
 
-    static boolean isOwnName(String localName, String chatName) {
+    private static boolean isOwnName(String localName, String chatName) {
         return localName != null && chatName != null && Text.sanitize(localName).equals(Text.sanitize(chatName));
     }
 
-    public static String withPrefix(String text, String playerName, String oldPrefix, String newPrefix) {
+    private static String withPrefix(String text, String playerName, String oldPrefix, String newPrefix) {
         String label = playerName + ":";
         String plain = oldPrefix == null ? text : text.replace(oldPrefix + label, label);
         return newPrefix == null ? plain : plain.replace(label, newPrefix + label);

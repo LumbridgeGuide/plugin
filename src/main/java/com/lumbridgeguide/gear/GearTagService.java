@@ -1,11 +1,9 @@
 package com.lumbridgeguide.gear;
 
-import com.google.gson.Gson;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.gear.data.PluginGearData;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
@@ -47,7 +45,6 @@ public class GearTagService {
     private static final String FALLBACK_TAG = "gear";
 
     private final LumbridgeGuideClient apiClient;
-    private final Gson gson;
     private final Client client;
     private final ClientThread clientThread;
     private final ItemManager itemManager;
@@ -55,18 +52,6 @@ public class GearTagService {
     private final LayoutManager layoutManager;
     private final TabManager tabManager;
     private final BankTagsService bankTagsService;
-
-    @Value
-    public static class Result {
-        boolean success;
-        String message;
-        /** In layout order */
-        List<String> missingItems;
-
-        static Result failure(String message) {
-            return new Result(false, message, List.of());
-        }
-    }
 
     public static Optional<String> extractCode(String codeOrLink) {
         if (codeOrLink == null) {
@@ -76,39 +61,33 @@ public class GearTagService {
         return matcher.find() ? Optional.of(matcher.group().toLowerCase(Locale.ROOT)) : Optional.empty();
     }
 
-    public static String tagName(String gearName) {
+    private static String tagName(String gearName) {
         String slug = gearName == null ? "" : gearName.toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-+|-+$", "");
         return "lg-" + (slug.isEmpty() ? FALLBACK_TAG : slug);
     }
 
-    public void generate(String code, boolean includeMissing, Consumer<Result> onComplete) {
+    public void generate(String code, boolean includeMissing, Consumer<GearResult> onComplete) {
         apiClient.get("/plugin/gear/" + code,
                 response -> build(response, includeMissing, onComplete),
-                response -> onComplete.accept(Result.failure(failureMessage(apiClient, response))));
+                response -> onComplete.accept(GearResult.failure(failureMessage(response))));
     }
 
-    private void build(ApiResponse response, boolean includeMissing, Consumer<Result> onComplete) {
-        PluginGearData gear;
-        try {
-            gear = gson.fromJson(response.getBody(), PluginGearData.class);
-        } catch (Exception exception) {
-            gear = null;
-        }
+    private void build(ApiResponse response, boolean includeMissing, Consumer<GearResult> onComplete) {
+        PluginGearData gear = apiClient.deserialize(response.getBody(), PluginGearData.class);
         if (gear == null || gear.getItemIds() == null || gear.getItemIds().isEmpty()) {
-            onComplete.accept(Result.failure("That gear set has no items"));
+            onComplete.accept(GearResult.failure("That setup has no items"));
             return;
         }
 
-        PluginGearData gearData = gear;
-        clientThread.invoke(() -> onComplete.accept(applyToBank(gearData, includeMissing)));
+        clientThread.invoke(() -> onComplete.accept(applyToBank(gear, includeMissing)));
     }
 
-    private Result applyToBank(PluginGearData gear, boolean includeMissing) {
+    private GearResult applyToBank(PluginGearData gear, boolean includeMissing) {
         ItemContainer bank = client.getItemContainer(InventoryID.BANK);
         if (bank == null) {
-            return Result.failure("Open your bank, then generate again");
+            return GearResult.failure("Open your bank first");
         }
 
         Set<Integer> owned = new HashSet<>();
@@ -139,7 +118,8 @@ public class GearTagService {
         String tag = tagName(gear.getName());
         writeTag(tag, gear, tagged, placed);
         log.debug("Gear tag '{}' generated: {} item(s), {} missing", tag, tagged.size(), missing.size());
-        return new Result(true, summary(tag, tagged.size(), missing.size(), includeMissing), itemNames(missing));
+        String summary = summary(tag, tagged.size(), missing.size(), includeMissing);
+        return new GearResult(true, summary, null, itemNames(missing));
     }
 
     private void readBank(ItemContainer bank, Set<Integer> owned, Map<Integer, Integer> ownedByVariation) {
@@ -176,8 +156,7 @@ public class GearTagService {
         return names;
     }
 
-    /** The exact item if the bank has it, otherwise a variation the player owns, otherwise -1 */
-    static int bankItemFor(int itemId, Set<Integer> owned, Map<Integer, Integer> ownedByVariation,
+    private static int bankItemFor(int itemId, Set<Integer> owned, Map<Integer, Integer> ownedByVariation,
                            IntUnaryOperator variation) {
         if (owned.contains(itemId)) {
             return itemId;
@@ -193,7 +172,7 @@ public class GearTagService {
         return tagged.iterator().next();
     }
 
-    static String summary(String tag, int tagged, int missing, boolean includeMissing) {
+    private static String summary(String tag, int tagged, int missing, boolean includeMissing) {
         String base = "Tagged " + tagged + " item" + (tagged == 1 ? "" : "s") + " as \"" + tag + "\"";
         if (missing == 0) {
             return base + ".";
@@ -204,9 +183,9 @@ public class GearTagService {
                 : base + ". " + items + " not in your bank " + (missing == 1 ? "was" : "were") + " left out.";
     }
 
-    static String failureMessage(LumbridgeGuideClient apiClient, ApiResponse response) {
+    private String failureMessage(ApiResponse response) {
         return response.getStatusCode() == 404
-                ? "No gear set found for that code"
-                : apiClient.failureMessage(response, "Generate failed");
+                ? "No setup found for that code"
+                : apiClient.failureMessage(response, "Couldn't make the tab");
     }
 }

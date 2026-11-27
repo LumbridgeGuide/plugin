@@ -5,7 +5,6 @@ import com.lumbridgeguide.ui.Theme;
 import net.runelite.client.ui.FontManager;
 
 import javax.swing.JPanel;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -14,34 +13,22 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
-class VerificationCodePanel extends JPanel {
+public class VerificationCodePanel extends JPanel {
 
     private static final int GAP = 3;
     private static final int HEIGHT = 32;
-    private static final String HINT = "Click to copy";
 
     private final Font codeFont = FontManager.getRunescapeBoldFont();
 
     private String code = "";
 
-    VerificationCodePanel() {
+    public VerificationCodePanel() {
         setOpaque(false);
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        setToolTipText(HINT);
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent mouseEvent) {
-                copy();
-            }
-        });
     }
 
-    void setCode(String newCode) {
+    public void setCode(String newCode) {
         code = newCode == null ? "" : newCode;
-        setToolTipText(HINT);
         setVisible(!code.isEmpty());
         revalidate();
         repaint();
@@ -85,11 +72,10 @@ class VerificationCodePanel extends JPanel {
         canvas.dispose();
     }
 
-    void copy() {
+    public void copy() {
         if (code.isEmpty()) {
             return;
         }
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(code), null);
-        setToolTipText("Copied!");
     }
 }

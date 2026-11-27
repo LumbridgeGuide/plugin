@@ -1,17 +1,17 @@
 package com.lumbridgeguide.bingo;
 
-import lombok.Value;
+import lombok.Data;
 
 import java.time.Instant;
 
-@Value
+@Data
 public class Detection {
-    DetectionEvent event;
-    Integer itemId;
-    Integer npcId;
-    String npcName;
-    Integer killCount;
-    String detectedAt = Instant.now().toString();
+    private final DetectionEvent event;
+    private final Integer itemId;
+    private final Integer npcId;
+    private final String npcName;
+    private final Integer killCount;
+    private String detectedAt = Instant.now().toString();
 
     public static Detection drop(int itemId, Integer npcId, String npcName) {
         return new Detection(DetectionEvent.DROP, itemId, npcId, npcName, null);

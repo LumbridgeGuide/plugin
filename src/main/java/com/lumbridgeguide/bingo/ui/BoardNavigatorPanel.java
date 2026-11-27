@@ -11,14 +11,13 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.util.function.IntConsumer;
 
-class BoardNavigatorPanel extends JPanel {
+public class BoardNavigatorPanel extends JPanel {
 
     private final JLabel positionLabel;
 
-    BoardNavigatorPanel(IntConsumer onStep) {
+    public BoardNavigatorPanel(IntConsumer onStep) {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         setOpaque(false);
 
@@ -29,7 +28,7 @@ class BoardNavigatorPanel extends JPanel {
         previousButton.addActionListener(event -> onStep.accept(-1));
         nextButton.addActionListener(event -> onStep.accept(1));
 
-        positionLabel = Components.label("", 10f, Font.PLAIN, Theme.TEXT_MUTED);
+        positionLabel = Components.label("", Components.SMALL, Theme.TEXT_MUTED);
         positionLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
 
         add(previousButton);
@@ -37,7 +36,7 @@ class BoardNavigatorPanel extends JPanel {
         add(nextButton);
     }
 
-    void update(int currentIndex, int total) {
+    public void update(int currentIndex, int total) {
         positionLabel.setText((currentIndex + 1) + "/" + total);
         setVisible(total > 1);
     }

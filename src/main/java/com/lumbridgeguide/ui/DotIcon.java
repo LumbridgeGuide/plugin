@@ -11,17 +11,17 @@ public class DotIcon implements Icon {
 
     private static final int SIZE = 7;
 
-    private final Color color;
+    private final Color colour;
 
-    public DotIcon(Color color) {
-        this.color = color;
+    public DotIcon(Color colour) {
+        this.colour = colour;
     }
 
     @Override
     public void paintIcon(Component component, Graphics graphics, int x, int y) {
         Graphics2D canvas = (Graphics2D) graphics.create();
         canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        canvas.setColor(color);
+        canvas.setColor(colour);
         canvas.fillOval(x, y, SIZE, SIZE);
         canvas.dispose();
     }

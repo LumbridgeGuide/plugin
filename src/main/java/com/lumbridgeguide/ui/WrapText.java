@@ -55,7 +55,9 @@ public class WrapText extends JComponent {
     @Override
     public void setBounds(int x, int y, int width, int height) {
         super.setBounds(x, y, width, height);
-        if (width <= 0 || width == laidOutWidth) return;
+        if (width <= 0 || width == laidOutWidth) {
+            return;
+        }
 
         laidOutWidth = width;
         int lineCount = lines.size();

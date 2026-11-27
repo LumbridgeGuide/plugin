@@ -60,7 +60,7 @@ public class BingoChatAnnouncer {
     }
 
     private static String resultText(PluginProofResult result) {
-        String decision = result.getStatus() == ProofStatus.REJECTED ? "turned down" : "accepted";
+        String decision = result.getStatus() == ProofStatus.REJECTED ? "not accepted" : "accepted";
         String tile = escape(result.getTileTitle());
         return result.isReversed()
                 ? "The decision on your proof for " + tile + " was reversed. It's now " + decision

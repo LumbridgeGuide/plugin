@@ -2,29 +2,22 @@ package com.lumbridgeguide.bingo.ui;
 
 import com.lumbridgeguide.bingo.data.PluginTileData;
 import com.lumbridgeguide.bingo.data.TileType;
+import lombok.RequiredArgsConstructor;
 import net.runelite.api.Skill;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 
 import java.awt.image.BufferedImage;
 
-class TileIcons {
+@RequiredArgsConstructor
+public class TileIcons {
 
     private final ItemManager itemManager;
     private final SkillIconManager skillIconManager;
 
-    TileIcons(ItemManager itemManager, SkillIconManager skillIconManager) {
-        this.itemManager = itemManager;
-        this.skillIconManager = skillIconManager;
-    }
-
-    BufferedImage imageFor(PluginTileData tile) {
-        if (tile.getType() == TileType.ITEM_DROP && tile.getItems() != null && !tile.getItems().isEmpty()
-                && itemManager != null) {
+    public BufferedImage imageFor(PluginTileData tile) {
+        if (tile.getType() == TileType.ITEM_DROP && tile.getItems() != null && !tile.getItems().isEmpty()) {
             return itemManager.getImage(tile.getItems().get(0).getId());
-        }
-        if (skillIconManager == null) {
-            return null;
         }
         if (tile.getType() == TileType.SKILL_XP) {
             return tile.skill().map(skill -> skillIconManager.getSkillImage(skill, false)).orElse(null);
@@ -35,7 +28,7 @@ class TileIcons {
         return null;
     }
 
-    BufferedImage itemImage(int itemId) {
-        return itemManager == null ? null : itemManager.getImage(itemId);
+    public BufferedImage itemImage(int itemId) {
+        return itemManager.getImage(itemId);
     }
 }

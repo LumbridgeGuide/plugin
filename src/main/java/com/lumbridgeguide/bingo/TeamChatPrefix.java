@@ -1,20 +1,19 @@
 package com.lumbridgeguide.bingo;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 import net.runelite.client.util.Text;
 
 import java.util.regex.Pattern;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class TeamChatPrefix {
+@UtilityClass
+public class TeamChatPrefix {
 
-    private static final Pattern HEX_COLOR = Pattern.compile("[0-9a-fA-F]{6}");
+    private static final Pattern HEX_COLOUR = Pattern.compile("[0-9a-fA-F]{6}");
 
-    public static String of(String teamName, String color) {
+    public static String of(String teamName, String colour) {
         String tag = "[" + Text.escapeJagex(teamName) + "]";
-        String hex = color == null ? "" : color.replace("#", "");
-        if (!HEX_COLOR.matcher(hex).matches()) {
+        String hex = colour == null ? "" : colour.replace("#", "");
+        if (!HEX_COLOUR.matcher(hex).matches()) {
             return tag + " ";
         }
         return "<col=" + hex + ">" + tag + "</col> ";

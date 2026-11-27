@@ -11,17 +11,17 @@ public class SwatchIcon implements Icon {
 
     private static final int SIZE = 9;
 
-    private final Color color;
+    private final Color colour;
 
-    public SwatchIcon(Color color) {
-        this.color = color;
+    public SwatchIcon(Color colour) {
+        this.colour = colour;
     }
 
     @Override
     public void paintIcon(Component component, Graphics graphics, int x, int y) {
         Graphics2D canvas = (Graphics2D) graphics.create();
         canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        canvas.setColor(color);
+        canvas.setColor(colour);
         canvas.fillRoundRect(x, y, SIZE, SIZE, 3, 3);
         canvas.dispose();
     }

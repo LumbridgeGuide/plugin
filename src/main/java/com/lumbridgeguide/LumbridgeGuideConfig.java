@@ -1,6 +1,7 @@
 package com.lumbridgeguide;
 
 import com.lumbridgeguide.bingo.ClaimMessages;
+import com.lumbridgeguide.ui.Theme;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -25,12 +26,12 @@ public interface LumbridgeGuideConfig extends Config {
     @ConfigItem(
             keyName = ACCENT_COLOUR_KEY,
             name = "Accent colour",
-            description = "The highlight colour for selected tabs, buttons and verification codes",
+            description = "The highlight colour for selected tabs, buttons and board codes",
             section = appearanceSection,
             position = 0
     )
     default Color accentColour() {
-        return new Color(0xE07A3A);
+        return Theme.DEFAULT_ACCENT;
     }
 
     @ConfigSection(
@@ -43,7 +44,7 @@ public interface LumbridgeGuideConfig extends Config {
 
     @ConfigItem(
             keyName = "showTeamPrefix",
-            name = "Show Team Prefix",
+            name = "Show team prefix",
             description = "Prefix your name in chat with your bingo team name in the team colour",
             section = bingoSection,
             position = 0
@@ -67,8 +68,7 @@ public interface LumbridgeGuideConfig extends Config {
             keyName = "trackTileProgress",
             name = "Track tile progress",
             description = "Count your kills and XP towards kill count and XP tiles on your running boards. Sends "
-                    + "Lumbridge Guide your progress on those tiles once a minute so your team can see it. Off by "
-                    + "default",
+                    + "Lumbridge Guide your progress on those tiles once a minute so your team can see it",
             section = bingoSection,
             position = 3
     )
@@ -108,25 +108,6 @@ public interface LumbridgeGuideConfig extends Config {
     void setSelectedBoardId(String boardId);
 
     @ConfigSection(
-            name = "Gear",
-            description = "Bank tag tabs made from gear configs",
-            position = 2,
-            closedByDefault = true
-    )
-    String gearSection = "gearSection";
-
-    @ConfigItem(
-            keyName = "includeMissingItems",
-            name = "Include missing items",
-            description = "Start with Include missing items ticked when making a tag tab",
-            section = gearSection,
-            position = 0
-    )
-    default boolean includeMissingItems() {
-        return true;
-    }
-
-    @ConfigSection(
             name = "Account",
             description = "RuneScape account syncing",
             position = 5,
@@ -137,9 +118,10 @@ public interface LumbridgeGuideConfig extends Config {
     @ConfigItem(
             keyName = "syncOnLoginLogout",
             name = "Sync on login and logout",
-            description = "Also sync your stats and quests when you log in and out. Only for accounts you have already linked with Sync now.",
+            description = "Also sync your stats and quests when you log in and out."
+                    + " Only for accounts you have already linked with Sync now",
             section = accountSection,
-            position = 0
+            position = 1
     )
     default boolean syncOnLoginLogout() {
         return false;
@@ -147,8 +129,8 @@ public interface LumbridgeGuideConfig extends Config {
 
     @ConfigItem(
             keyName = API_KEY_KEY,
-            name = "API Key",
-            description = "Your API key from the Lumbridge Guide website. Keep this private!",
+            name = "Plugin key",
+            description = "Your plugin key from the Lumbridge Guide website. Keep it private",
             secret = true,
             section = accountSection,
             position = 0

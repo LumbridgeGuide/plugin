@@ -3,10 +3,10 @@ package com.lumbridgeguide.bingo;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lumbridgeguide.LumbridgeGuideConfig;
+import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.bingo.data.PluginBoardData;
 import com.lumbridgeguide.bingo.data.PluginTileData;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -43,13 +43,6 @@ public class TileProgressTracker {
     private static final Duration REPORT_INTERVAL = Duration.ofMinutes(1);
     private static final Type BASELINE_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
 
-    @Value
-    public static class XpReading {
-        Skill skill;
-        Long gained;
-        long total;
-    }
-
     private final Client client;
     private final LumbridgeGuideConfig config;
     private final BoardDataService boardDataService;
@@ -83,7 +76,6 @@ public class TileProgressTracker {
         });
     }
 
-    /** Called on the client thread when tracked progress first reaches a tile's target */
     public void setOnTargetReached(BiConsumer<Map.Entry<PluginBoardData, PluginTileData>, Detection> listener) {
         counter.setOnTargetReached(listener);
     }
@@ -92,7 +84,6 @@ public class TileProgressTracker {
         return counter.progressFor(tileId);
     }
 
-    /** Gained is null when tracking never took a baseline for the tile */
     public Optional<XpReading> xpReading(PluginBoardData board, PluginTileData tile) {
         return tile.skill().map(skill -> {
             long total = client.getSkillExperience(skill);
@@ -100,7 +91,6 @@ public class TileProgressTracker {
         });
     }
 
-    /** Forgets that a tile's target was reached, so the next reading at or past it completes it again */
     public void rearm(String tileId) {
         counter.rearm(tileId);
     }
@@ -156,7 +146,7 @@ public class TileProgressTracker {
                     response -> { },
                     response -> {
                         log.debug("Progress report failed with status {}", response.getStatusCode());
-                        if (response.getStatusCode() == -1 || response.getStatusCode() >= 500) {
+                        if (response.getStatusCode() == ApiResponse.NETWORK_ERROR || response.getStatusCode() >= 500) {
                             counter.markChanged(boardId, tileIds);
                         }
                     });

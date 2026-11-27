@@ -13,7 +13,7 @@ import javax.swing.JToggleButton;
 import javax.swing.JTextField;
 import java.awt.Color;
 
-class CreateConfigSection extends Section {
+public class CreateConfigSection extends Section {
 
     private final GearConfigExportService gearConfigExportService;
     private final JToggleButton includeEquipmentBox;
@@ -24,22 +24,22 @@ class CreateConfigSection extends Section {
     private final JButton openButton;
     private String createdUrl;
 
-    CreateConfigSection(GearConfigExportService gearConfigExportService) {
+    public CreateConfigSection(GearConfigExportService gearConfigExportService) {
         super(0);
         this.gearConfigExportService = gearConfigExportService;
 
-        includeEquipmentBox = Components.toggleChips("Equipment");
-        includeInventoryBox = Components.toggleChips("Inventory");
+        includeEquipmentBox = Components.toggleChip("Equipment");
+        includeInventoryBox = Components.toggleChip("Inventory");
 
-        configNameField = GearForm.textField("Name (optional)");
+        configNameField = Components.textField("Name (optional)");
         configNameField.addActionListener(event -> onCreateClicked());
 
-        createButton = GearForm.actionButton("Create");
+        createButton = Components.primaryButton("Save");
         createButton.addActionListener(event -> onCreateClicked());
 
         statusLabel = GearForm.status(" ");
 
-        openButton = Components.linkButton("Open on website  ›");
+        openButton = Components.linkButton("Open on the website  ›");
         openButton.setVisible(false);
         openButton.addActionListener(event -> {
             if (createdUrl != null) {
@@ -53,7 +53,7 @@ class CreateConfigSection extends Section {
         add(Box.createVerticalStrut(10));
         add(GearForm.fieldRow(configNameField, createButton));
         add(Box.createVerticalStrut(4));
-        add(GearForm.note("Leave blank to use your name + setup.", 0));
+        add(GearForm.note("Leave blank to name it after you", 0));
         add(Box.createVerticalStrut(6));
         add(statusLabel);
         add(Box.createVerticalStrut(4));
@@ -61,23 +61,24 @@ class CreateConfigSection extends Section {
     }
 
     private void onCreateClicked() {
-        if (!createButton.isEnabled()) return;
+        if (!createButton.isEnabled()) {
+            return;
+        }
 
         if (!includeEquipmentBox.isSelected() && !includeInventoryBox.isSelected()) {
-            showStatus("Include equipment, inventory or both.", Theme.ERROR);
+            showStatus("Include equipment, inventory or both", Theme.ERROR);
             return;
         }
 
         createButton.setEnabled(false);
-        createButton.setText("Creating...");
+        createButton.setText("Saving...");
         openButton.setVisible(false);
         showStatus("Reading your items...", Theme.TEXT_MUTED);
 
         gearConfigExportService.create(configNameField.getText(), includeEquipmentBox.isSelected(),
-                includeInventoryBox.isSelected(), result ->
-                {
+                includeInventoryBox.isSelected(), result -> {
                     createButton.setEnabled(true);
-                    createButton.setText("Create");
+                    createButton.setText("Save");
                     showStatus(result.getMessage(), result.isSuccess() ? Theme.SUCCESS : Theme.ERROR);
                     createdUrl = result.getUrl();
                     openButton.setVisible(result.isSuccess() && createdUrl != null);
@@ -85,8 +86,8 @@ class CreateConfigSection extends Section {
                 });
     }
 
-    private void showStatus(String message, Color color) {
+    private void showStatus(String message, Color colour) {
         statusLabel.setText(message);
-        statusLabel.setForeground(color);
+        statusLabel.setForeground(colour);
     }
 }

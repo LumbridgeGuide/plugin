@@ -2,9 +2,11 @@ package com.lumbridgeguide.gear;
 
 import com.lumbridgeguide.api.LumbridgeGuideClient;
 import com.lumbridgeguide.gear.data.GearConfigCreatedData;
+import com.lumbridgeguide.gear.data.EquipmentEntry;
 import com.lumbridgeguide.gear.data.GearConfigPayload;
+import com.lumbridgeguide.gear.data.InventoryEntry;
+import com.lumbridgeguide.gear.data.RunePouchEntry;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
@@ -48,24 +50,25 @@ public class GearConfigExportService {
     private final ItemManager itemManager;
     private final LumbridgeGuideClient apiClient;
 
-    public void create(String name, boolean includeEquipment, boolean includeInventory, Consumer<Result> onComplete) {
-        Consumer<Result> onSwing = result -> SwingUtilities.invokeLater(() -> onComplete.accept(result));
+    public void create(String name, boolean includeEquipment, boolean includeInventory,
+                       Consumer<GearResult> onComplete) {
+        Consumer<GearResult> onSwing = result -> SwingUtilities.invokeLater(() -> onComplete.accept(result));
         clientThread.invoke(() -> {
             if (client.getGameState() != GameState.LOGGED_IN) {
-                onSwing.accept(Result.failure("Log in to the game first."));
+                onSwing.accept(GearResult.failure("Log in to the game first"));
                 return;
             }
 
             apiClient.post("/plugin/gear-configs", payload(name, includeEquipment, includeInventory),
-                    response -> onSwing.accept(Result.success(
+                    response -> onSwing.accept(saved(
                             apiClient.deserialize(response.getBody(), GearConfigCreatedData.class))),
-                    response -> onSwing.accept(Result.failure(
-                            apiClient.failureMessage(response, "Could not create the gear config"))));
+                    response -> onSwing.accept(GearResult.failure(
+                            apiClient.failureMessage(response, "Couldn't save the setup"))));
         });
     }
 
     private GearConfigPayload payload(String name, boolean includeEquipment, boolean includeInventory) {
-        List<GearConfigPayload.InventoryEntry> inventory = includeInventory ? readInventory() : new ArrayList<>();
+        List<InventoryEntry> inventory = includeInventory ? readInventory() : new ArrayList<>();
         boolean hasRunePouch = inventory.stream().anyMatch(entry -> RUNE_POUCHES.contains(entry.getItemId()));
         String configName = name == null || name.trim().isEmpty()
                 ? defaultName()
@@ -80,11 +83,13 @@ public class GearConfigExportService {
                 hasRunePouch ? readRunePouch() : new ArrayList<>());
     }
 
-    List<GearConfigPayload.EquipmentEntry> readEquipment() {
-        List<GearConfigPayload.EquipmentEntry> entries = new ArrayList<>();
+    private List<EquipmentEntry> readEquipment() {
+        List<EquipmentEntry> entries = new ArrayList<>();
         ItemContainer equipment = client.getItemContainer(InventoryID.WORN);
 
-        if (equipment == null) return entries;
+        if (equipment == null) {
+            return entries;
+        }
 
         Item[] contents = equipment.getItems();
         for (EquipmentInventorySlot slot : EquipmentInventorySlot.values()) {
@@ -94,17 +99,19 @@ public class GearConfigExportService {
             }
 
             int itemId = itemManager.canonicalize(contents[index].getId());
-            entries.add(new GearConfigPayload.EquipmentEntry(
+            entries.add(new EquipmentEntry(
                     slot.name(), itemId, itemName(itemId), contents[index].getQuantity()));
         }
         return entries;
     }
 
-    List<GearConfigPayload.InventoryEntry> readInventory() {
-        List<GearConfigPayload.InventoryEntry> entries = new ArrayList<>();
+    private List<InventoryEntry> readInventory() {
+        List<InventoryEntry> entries = new ArrayList<>();
         ItemContainer inventory = client.getItemContainer(InventoryID.INV);
 
-        if (inventory == null) return entries;
+        if (inventory == null) {
+            return entries;
+        }
 
         Item[] contents = inventory.getItems();
         for (int slot = 0; slot < Math.min(contents.length, 28); slot++) {
@@ -113,14 +120,14 @@ public class GearConfigExportService {
             }
 
             int itemId = itemManager.canonicalize(contents[slot].getId());
-            entries.add(new GearConfigPayload.InventoryEntry(
+            entries.add(new InventoryEntry(
                     slot, itemId, itemName(itemId), contents[slot].getQuantity()));
         }
         return entries;
     }
 
-    List<GearConfigPayload.RunePouchEntry> readRunePouch() {
-        List<GearConfigPayload.RunePouchEntry> entries = new ArrayList<>();
+    private List<RunePouchEntry> readRunePouch() {
+        List<RunePouchEntry> entries = new ArrayList<>();
         EnumComposition runes = client.getEnum(EnumID.RUNEPOUCH_RUNE);
 
         for (int index = 0; index < POUCH_RUNE_VARBITS.length; index++) {
@@ -131,7 +138,7 @@ public class GearConfigExportService {
             }
 
             int itemId = runes.getIntValue(runeType);
-            entries.add(new GearConfigPayload.RunePouchEntry(itemId, itemName(itemId), amount));
+            entries.add(new RunePouchEntry(itemId, itemName(itemId), amount));
         }
         return entries;
     }
@@ -145,20 +152,8 @@ public class GearConfigExportService {
         return itemManager.getItemComposition(itemId).getName();
     }
 
-    @Value
-    public static class Result {
-        boolean success;
-        String message;
-        String url;
-
-        static Result success(GearConfigCreatedData created) {
-            return new Result(true,
-                    created.isAlreadySaved() ? "You already saved this setup." : "Gear config created.",
-                    created.getUrl());
-        }
-
-        static Result failure(String message) {
-            return new Result(false, message, null);
-        }
+    private static GearResult saved(GearConfigCreatedData created) {
+        return new GearResult(true, created.isAlreadySaved() ? "You already saved this setup" : "Setup saved",
+                created.getUrl(), List.of());
     }
 }

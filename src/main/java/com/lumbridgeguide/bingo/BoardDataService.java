@@ -1,6 +1,5 @@
 package com.lumbridgeguide.bingo;
 
-import com.google.gson.Gson;
 import com.lumbridgeguide.LumbridgeGuideConfig;
 import com.lumbridgeguide.api.ApiResponse;
 import com.lumbridgeguide.api.LumbridgeGuideClient;
@@ -15,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,7 +31,6 @@ public class BoardDataService {
     private static final long DEFAULT_POLL_SECONDS = 150;
 
     private final LumbridgeGuideClient apiClient;
-    private final Gson gson;
     private final LumbridgeGuideConfig config;
     private final BingoChatAnnouncer announcer;
 
@@ -69,7 +68,7 @@ public class BoardDataService {
         }
         try {
             return !now.isBefore(Instant.parse(isoInstant));
-        } catch (RuntimeException ignored) {
+        } catch (DateTimeParseException ignored) {
             return false;
         }
     }
@@ -111,7 +110,7 @@ public class BoardDataService {
     }
 
     private void handlePoll(ApiResponse response) {
-        PluginPollResponse poll = gson.fromJson(response.getBody(), PluginPollResponse.class);
+        PluginPollResponse poll = apiClient.deserialize(response.getBody(), PluginPollResponse.class);
         boolean firstPoll;
         List<PluginBoardData> current;
         synchronized (this) {

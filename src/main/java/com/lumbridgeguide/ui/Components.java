@@ -29,16 +29,14 @@ public class Components {
 
     public static final int CONTENT_WIDTH = 188;
 
-    public static Font font(float size, int style) {
-        if (style == Font.BOLD) return FontManager.getRunescapeBoldFont();
-        if (size <= 11f) return FontManager.getRunescapeSmallFont();
-        return FontManager.getRunescapeFont();
-    }
+    public static final Font SMALL = FontManager.getRunescapeSmallFont();
+    public static final Font REGULAR = FontManager.getRunescapeFont();
+    public static final Font BOLD = FontManager.getRunescapeBoldFont();
 
-    public static JLabel label(String text, float size, int style, Color color) {
+    public static JLabel label(String text, Font font, Color colour) {
         JLabel label = new JLabel(text);
-        label.setFont(font(size, style));
-        label.setForeground(color);
+        label.setFont(font);
+        label.setForeground(colour);
         return label;
     }
 
@@ -48,7 +46,7 @@ public class Components {
         header.setOpaque(false);
         header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel label = label(text.toUpperCase(Locale.ROOT), 11f, Font.PLAIN, Theme.TEXT_SECONDARY);
+        JLabel label = label(text.toUpperCase(Locale.ROOT), SMALL, Theme.TEXT_SECONDARY);
         label.setAlignmentY(Component.CENTER_ALIGNMENT);
         header.add(label);
         header.add(Box.createHorizontalStrut(8));
@@ -70,38 +68,38 @@ public class Components {
 
     public static JButton textLink(String text) {
         JButton button = linkButton(text);
-        button.setFont(FontManager.getRunescapeSmallFont());
+        button.setFont(SMALL);
         button.setForeground(Theme.accentText());
         return button;
     }
 
-    public static JLabel statusLine(String text, Color dotColor, Color textColor) {
-        JLabel label = label(text, 12f, Font.PLAIN, textColor);
-        label.setIcon(new DotIcon(dotColor));
+    public static JLabel statusLine(String text, Color dotColour, Color textColour) {
+        JLabel label = label(text, REGULAR, textColour);
+        label.setIcon(new DotIcon(dotColour));
         label.setIconTextGap(6);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         return label;
     }
 
-    public static WrapText wrapped(String text, int width, float size, int style, Color color) {
+    public static WrapText wrapped(String text, int width, Font font, Color colour) {
         WrapText wrapText = new WrapText(width);
-        wrapText.setFont(font(size, style));
-        wrapText.setForeground(color);
+        wrapText.setFont(font);
+        wrapText.setForeground(colour);
         wrapText.setText(text);
         return wrapText;
     }
 
     public static JButton primaryButton(String text) {
-        return new ActionButton(text, ActionButton.Kind.PRIMARY);
+        return new ActionButton(text, true);
     }
 
     public static JButton secondaryButton(String text) {
-        return new ActionButton(text, ActionButton.Kind.SECONDARY);
+        return new ActionButton(text, false);
     }
 
     public static JButton linkButton(String text) {
         JButton button = new JButton(text);
-        button.setFont(FontManager.getRunescapeBoldFont());
+        button.setFont(BOLD);
         button.setForeground(Theme.accentText());
         button.setBorder(new EmptyBorder(0, 0, 0, 0));
         button.setContentAreaFilled(false);
@@ -132,7 +130,7 @@ public class Components {
     public static JTextField textField(String tooltip) {
         JTextField field = new PlaceholderField(tooltip);
         field.setToolTipText(tooltip);
-        field.setFont(FontManager.getRunescapeFont());
+        field.setFont(REGULAR);
         field.setOpaque(false);
         field.setBackground(Theme.SURFACE_OVERLAY);
         field.setForeground(Theme.TEXT_PRIMARY);
@@ -144,9 +142,9 @@ public class Components {
         return field;
     }
 
-    public static JToggleButton toggleChips(String text) {
+    public static JToggleButton toggleChip(String text) {
         JToggleButton chip = new JToggleButton(text, true);
-        chip.setFont(font(12f, Font.PLAIN));
+        chip.setFont(REGULAR);
         chip.setIcon(new CheckIcon(new Color(0, 0, 0, 0)));
         chip.setSelectedIcon(new CheckIcon(Theme.accent()));
         chip.setIconTextGap(6);
@@ -161,7 +159,7 @@ public class Components {
 
     public static JCheckBox checkBox(String text) {
         JCheckBox box = new JCheckBox(text, true);
-        box.setFont(font(12f, Font.PLAIN));
+        box.setFont(REGULAR);
         box.setForeground(Theme.TEXT_PRIMARY);
         box.setIcon(new CheckBoxIcon(false));
         box.setSelectedIcon(new CheckBoxIcon(true));

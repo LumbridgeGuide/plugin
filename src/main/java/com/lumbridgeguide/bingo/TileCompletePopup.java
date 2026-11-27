@@ -1,5 +1,7 @@
 package com.lumbridgeguide.bingo;
 
+import com.lumbridgeguide.ui.Theme;
+import lombok.RequiredArgsConstructor;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.WidgetNode;
@@ -14,7 +16,8 @@ import javax.inject.Singleton;
 import java.util.function.BooleanSupplier;
 
 @Singleton
-class TileCompletePopup {
+@RequiredArgsConstructor(onConstructor_ = @Inject)
+public class TileCompletePopup {
 
     private static final int NOTIFICATION_DISPLAY_INIT = 3343;
     private static final int NOTIFICATION_INTERFACE = 660;
@@ -22,20 +25,12 @@ class TileCompletePopup {
     private static final int RESIZABLE_CLASSIC_SLOT = WidgetUtil.packComponentId(161, 13);
     private static final int RESIZABLE_MODERN_SLOT = WidgetUtil.packComponentId(164, 13);
     private static final int FIXED_SLOT = WidgetUtil.packComponentId(548, 42);
-    private static final int TITLE_COLOUR = 0xE07A3A;
     private static final long OPEN_ANIMATION_MILLIS = 1200;
 
     private final Client client;
     private final ClientThread clientThread;
 
-    @Inject
-    TileCompletePopup(Client client, ClientThread clientThread) {
-        this.client = client;
-        this.clientThread = clientThread;
-    }
-
-    /** Runs {@code onOpen} on the client thread once the popup is fully open */
-    void show(String title, String message, Runnable onOpen) {
+    public void show(String title, String message, Runnable onOpen) {
         clientThread.invokeLater(new BooleanSupplier() {
             private long openedAt = -1;
             private WidgetNode node;
@@ -50,7 +45,7 @@ class TileCompletePopup {
                         return false;
                     }
                     node = client.openInterface(slot(), NOTIFICATION_INTERFACE, WidgetModalMode.MODAL_CLICKTHROUGH);
-                    client.runScript(NOTIFICATION_DISPLAY_INIT, title, message, TITLE_COLOUR);
+                    client.runScript(NOTIFICATION_DISPLAY_INIT, title, message, Theme.accent().getRGB() & 0xFFFFFF);
                     openedAt = System.currentTimeMillis();
                     return false;
                 }

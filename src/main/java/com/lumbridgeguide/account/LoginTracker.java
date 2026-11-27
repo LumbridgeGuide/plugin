@@ -5,7 +5,7 @@ import net.runelite.api.GameState;
 import java.util.EnumSet;
 import java.util.Set;
 
-final class LoginTracker {
+public final class LoginTracker {
 
     private static final Set<GameState> LOGGED_OUT_STATES = EnumSet.of(
             GameState.UNKNOWN,
@@ -17,14 +17,12 @@ final class LoginTracker {
     private boolean awaitingLogin = true;
     private boolean loginPending;
 
-    /** May be called while the player is already logged in */
-    void start(boolean loggedIn) {
+    public void start(boolean loggedIn) {
         loginPending = loggedIn;
         awaitingLogin = !loginPending;
     }
 
-    /** Returns true when the state change is a logout */
-    boolean onGameState(GameState state) {
+    public boolean onGameState(GameState state) {
         if (LOGGED_OUT_STATES.contains(state)) {
             boolean loggedOut = !awaitingLogin;
             if (loggedOut) {
@@ -40,8 +38,7 @@ final class LoginTracker {
         return false;
     }
 
-    /** Returns true on the first tick after a login */
-    boolean onTick() {
+    public boolean onTick() {
         boolean login = loginPending;
         loginPending = false;
         return login;
