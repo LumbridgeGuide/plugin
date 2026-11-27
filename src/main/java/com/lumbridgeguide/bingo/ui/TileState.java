@@ -6,7 +6,6 @@ import com.lumbridgeguide.bingo.data.PluginTileData;
 import lombok.experimental.UtilityClass;
 
 import java.util.Locale;
-import java.util.OptionalLong;
 
 @UtilityClass
 public class TileState {
@@ -22,9 +21,9 @@ public class TileState {
         return tile.getPoints() + (tile.getPoints() == 1 ? " point" : " points");
     }
 
-    public static long myProgress(PluginTileData tile, OptionalLong tracked) {
-        if (tracked.isPresent()) {
-            return tracked.getAsLong();
+    public static long myProgress(PluginTileData tile, Long tracked) {
+        if (tracked != null) {
+            return tracked;
         }
         if (tile.getProgress() == null) {
             return 0;
@@ -33,7 +32,7 @@ public class TileState {
                 .mapToLong(PluginProgressData::getProgress).findFirst().orElse(0);
     }
 
-    public static String progressText(PluginTileData tile, OptionalLong tracked) {
+    public static String progressText(PluginTileData tile, Long tracked) {
         long target = tile.target();
         if (target <= 0) {
             return "";

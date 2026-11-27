@@ -9,7 +9,6 @@ import net.runelite.api.Skill;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -76,9 +75,8 @@ public class TileProgressCounter {
         return baseline == null ? null : Math.max(0, totalXp - baseline);
     }
 
-    public OptionalLong progressFor(String tileId) {
-        Long value = progress.get(tileId);
-        return value == null ? OptionalLong.empty() : OptionalLong.of(value);
+    public Long progressFor(String tileId) {
+        return progress.get(tileId);
     }
 
     public void rearm(String tileId) {

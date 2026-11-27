@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
 
 import static org.junit.Assert.assertEquals;
 
@@ -27,46 +26,46 @@ public class TileProgressCounterTest {
 
     @Test
     public void countsBossKillsFromKillCountMessagesAndReachesTheTarget() {
-        PluginBoardData board = board(killTile("vork", "Vorkath", null, 3));
+        PluginBoardData board = board(killTile("vork", "Vorkath", 3));
 
         chat(board, "Your <col=ff0000>Vorkath</col> kill count is: <col=ff0000>1,032</col>.");
         chat(board, "Your Vorkath kill count is: 1,033.");
-        assertEquals(OptionalLong.of(2), counter.progressFor("vork"));
+        assertEquals(Long.valueOf(2), counter.progressFor("vork"));
         assertEquals(List.of(), reached);
 
         chat(board, "Your Vorkath kill count is: 1,034.");
-        assertEquals(OptionalLong.of(3), counter.progressFor("vork"));
+        assertEquals(Long.valueOf(3), counter.progressFor("vork"));
         assertEquals(List.of("vork"), reached);
     }
 
     @Test
     public void countsOrdinaryMonstersFromTheirLootForgivingHowTheHostTypedTheName() {
-        PluginBoardData board = board(killTile("demons", "abyssal demons", null, 2));
+        PluginBoardData board = board(killTile("demons", "abyssal demons", 2));
 
         counter.lootReceived(List.of(board), "Abyssal demon", 415);
         counter.lootReceived(List.of(board), "Goblin", 3029);
         counter.lootReceived(List.of(board), "Abyssal demon", 415);
 
-        assertEquals(OptionalLong.of(2), counter.progressFor("demons"));
+        assertEquals(Long.valueOf(2), counter.progressFor("demons"));
         assertEquals(List.of("demons"), reached);
     }
 
     @Test
     public void aBossKillWithLootAndMessageCountsOnceInEitherOrder() {
-        PluginBoardData board = board(killTile("vork", "Vorkath", null, 5));
+        PluginBoardData board = board(killTile("vork", "Vorkath", 5));
 
         counter.lootReceived(List.of(board), "Vorkath", 8061);
         chat(board, "Your Vorkath kill count is: 50.");
-        assertEquals(OptionalLong.of(1), counter.progressFor("vork"));
+        assertEquals(Long.valueOf(1), counter.progressFor("vork"));
 
         chat(board, "Your Vorkath kill count is: 51.");
         counter.lootReceived(List.of(board), "Vorkath", 8061);
-        assertEquals(OptionalLong.of(2), counter.progressFor("vork"));
+        assertEquals(Long.valueOf(2), counter.progressFor("vork"));
     }
 
     @Test
     public void progressSurvivesARestart() {
-        PluginBoardData board = board(killTile("vork", "Vorkath", null, 5), killTile("demons", "Abyssal demon", null, 5));
+        PluginBoardData board = board(killTile("vork", "Vorkath", 5), killTile("demons", "Abyssal demon", 5));
         chat(board, "Your Vorkath kill count is: 50.");
         counter.lootReceived(List.of(board), "Abyssal demon", 415);
 
@@ -74,8 +73,8 @@ public class TileProgressCounterTest {
         chat(board, "Your Vorkath kill count is: 52.");
         counter.lootReceived(List.of(board), "Abyssal demon", 415);
 
-        assertEquals(OptionalLong.of(3), counter.progressFor("vork"));
-        assertEquals(OptionalLong.of(2), counter.progressFor("demons"));
+        assertEquals(Long.valueOf(3), counter.progressFor("vork"));
+        assertEquals(Long.valueOf(2), counter.progressFor("demons"));
     }
 
     private TileProgressCounter newSession() {
@@ -105,12 +104,11 @@ public class TileProgressCounterTest {
         return board;
     }
 
-    private static PluginTileData killTile(String id, String monster, Integer monsterId, int target) {
+    private static PluginTileData killTile(String id, String monster, int target) {
         PluginTileData tile = new PluginTileData();
         tile.setId(id);
         tile.setType(TileType.KILL_COUNT);
         tile.setMonsterName(monster);
-        tile.setMonsterId(monsterId);
         tile.setKillCount(target);
         return tile;
     }

@@ -29,7 +29,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
 import java.util.List;
-import java.util.OptionalLong;
 import java.util.function.BiConsumer;
 
 public class TileDetailPanel extends JPanel {
@@ -120,7 +119,7 @@ public class TileDetailPanel extends JPanel {
         }
         boolean killCount = tile.getType() == TileType.KILL_COUNT;
         List<PluginProgressData> team = tile.getProgress() == null ? List.of() : tile.getProgress();
-        OptionalLong tracked = progressTracker.progressFor(tile.getId());
+        Long tracked = progressTracker.progressFor(tile.getId());
         long mine = TileState.myProgress(tile, tracked);
         boolean tracking = progressTracker.isTracking();
 

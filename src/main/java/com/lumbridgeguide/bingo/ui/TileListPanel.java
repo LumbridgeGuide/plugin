@@ -7,7 +7,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import java.util.Comparator;
 import java.util.List;
-import java.util.OptionalLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -34,7 +33,7 @@ public class TileListPanel extends JPanel {
 
             List<PluginTileData> tiles = board.tiles().stream().sorted(order).collect(Collectors.toList());
             for (PluginTileData tile : tiles) {
-                OptionalLong tracked = progressTracker.progressFor(tile.getId());
+                Long tracked = progressTracker.progressFor(tile.getId());
                 TileRowPanel row = new TileRowPanel(tile, board, icons, tracked, () -> onTileSelected.accept(tile));
                 row.setAlignmentX(LEFT_ALIGNMENT);
                 add(row);

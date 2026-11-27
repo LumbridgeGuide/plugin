@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -79,7 +79,7 @@ public class TileProgressTracker {
         counter.setOnTargetReached(listener);
     }
 
-    public OptionalLong progressFor(String tileId) {
+    public Long progressFor(String tileId) {
         return counter.progressFor(tileId);
     }
 
@@ -138,7 +138,7 @@ public class TileProgressTracker {
             for (String tileId : tileIds) {
                 Map<String, Object> entry = new HashMap<>();
                 entry.put("tileId", tileId);
-                entry.put("progress", counter.progressFor(tileId).orElse(0L));
+                entry.put("progress", Objects.requireNonNullElse(counter.progressFor(tileId), 0L));
                 entries.add(entry);
             }
             apiClient.post("/plugin/bingo/" + boardId + "/progress", Map.of("entries", entries),

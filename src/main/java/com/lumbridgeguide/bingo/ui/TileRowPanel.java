@@ -21,11 +21,10 @@ import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.OptionalLong;
 
 public class TileRowPanel extends JPanel {
 
-    public TileRowPanel(PluginTileData tile, PluginBoardData board, TileIcons icons, OptionalLong tracked, Runnable onClick) {
+    public TileRowPanel(PluginTileData tile, PluginBoardData board, TileIcons icons, Long tracked, Runnable onClick) {
         super(new BorderLayout(8, 0));
         setBackground(Theme.SURFACE_RAISED);
         setOpaque(false);
@@ -60,7 +59,7 @@ public class TileRowPanel extends JPanel {
         return iconHolder;
     }
 
-    private static JPanel textColumn(PluginTileData tile, PluginBoardData board, OptionalLong tracked, boolean mine,
+    private static JPanel textColumn(PluginTileData tile, PluginBoardData board, Long tracked, boolean mine,
                                      boolean takenByOther, Color teamColour) {
         JPanel textColumn = new JPanel();
         textColumn.setLayout(new BoxLayout(textColumn, BoxLayout.Y_AXIS));
@@ -117,7 +116,7 @@ public class TileRowPanel extends JPanel {
         return holder;
     }
 
-    private static String metaText(PluginTileData tile, PluginBoardData board, boolean mine, OptionalLong tracked) {
+    private static String metaText(PluginTileData tile, PluginBoardData board, boolean mine, Long tracked) {
         if (mine) {
             return "Your team";
         }
